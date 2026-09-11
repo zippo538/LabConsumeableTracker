@@ -4,7 +4,7 @@ using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace LabConsumableExpiryTracker.Controllers;
+namespace LabConsumableExpiryTracker.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -43,7 +43,7 @@ public class ScientistController : ControllerBase
     }
 
     [Authorize(Roles = "WarehouseAdmin")]
-    [HttpPut("/{id:guid}")]
+    [HttpPut("{id:guid}")]
     public async Task<ActionResult<ServiceResult<ScientistResponseDto>>> UpdateScientist(
         Guid id,
         UpdateScientistRequestDto requestDto)
