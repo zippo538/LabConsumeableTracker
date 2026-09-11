@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using LabConsumableExpiryTracker.Application.DTOs.Scientist;
+using LabConsumableExpiryTracker.Application.DTOs.ScientistDTOs;
 
 namespace LabConsumableExpiryTracker.Application.Validators.Scientist;
 

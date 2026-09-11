@@ -26,6 +26,7 @@
     <Reference Include="Bogus">
       <HintPath>..\..\..\..\.nuget\packages\bogus\35.6.5\lib\net6.0\Bogus.dll</HintPath>
     </Reference>
+    <Folder Include="Migrations\" />
   </ItemGroup>
 
   <PropertyGroup>

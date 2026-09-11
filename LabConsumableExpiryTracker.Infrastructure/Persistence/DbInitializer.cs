@@ -1,5 +1,7 @@
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Infrastructure.Persistence.Seeders;
+using LabConsumableExpiryTracker.Domain.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

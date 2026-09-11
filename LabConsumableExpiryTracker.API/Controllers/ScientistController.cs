@@ -1,6 +1,5 @@
-using LabConsumableExpiryTracker.Application.Common.Interfaces;
 using LabConsumableExpiryTracker.Application.Common.Result;
-using LabConsumableExpiryTracker.Application.DTOs.Scientist;
+using LabConsumableExpiryTracker.Application.DTOs.ScientistDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -45,7 +44,7 @@ public class ScientistController : ControllerBase
     }
 
     [Authorize(Roles = "WarehouseAdmin")]
-    [HttpPut("/{id:guid}")]
+    [HttpPut("{id:guid}")]
     public async Task<ActionResult<ServiceResult<ScientistResponseDto>>> UpdateScientist(
         Guid id,
         UpdateScientistRequestDto requestDto)
@@ -84,15 +83,4 @@ public class ScientistController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize(Roles = "WarehouseAdmin")]
-    [HttpDelete("scientists/{id:guid}")]
-    public async Task<ActionResult<bool>> DeleteScientist(Guid id)
-    {
-        var response = await _scientistService.DeleteScientistAsync(id);
-
-        if (!response.Success)
-            return BadRequest(response);
-
-        return Ok(response);
-    }
 }

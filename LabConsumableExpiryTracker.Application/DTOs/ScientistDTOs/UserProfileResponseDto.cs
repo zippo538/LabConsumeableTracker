@@ -1,5 +1,4 @@
-namespace LabConsumableExpiryTracker.Application.DTOs.Scientist;
-
+namespace LabConsumableExpiryTracker.Application.DTOs.ScientistDTOs;
 public class UserProfileResponseDto
 {
     public Guid Id { get; set; }
@@ -7,5 +6,5 @@ public class UserProfileResponseDto
     public string Email { get; set; } = string.Empty;
     public string FullName { get; set; }
     public string Role { get; set; } = string.Empty;
-    public string IsActive { get; set; } = string.Empty;
+    public bool IsActive { get; init; }
 }

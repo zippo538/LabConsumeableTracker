@@ -4,30 +4,30 @@ using System.Text;
 using AutoMapper;
 using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.Configurations;
-using LabConsumableExpiryTracker.Application.DTOs.Scientist;
+using LabConsumableExpiryTracker.Application.DTOs.ScientistDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 
 namespace LabConsumableExpiryTracker.Application.Services;
 
-public class AuthService :IScientistService
+public class ScientistService : IScientistService
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly JwtSettings _jwtSettings;
     private readonly IMapper _mapper;
+    private readonly ILogger<ScientistService> _logger;
 
-    public AuthService(
+    public ScientistService(
         UserManager<ApplicationUser> userManager,
         IOptions<JwtSettings> jwtSettings,
-        IMapper mapper)
+        IMapper mapper, ILogger<ScientistService> logger)
     {
         _userManager = userManager;
-        _jwtSettings = jwtSettings.Value;
         _mapper = mapper;
+        _logger = logger;
     }
 
     public async Task<ServiceResult<ScientistResponseDto>> RegisterScientistAsync(
@@ -51,6 +51,9 @@ public class AuthService :IScientistService
             var errors = result.Errors
                 .Select(e => e.Description)
                 .ToList();
+            _logger.LogWarning(
+                "Failed to register scientist {Username}.",
+                createScientistRequest.Username);
 
             return ServiceResult<ScientistResponseDto>.ErrorResult(
                 "Failed to create scientist.",
@@ -70,40 +73,52 @@ public class AuthService :IScientistService
                 .Select(e => e.Description)
                 .ToList();
 
+            _logger.LogWarning(
+                "Failed to assign scientist role to {Username}.",
+                user.UserName);
+
+
             return ServiceResult<ScientistResponseDto>.ErrorResult(
                 "Failed to assign scientist role.",
                 errors
             );
         }
 
+        _logger.LogInformation(
+            "Scientist {Username} registered successfully.",
+            user.UserName);
+
         var response = _mapper.Map<ScientistResponseDto>(user);
 
         return ServiceResult<ScientistResponseDto>.SuccessResult(response);
     }
 
-    public async Task<ServiceResult<List<UserProfileResponseDto>>> GetAllScientistsAsync()
+    public async Task<ServiceResult<List<ScientistResponseDto>>> GetAllScientistsAsync()
     {
         var scientists = await _userManager.GetUsersInRoleAsync(UserRole.Scientist.ToString());
 
-        var response = _mapper.Map<List<UserProfileResponseDto>>(scientists);
+        var response = _mapper.Map<List<ScientistResponseDto>>(scientists);
         foreach (var user in response)
         {
             user.Role = UserRole.Scientist.ToString();
         }
 
 
-        return ServiceResult<List<UserProfileResponseDto>>.SuccessResult(response);
+        return ServiceResult<List<ScientistResponseDto>>.SuccessResult(response);
     }
-    
-    public async Task<ServiceResult<UserProfileResponseDto>> GetUserProfileAsync(
-        Guid userId,
-        CancellationToken ct)
+
+    public async Task<ServiceResult<ScientistResponseDto>> GetUserProfileAsync(
+        Guid userId)
     {
         var user = await _userManager.FindByIdAsync(userId.ToString());
 
         if (user == null || !user.IsActive)
         {
-            return ServiceResult<UserProfileResponseDto>.ErrorResult(
+            _logger.LogWarning(
+                "Failed to retrieve user profile for {UserId}: user not found or inactive.",
+                userId);
+
+            return ServiceResult<ScientistResponseDto>.ErrorResult(
                 "User not found or inactive."
             );
         }
@@ -111,10 +126,10 @@ public class AuthService :IScientistService
         var roles = await _userManager.GetRolesAsync(user);
         var role = roles.FirstOrDefault() ?? string.Empty;
 
-        var response = _mapper.Map<UserProfileResponseDto>(user);
+        var response = _mapper.Map<ScientistResponseDto>(user);
         response.Role = role;
 
-        return ServiceResult<UserProfileResponseDto>.SuccessResult(
+        return ServiceResult<ScientistResponseDto>.SuccessResult(
             response,
             "User profile retrieved successfully."
         );
@@ -129,6 +144,9 @@ public class AuthService :IScientistService
         if (scientist is null ||
             !await _userManager.IsInRoleAsync(scientist, UserRole.Scientist.ToString()))
         {
+            _logger.LogWarning(
+                "Scientist not found.");
+
             return ServiceResult<ScientistResponseDto>.ErrorResult(
                 "Scientist not found."
             );
@@ -146,13 +164,22 @@ public class AuthService :IScientistService
                 .Select(e => e.Description)
                 .ToList();
 
+            _logger.LogWarning(
+                "Failed to update scientist {Username}.",
+                scientist.UserName);
+
             return ServiceResult<ScientistResponseDto>.ErrorResult(
                 "Failed to update scientist detail.",
                 errors
             );
         }
 
+        _logger.LogInformation(
+            "Scientist {Username} updated successfully.",
+            scientist.UserName);
+
         var response = _mapper.Map<ScientistResponseDto>(scientist);
+
 
         return ServiceResult<ScientistResponseDto>.SuccessResult(response);
     }
@@ -168,6 +195,8 @@ public class AuthService :IScientistService
                 scientist,
                 UserRole.Scientist.ToString()))
         {
+            _logger.LogWarning(
+                "Scientist not found.");
             return ServiceResult<bool>.ErrorResult(
                 "Scientist not found."
             );
@@ -183,80 +212,19 @@ public class AuthService :IScientistService
                 .Select(e => e.Description)
                 .ToList();
 
+            _logger.LogWarning(
+                "Failed to update scientist status.");
             return ServiceResult<bool>.ErrorResult(
-                "ErrorResulted to update scientist status.",
+                "Failed to update scientist status.",
                 errors
             );
         }
 
-        return ServiceResult<bool>.SuccessResult(true);
-    }
-
-    public async Task<ServiceResult<bool>> DeleteScientistAsync(Guid id)
-    {
-        var scientist = await _userManager.FindByIdAsync(id.ToString());
-
-        if (scientist is null || !await _userManager.IsInRoleAsync(scientist, UserRole.Scientist.ToString()))
-        {
-            return ServiceResult<bool>.ErrorResult(
-                "Scientist tidak ditemukan."
-            );
-        }
-
-        var result = await _userManager.DeleteAsync(scientist);
-
-        if (!result.Succeeded)
-        {
-            var errors = result.Errors
-                .Select(e => e.Description)
-                .ToList();
-
-            return ServiceResult<bool>.ErrorResult(
-                "ErrorResulted to delete scientist account.",
-                errors
-            );
-        }
+        _logger.LogInformation(
+            "Scientist {Username} status changed to {IsActive}.",
+            scientist.UserName,
+            isActive);
 
         return ServiceResult<bool>.SuccessResult(true);
-    }
-
-    private async Task<string> GenerateJwtTokenAsync(ApplicationUser user)
-    {
-        var roles = await _userManager.GetRolesAsync(user);
-
-
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Name, user.UserName!),
-            new(ClaimTypes.Email, user.Email!)
-        };
-
-        foreach (var role in roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-        }
-
-        var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(_jwtSettings.SecretKey)
-        );
-
-        var creds = new SigningCredentials(
-            key,
-            SecurityAlgorithms.HmacSha256
-        );
-
-  
-        var token = new JwtSecurityToken(
-            issuer: _jwtSettings.Issuer,
-            audience: _jwtSettings.Audience,
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(
-                _jwtSettings.ExpiryHours
-            ),
-            signingCredentials: creds
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }

@@ -468,39 +468,6 @@ namespace LabConsumableExpiryTracker.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.Consumption", b =>
-                {
-                    b.HasOne("LabConsumableExpiryTracker.Domain.Models.Job", null)
-                        .WithMany("Consumptions")
-                        .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("LabConsumableExpiryTracker.Domain.Models.Lot", null)
-                        .WithMany()
-                        .HasForeignKey("SubLotId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.Disposal", b =>
-                {
-                    b.HasOne("LabConsumableExpiryTracker.Domain.Models.Lot", null)
-                        .WithMany()
-                        .HasForeignKey("SubLotId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.Lot", b =>
-                {
-                    b.HasOne("LabConsumableExpiryTracker.Domain.Models.Item", null)
-                        .WithMany("Lots")
-                        .HasForeignKey("ItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
@@ -550,16 +517,6 @@ namespace LabConsumableExpiryTracker.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.Item", b =>
-                {
-                    b.Navigation("Lots");
-                });
-
-            modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.Job", b =>
-                {
-                    b.Navigation("Consumptions");
                 });
 #pragma warning restore 612, 618
         }

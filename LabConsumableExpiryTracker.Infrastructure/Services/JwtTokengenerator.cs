@@ -1,8 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using LabConsumableExpiryTracker.Application.Common.Interfaces;
 using LabConsumableExpiryTracker.Application.Configurations;
+using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -17,6 +17,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
 
     public string GenerateToken(ApplicationUser user, string role)
     {
+        
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -35,7 +36,6 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             expires: DateTime.UtcNow.AddHours(_settings.ExpiryHours),
             signingCredentials: credentials
         );
-
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }

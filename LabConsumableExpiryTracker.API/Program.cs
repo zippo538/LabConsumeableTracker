@@ -1,5 +1,4 @@
 using FluentValidation;
-using LabConsumableExpiryTracker.Application.Common.Interfaces;
 using LabConsumableExpiryTracker.Domain.Models;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using LabConsumableExpiryTracker.Infrastructure.Services;
@@ -22,6 +21,7 @@ using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using LabConsumableExpiryTracker.Mappings;
 using Microsoft.OpenApi.Models;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,24 +60,18 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings.Issuer,
         ValidAudience = jwtSettings.Audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwtSettings.SecretKey)
+        )
     };
 });
-
-//json serialize
-builder.Services
-    .AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
 
 builder.Services.AddAuthorization();
 
 // --- Application / Infrastructure Services ---
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<ILoginService, LoginService>();
-builder.Services.AddScoped<IScientistService, AuthService>();
+builder.Services.AddScoped<IScientistService, ScientistService>();
 builder.Services.AddScoped<ILotService, LotService>();
 builder.Services.AddScoped<IItemService, ItemService>();
 
@@ -98,6 +92,12 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreateItemValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UpdateItemValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateLotValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UpdateLotValidator>();
+builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+builder.Services.AddScoped<IdentitySeeder>();
+builder.Services.AddScoped<IScientistService, ScientistService>();
+
+// --- FluentValidation ---
+builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 builder.Services.AddFluentValidationAutoValidation();
 
 
@@ -106,7 +106,16 @@ builder.Services.AddAutoMapper(
     typeof(UserMappingProfile).Assembly,
     typeof(ItemMappingProfile).Assembly,
     typeof(LotMappingProfile).Assembly
-);
+    );
+
+// --- Serilog ---
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+
+
+builder.Host.UseSerilog();
+
 
 // --- Controllers & Swagger ---
 builder.Services.AddControllers();

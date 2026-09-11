@@ -1,7 +1,7 @@
 
-namespace LabConsumableExpiryTracker.Application.DTOs.Login;
+namespace LabConsumableExpiryTracker.Application.DTOs.LoginDTOs;
 
-public record LoginResponseDto
+public class LoginResponseDto
 {
     public string Token { get; set; } = string.Empty;
     public Guid Id { get; set; }
