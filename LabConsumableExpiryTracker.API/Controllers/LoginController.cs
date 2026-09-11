@@ -8,11 +8,11 @@ namespace LabConsumableExpiryTracker.API.Controllers;
 
 [ApiController]
 [Route("api/login")]
-public class AuthController : ControllerBase
+public class LoginController : ControllerBase
 {
     private readonly ILoginService _authService;
 
-    public AuthController(ILoginService authService)
+    public LoginController(ILoginService authService)
     {
         _authService = authService;
     }
