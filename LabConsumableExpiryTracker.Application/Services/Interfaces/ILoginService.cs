@@ -1,5 +1,5 @@
 using LabConsumableExpiryTracker.Application.Common.Result;
-using LabConsumableExpiryTracker.Application.DTOs.Login;
+using LabConsumableExpiryTracker.Application.DTOs.LoginDTOs;
 
 namespace LabConsumableExpiryTracker.Application.Services.Interfaces;
 

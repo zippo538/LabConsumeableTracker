@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using LabConsumableExpiryTracker.Application.DTOs.Login;
+using LabConsumableExpiryTracker.Application.DTOs.LoginDTOs;
 using LabConsumableExpiryTracker.Domain.Models;
 
 namespace LabConsumableExpiryTracker.Application.Mappings;

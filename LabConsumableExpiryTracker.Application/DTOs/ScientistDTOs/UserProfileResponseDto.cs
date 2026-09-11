@@ -1,4 +1,4 @@
-namespace LabConsumableExpiryTracker.Application.DTOs.Scientist;
+namespace LabConsumableExpiryTracker.Application.DTOs.ScientistDTOs;
 
 public class UserProfileResponseDto
 {

@@ -4,7 +4,7 @@ using System.Text;
 using AutoMapper;
 using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.Configurations;
-using LabConsumableExpiryTracker.Application.DTOs.Scientist;
+using LabConsumableExpiryTracker.Application.DTOs.ScientistDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;

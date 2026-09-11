@@ -1,5 +1,5 @@
 using FluentValidation;
-using LabConsumableExpiryTracker.Application.DTOs.Login;
+using LabConsumableExpiryTracker.Application.DTOs.LoginDTOs;
 
 namespace LabConsumableExpiryTracker.Application.Validators.Login;
 

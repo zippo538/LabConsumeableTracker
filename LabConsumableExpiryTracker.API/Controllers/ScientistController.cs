@@ -1,6 +1,6 @@
 using LabConsumableExpiryTracker.Application.Common.Interfaces;
 using LabConsumableExpiryTracker.Application.Common.Result;
-using LabConsumableExpiryTracker.Application.DTOs.Scientist;
+using LabConsumableExpiryTracker.Application.DTOs.ScientistDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

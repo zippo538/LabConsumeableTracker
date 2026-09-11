@@ -1,5 +1,5 @@
 
-namespace LabConsumableExpiryTracker.Application.DTOs.Login;
+namespace LabConsumableExpiryTracker.Application.DTOs.LoginDTOs;
 
 public record LoginResponseDto
 {

@@ -1,5 +1,5 @@
 using AutoMapper;
-using LabConsumableExpiryTracker.Application.DTOs.Scientist;
+using LabConsumableExpiryTracker.Application.DTOs.ScientistDTOs;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 
