@@ -19,7 +19,6 @@ public class IdentitySeeder
 
     public async Task SeedAsync()
     {
-        Console.WriteLine("=== IDENTITY SEEDER RUNNING ===");
         foreach (var role in Enum.GetValues<UserRole>())
         {
             var roleName = role.ToString();

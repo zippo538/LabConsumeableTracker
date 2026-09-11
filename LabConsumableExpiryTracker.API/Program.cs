@@ -7,12 +7,14 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
 using LabConsumableExpiryTracker.Application.Configurations;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Mappings;
 using LabConsumableExpiryTracker.Application.Services;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Application.Validators.Login;
+using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
@@ -64,10 +66,11 @@ builder.Services.AddAuthorization();
 
 // --- Application / Infrastructure Services ---
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-builder.Services.AddScoped<ILoginService, LoginService>();
+builder.Services.AddScoped<ILoginService, AuthService>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IdentitySeeder>();
-builder.Services.AddScoped<IScientistService, ScientistService>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // --- FluentValidation ---
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
@@ -89,7 +92,12 @@ builder.Host.UseSerilog();
 
 
 // --- Controllers & Swagger ---
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
