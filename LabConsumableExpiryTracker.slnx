@@ -1,6 +1,0 @@
-<Solution>
-  <Project Path="LabConsumableExpiryTracker.API/LabConsumableExpiryTracker.API.csproj" />
-  <Project Path="LabConsumableExpiryTracker.Application/LabConsumableExpiryTracker.Application.csproj" />
-  <Project Path="LabConsumableExpiryTracker.Domain/LabConsumableExpiryTracker.Domain.csproj" />
-  <Project Path="LabConsumableExpiryTracker.Infrastructure/LabConsumableExpiryTracker.Infrastructure.csproj" />
-</Solution>

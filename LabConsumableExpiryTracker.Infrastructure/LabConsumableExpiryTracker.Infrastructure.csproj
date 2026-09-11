@@ -18,6 +18,14 @@
   <ItemGroup>
     <Folder Include="Configurations\" />
     <Folder Include="Migrations\" />
+    <Folder Include="Persistence\Seeders\" />
+    <Folder Include="Services\Interfaces\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Bogus">
+      <HintPath>..\..\..\..\.nuget\packages\bogus\35.6.5\lib\net6.0\Bogus.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <PropertyGroup>

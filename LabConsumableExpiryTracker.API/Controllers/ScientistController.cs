@@ -9,6 +9,7 @@ namespace LabConsumableExpiryTracker.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ScientistController : ControllerBase
 {
     private readonly IScientistService _scientistService;

@@ -8,11 +8,18 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
 using LabConsumableExpiryTracker.Application.Configurations;
+using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Mappings;
 using LabConsumableExpiryTracker.Application.Services;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
+using LabConsumableExpiryTracker.Application.Validators.ItemValidator;
 using LabConsumableExpiryTracker.Application.Validators.Login;
+using LabConsumableExpiryTracker.Application.Validators.LotValidator;
+using LabConsumableExpiryTracker.Application.Validators.Scientist;
+using LabConsumableExpiryTracker.Infrastructure.Repositories;
+using LabConsumableExpiryTracker.Mappings;
 using Microsoft.OpenApi.Models;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 
@@ -57,23 +64,48 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+//json serialize
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+
 builder.Services.AddAuthorization();
 
 // --- Application / Infrastructure Services ---
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<ILoginService, LoginService>();
-builder.Services.AddScoped<IDbInitializer, DbInitializer>();
-builder.Services.AddScoped<IdentitySeeder>();
 builder.Services.AddScoped<IScientistService, AuthService>();
+builder.Services.AddScoped<ILotService, LotService>();
+builder.Services.AddScoped<IItemService, ItemService>();
+
+builder.Services.AddScoped<ILotRepository, LotRepository>();
+builder.Services.AddScoped<IItemRepository, ItemRepository>();
+
+builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IdentitySeeder>();
+
+
 
 // --- FluentValidation ---
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateScientistRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdateScientistRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateItemValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdateItemValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateLotValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdateLotValidator>();
 builder.Services.AddFluentValidationAutoValidation();
 
 
 builder.Services.AddAutoMapper(
     _ => { },
-    typeof(UserMappingProfile).Assembly
+    typeof(UserMappingProfile).Assembly,
+    typeof(ItemMappingProfile).Assembly,
+    typeof(LotMappingProfile).Assembly
 );
 
 // --- Controllers & Swagger ---
@@ -108,6 +140,15 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+// ==================================================
+// Database Initialization / Seeder
+// ==================================================
+
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var initializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+    await initializer.InitializeAsync();
+}
 
 if (app.Environment.IsDevelopment())
 {
