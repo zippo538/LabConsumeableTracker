@@ -7,7 +7,7 @@ public class ServiceResult<T>
     public T? Data { get; set; }
     public List<string> Errors { get; set; } = new List<string>();
 
-    public static ServiceResult<T> SuccessResult<T>(T data, string message = "Success")
+    public static ServiceResult<T> SuccessResult(T data, string message = "Success")
     {
         return new ServiceResult<T>
         {

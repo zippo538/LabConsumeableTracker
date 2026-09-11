@@ -24,7 +24,7 @@ namespace LabConsumableExpiryTracker.Application.Services
         {
             var lots = await _lotRepository.GetAllAsync(ct);
             var response = _mapper.Map<IEnumerable<LotDto>>(lots);
-            return ServiceResult<LotDto>.SuccessResult(
+            return ServiceResult<IEnumerable<LotDto>>.SuccessResult(
                 response,
                 "Lots retrieved successfully.");
         }
@@ -106,7 +106,7 @@ namespace LabConsumableExpiryTracker.Application.Services
         {
             var lots = await _lotRepository.GetByItemIdAsync(itemId, ct);
             var summaries = _mapper.Map<IEnumerable<LotSummaryDto>>(lots);
-            return ServiceResult<LotSummaryDto>.SuccessResult(
+            return ServiceResult<IEnumerable<LotSummaryDto>>.SuccessResult(
                 summaries,
                 "Lots retrieved successfully.");
         }
