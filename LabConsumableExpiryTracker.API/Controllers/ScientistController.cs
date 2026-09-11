@@ -1,4 +1,3 @@
-using LabConsumableExpiryTracker.Application.Common.Interfaces;
 using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.ScientistDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
@@ -83,15 +82,5 @@ public class ScientistController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize(Roles = "WarehouseAdmin")]
-    [HttpDelete("scientists/{id:guid}")]
-    public async Task<ActionResult<bool>> DeleteScientist(Guid id)
-    {
-        var response = await _scientistService.DeleteScientistAsync(id);
 
-        if (!response.Success)
-            return BadRequest(response);
-
-        return Ok(response);
-    }
 }

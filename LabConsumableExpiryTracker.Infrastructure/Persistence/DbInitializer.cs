@@ -1,4 +1,4 @@
-using LabConsumableExpiryTracker.Application.Common.Interfaces;
+using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

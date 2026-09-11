@@ -1,6 +1,6 @@
 using LabConsumableExpiryTracker.Domain.Models;
 
-namespace LabConsumableExpiryTracker.Application.Common.Interfaces;
+namespace LabConsumableExpiryTracker.Application.Interfaces;
 
 public interface IJwtTokenGenerator
 {
