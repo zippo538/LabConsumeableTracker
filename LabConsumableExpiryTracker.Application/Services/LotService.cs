@@ -64,8 +64,6 @@ namespace LabConsumableExpiryTracker.Application.Services
                 return ServiceResult<LotDto>.ErrorResult("A lot with the same item, lot number, and expiry date already exists.");
             }
             var lot = _mapper.Map<Lot>(createLotDto);
-            lot.UpdateRemainingQuantity(createLotDto.InitialQuantity);
-
             var created = await _lotRepository.AddAsync(lot, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             var response = _mapper.Map<LotDto>(created);

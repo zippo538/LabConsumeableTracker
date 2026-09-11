@@ -13,18 +13,15 @@ namespace LabConsumableExpiryTracker.Mappings
 
 
             CreateMap<CreateLotDto, Lot>()
-            .ConstructUsing(source => new Lot(
-                Guid.NewGuid(),
+            .ConstructUsing(source => Lot.Create(
                 source.ItemId,
                 source.LotNumber,
                 source.SupplierLotNumber,
                 new DateTimeOffset(source.ReceivedAt),
                 source.SupplierName,
                 source.InitialQuantity,
-                source.RemainingQuantity,
                 source.ExpiryDate,
-                source.StorageLocation,
-                LotStatus.Active));
+                source.StorageLocation));
 
             CreateMap<UpdateLotDto, Lot>();
         }

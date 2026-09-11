@@ -19,18 +19,28 @@ public class Lot
     public byte[] RowVersion { get; private set; } = [];
 
     public Lot(
-    Guid id,
-    Guid itemId,
-    string lotNumber,
-    string? supplierLotNumber,
-    DateTimeOffset receivedAt,
-    string? supplierName,
-    decimal initialQuantity,
-    decimal remainingQuantity,
-    DateOnly expiryDate,
-    string storageLocation,
-    LotStatus status)
+        Guid id,
+        Guid itemId,
+        string lotNumber,
+        string? supplierLotNumber,
+        DateTimeOffset receivedAt,
+        string? supplierName,
+        decimal initialQuantity,
+        decimal remainingQuantity,
+        DateOnly expiryDate,
+        string storageLocation,
+        LotStatus status)
     {
+        if (remainingQuantity < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(remainingQuantity), "Remaining quantity cannot be negative.");
+        }
+
+        if (remainingQuantity > initialQuantity)
+        {
+            throw new ArgumentException("Remaining quantity cannot exceed initial quantity.", nameof(remainingQuantity));
+        }
+
         Id = id;
         ItemId = itemId;
         LotNumber = lotNumber.Trim();
@@ -42,6 +52,35 @@ public class Lot
         ExpiryDate = expiryDate;
         StorageLocation = storageLocation.Trim();
         Status = status;
+    }
+
+    public static Lot Create(
+        Guid itemId,
+        string lotNumber,
+        string? supplierLotNumber,
+        DateTimeOffset receivedAt,
+        string? supplierName,
+        decimal initialQuantity,
+        DateOnly expiryDate,
+        string storageLocation)
+    {
+        if (initialQuantity <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(initialQuantity), "Initial quantity must be greater than zero.");
+        }
+
+        return new Lot(
+            Guid.NewGuid(),
+            itemId,
+            lotNumber,
+            supplierLotNumber,
+            receivedAt,
+            supplierName,
+            initialQuantity,
+            initialQuantity,
+            expiryDate,
+            storageLocation,
+            LotStatus.Active);
     }
     public void UpdateRemainingQuantity(decimal quantity)
     {

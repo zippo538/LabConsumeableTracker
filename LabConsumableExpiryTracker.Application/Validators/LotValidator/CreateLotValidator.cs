@@ -39,12 +39,6 @@ public class CreateLotValidator : AbstractValidator<CreateLotDto>
             .LessThanOrEqualTo(999_999_999_999.9999m)
             .WithMessage("InitialQuantity melebihi batas yang diperbolehkan.");
 
-        RuleFor(x => x.RemainingQuantity)
-            .GreaterThanOrEqualTo(0)
-            .WithMessage("RemainingQuantity tidak boleh negatif.")
-            .LessThanOrEqualTo(x => x.InitialQuantity)
-            .WithMessage("RemainingQuantity tidak boleh melebihi InitialQuantity.");
-
         RuleFor(x => x.ReceivedAt)
             .NotEqual(default(DateTime))
             .WithMessage("ReceivedAt wajib diisi.")
