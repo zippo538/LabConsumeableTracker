@@ -1,0 +1,6 @@
+namespace LabConsumableExpiryTracker.Application.Common.Interfaces;
+
+public interface IDbInitializer
+{
+    Task InitializeAsync();
+}
