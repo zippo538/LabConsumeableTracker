@@ -11,7 +11,6 @@ using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 
 namespace LabConsumableExpiryTracker.Application.Services;
 
@@ -94,21 +93,21 @@ public class ScientistService : IScientistService
         return ServiceResult<ScientistResponseDto>.SuccessResult(response);
     }
 
-    public async Task<ServiceResult<List<UserProfileResponseDto>>> GetAllScientistsAsync()
+    public async Task<ServiceResult<List<ScientistResponseDto>>> GetAllScientistsAsync()
     {
         var scientists = await _userManager.GetUsersInRoleAsync(UserRole.Scientist.ToString());
 
-        var response = _mapper.Map<List<UserProfileResponseDto>>(scientists);
+        var response = _mapper.Map<List<ScientistResponseDto>>(scientists);
         foreach (var user in response)
         {
             user.Role = UserRole.Scientist.ToString();
         }
 
 
-        return ServiceResult<List<UserProfileResponseDto>>.SuccessResult(response);
+        return ServiceResult<List<ScientistResponseDto>>.SuccessResult(response);
     }
 
-    public async Task<ServiceResult<UserProfileResponseDto>> GetUserProfileAsync(
+    public async Task<ServiceResult<ScientistResponseDto>> GetUserProfileAsync(
         Guid userId)
     {
         var user = await _userManager.FindByIdAsync(userId.ToString());
@@ -119,7 +118,7 @@ public class ScientistService : IScientistService
                 "Failed to retrieve user profile for {UserId}: user not found or inactive.",
                 userId);
 
-            return ServiceResult<UserProfileResponseDto>.ErrorResult(
+            return ServiceResult<ScientistResponseDto>.ErrorResult(
                 "User not found or inactive."
             );
         }
@@ -127,10 +126,10 @@ public class ScientistService : IScientistService
         var roles = await _userManager.GetRolesAsync(user);
         var role = roles.FirstOrDefault() ?? string.Empty;
 
-        var response = _mapper.Map<UserProfileResponseDto>(user);
+        var response = _mapper.Map<ScientistResponseDto>(user);
         response.Role = role;
 
-        return ServiceResult<UserProfileResponseDto>.SuccessResult(
+        return ServiceResult<ScientistResponseDto>.SuccessResult(
             response,
             "User profile retrieved successfully."
         );

@@ -20,7 +20,7 @@ public class UserController : ControllerBase
 
     [Authorize]
     [HttpGet("profile")]
-    public async Task<ServiceResult<UserProfileResponseDto>> GetMe(
+    public async Task<ServiceResult<ScientistResponseDto>> GetMe(
         CancellationToken ct)
     {
         var userId = Guid.Parse(
