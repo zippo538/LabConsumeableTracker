@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using LabConsumableExpiryTracker.Application.Configurations;
 using LabConsumableExpiryTracker.Application.Interfaces;
@@ -33,9 +34,16 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             issuer: _settings.Issuer,
             audience: _settings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(_settings.ExpiryHours),
+            expires: DateTime.UtcNow.AddMinutes(_settings.AccessTokenExpiryMinutes),
             signingCredentials: credentials
         );
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+    public string GenerateRefreshToken()
+    {
+        var randomBytes = new byte[64];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomBytes);
+        return Convert.ToBase64String(randomBytes);
     }
 }
