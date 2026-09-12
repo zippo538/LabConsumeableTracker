@@ -2,6 +2,7 @@ using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using LabConsumableExpiryTracker.Infrastructure.Repositories;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.EntityFrameworkCore;
 
 namespace LabConsumableExpiryTracker.Tests.Repository;
@@ -29,16 +30,10 @@ public class LotRepositoryTests
             .Options;
 
         _context = new AppDbContext(options);
-        _repository = new LotRepository(_context);
+        _repository = new LotRepository(_context, NullLogger<LotRepository>.Instance);
 
-        // Memastikan database dapat diakses.
         await _context.Database.CanConnectAsync();
 
-        // Test menggunakan database yang sudah memiliki schema
-        // melalui EF Core migration.
-        //
-        // Tidak menjalankan EnsureDeleted / EnsureCreated,
-        // agar migration PostgreSQL tetap menjadi sumber schema.
     }
 
     [SetUp]

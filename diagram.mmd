@@ -1,0 +1,129 @@
+classDiagram
+direction LR
+
+class Item {
+  +Guid Id
+  +string Code
+  +string Name
+  +UnitOfMeasure BaseUnit
+  +decimal MinimumStock
+  +int ExpiringSoonDays
+  +IsLowStock(totalQuantity) bool
+}
+
+class Lot {
+  +Guid Id
+  +Guid ItemId
+  +string LotNumber
+  +decimal InitialQuantity
+  +decimal RemainingQuantity
+  +DateOnly ExpiryDate
+  +DateTimeOffset ReceivedAt
+  +LotAdministrativeStatus AdministrativeStatus
+  +string StorageLocation
+  +byte[] RowVersion
+  +GetExpiryCondition(now, warningDays) ExpiryCondition
+  +IsEligible(now) bool
+  +Consume(quantity, jobId, now) Consumption
+  +Dispose(quantity, reason, now) Disposal
+  +Block(reason) void
+}
+
+class Job {
+  +Guid Id
+  +string JobNumber
+  +JobStatus Status
+  +DateTimeOffset? StartedAt
+  +DateTimeOffset? CompletedAt
+  +Start(now) void
+  +Complete(now) void
+}
+
+class Consumption {
+  +Guid Id
+  +Guid JobId
+  +Guid LotId
+  +decimal Quantity
+  +DateTimeOffset ConsumedAt
+  +Guid ConsumedBy
+}
+
+class Disposal {
+  +Guid Id
+  +Guid LotId
+  +decimal Quantity
+  +string Reason
+  +DateTimeOffset DisposedAt
+  +Guid DisposedBy
+}
+
+class LotAllocation {
+  +Guid LotId
+  +decimal Quantity
+}
+
+class LotSelectionService {
+  +Allocate(lots, requestedQuantity, now) IReadOnlyList~LotAllocation~
+}
+
+class ILotRepository {
+  <>
+  +GetCandidatesAsync(itemId) IReadOnlyList~Lot~
+  +GetByIdAsync(id) Lot
+  +AddAsync(lot) void
+}
+
+class IUnitOfWork {
+  <>
+  +SaveChangesAsync() int
+}
+
+class TimeProvider {
+  <>
+  +GetUtcNow() DateTimeOffset
+}
+
+class UnitOfMeasure {
+  <>
+  Milliliter
+  Gram
+  Unit
+  Vial
+}
+
+class LotAdministrativeStatus {
+  <>
+  Active
+  Quarantined
+  ManuallyBlocked
+  Disposed
+}
+
+class ExpiryCondition {
+  <>
+  Valid
+  ExpiringSoon
+  Expired
+}
+
+class JobStatus {
+  <>
+  Draft
+  InProgress
+  Completed
+  Cancelled
+}
+
+Item "1" *-- "0..*" Lot : owns lots
+Item --> UnitOfMeasure
+Lot --> LotAdministrativeStatus
+Lot ..> ExpiryCondition : calculates
+Job --> JobStatus
+Job "1" --> "0..*" Consumption : records
+Lot "1" --> "0..*" Consumption : consumed through
+Lot "1" --> "0..*" Disposal : disposed through
+LotSelectionService ..> Lot : evaluates
+LotSelectionService ..> LotAllocation : creates
+LotSelectionService ..> TimeProvider : uses
+ILotRepository ..> Lot : persists
+IUnitOfWork ..> Consumption : commits atomically

@@ -75,6 +75,11 @@ namespace LabConsumableExpiryTracker.Application.Services
                 return ServiceResult<JobDto>.ErrorResult("Id is null");
             }
             var create = await _jobRepository.GetByIdAsync(id, ct);
+            if (create is null)
+            {
+                return ServiceResult<JobDto>.ErrorResult(
+                    $"Job with id '{id}' not found.");
+            }
             var response = _mapper.Map<JobDto>(create);
             return ServiceResult<JobDto>.SuccessResult(
                 response);
@@ -120,6 +125,7 @@ namespace LabConsumableExpiryTracker.Application.Services
             }
             transition(job);
             var create = await _jobRepository.UpdateAsync(job, ct);
+            await _unitOfWork.SaveChangesAsync(ct);
             var response = _mapper.Map<JobDto>(create);
             return ServiceResult<JobDto>.SuccessResult(response);
         }
