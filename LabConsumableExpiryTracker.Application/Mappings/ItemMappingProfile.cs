@@ -40,7 +40,7 @@ namespace LabConsumableExpiryTracker.Mappings
             options => options.MapFrom(source => source.Id))
         .ForMember(
             destination => destination.Status,
-            options => options.MapFrom(source => source.LotAdministrativeStatus.ToString()));
+            options => options.MapFrom(source => source.AdministrativeStatus.ToString()));
 
             CreateMap<Item, ItemDto>()
                 .ForMember(

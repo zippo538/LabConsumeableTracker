@@ -56,7 +56,7 @@ public class LotController : ControllerBase
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateLotDto request, CancellationToken ct)
     {
         var response = await _lotService.UpdateLot(id, request, ct);
-        return response.Success ? NoContent() : NotFound(response);
+        return response.Success ? Ok(response) : NotFound(response);
     }
 
     [HttpDelete("{id:guid}")]
@@ -64,7 +64,12 @@ public class LotController : ControllerBase
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var response = await _lotService.DeleteLot(id, ct);
-        return response.Success ? NoContent() : NotFound(response);
+        if (!response.Success)
+        {
+            return NotFound(response);
+        }
+
+        return response.Success ? Ok(response) : NotFound(response);
     }
     [HttpGet("summary")]
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
@@ -72,7 +77,7 @@ public class LotController : ControllerBase
     CancellationToken ct = default)
     {
         var response = await _lotService.GetAllSummary(ct);
-        return Ok(response);
+        return response.Success ? Ok(response): BadRequest(response);
     }
 }
 

@@ -81,7 +81,7 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
             .AsNoTracking()
             .Where(lot =>
                 lot.ItemId == itemId &&
-                lot.LotAdministrativeStatus == LotAdministrativeStatus.Active &&
+                lot.AdministrativeStatus == LotAdministrativeStatus.Active &&
                 lot.RemainingQuantity > 0 &&
                 lot.ExpiryDate >= today)
             .SumAsync(
@@ -120,7 +120,7 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
             .AsNoTracking()
             .Where(lot =>
                 ids.Contains(lot.ItemId) &&
-                lot.LotAdministrativeStatus == LotAdministrativeStatus.Active &&
+                lot.AdministrativeStatus == LotAdministrativeStatus.Active &&
                 lot.RemainingQuantity > 0 &&
                 lot.ExpiryDate >= today)
             .GroupBy(lot => lot.ItemId)
