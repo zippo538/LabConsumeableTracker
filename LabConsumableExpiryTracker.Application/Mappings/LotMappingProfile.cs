@@ -1,9 +1,8 @@
 using AutoMapper;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
-using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 
-namespace LabConsumableExpiryTracker.Mappings
+namespace LabConsumableExpiryTracker.Application.Mappings
 {
     public class LotMappingProfile : Profile
     {
