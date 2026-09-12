@@ -39,7 +39,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
             CancellationToken ct = default)
         {
             var response = await _itemService.GetAllItem(ct);
-            return response.Success ? Ok(response) : BadRequest(response);
+            return Ok(response);
         }
 
         [HttpGet("{id:guid}")]
@@ -79,7 +79,10 @@ namespace LabConsumableExpiryTracker.API.Controllers
                 return BadRequest(response);
             }
 
-            return CreatedAtAction(nameof(GetById),new { id = response.Data!.Id },response);
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = response.Data!.Id },
+                response);
         }
 
         [HttpPut("{id:guid}")]
@@ -102,7 +105,9 @@ namespace LabConsumableExpiryTracker.API.Controllers
 
             var response = await _itemService.UpdateItem(id, dto, ct);
 
-            return response.Success ? Ok(response) : NotFound(response);
+            return response.Success
+                ? Ok(response)
+                : NotFound(response);
         }
 
         [HttpDelete("{id:guid}")]
@@ -113,7 +118,9 @@ namespace LabConsumableExpiryTracker.API.Controllers
         {
             var response = await _itemService.DeleteItem(id, ct);
 
-            return response.Success ? Ok(response) : NotFound(response);
+            return response.Success
+                ? Ok(response)
+                : NotFound(response);
         }
 
         //lot summary
@@ -124,7 +131,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
             CancellationToken ct = default)
         {
             var response = await _lotService.GetSummaryByItemId(itemId, ct);
-            return response.Success ? Ok(response): BadRequest(response);
+            return Ok(response);
         }
     }
 }
