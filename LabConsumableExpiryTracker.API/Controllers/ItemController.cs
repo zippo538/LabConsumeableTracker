@@ -3,6 +3,7 @@ using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.ItemDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
+using LabConsumableExpiryTracker.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,7 +11,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    // [Authorize]
+    [Authorize]
     public class ItemController : ControllerBase
     {
         private readonly IItemService _itemService;
@@ -33,7 +34,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
         }
 
         [HttpGet]
-        // [Authorize(Roles = "WarehouseAdmin")]
+        [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
         public async Task<ActionResult<ServiceResult<IEnumerable<ItemDto>>>> GetAll(
             CancellationToken ct = default)
         {
@@ -42,7 +43,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
         }
 
         [HttpGet("{id:guid}")]
-        // [Authorize(Roles = "WarehouseAdmin")]
+        [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
         public async Task<ActionResult<ServiceResult<ItemDto>>> GetById(
             Guid id,
             CancellationToken ct = default)
@@ -55,7 +56,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
         }
 
         [HttpPost]
-        // [Authorize(Roles = "WarehouseAdmin")]
+        [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
         public async Task<ActionResult<ServiceResult<ItemDto>>> Create(
             [FromBody] CreateItemDto dto,
             CancellationToken ct = default)
@@ -85,7 +86,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        // [Authorize(Roles = "WarehouseAdmin")]
+        [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
         public async Task<ActionResult<ServiceResult<ItemDto>>> Update(
             Guid id,
             [FromBody] UpdateItemDto dto,
@@ -110,7 +111,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
         }
 
         [HttpDelete("{id:guid}")]
-        // [Authorize(Roles = "WarehouseAdmin")]
+        [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
         public async Task<ActionResult<ServiceResult<bool>>> Delete(
             Guid id,
             CancellationToken ct = default)
@@ -124,7 +125,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
 
         //lot summary
         [HttpGet("item/{itemId:guid}/summary")]
-        // [Authorize(Roles = "WarehouseAdmin")]
+        [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
         public async Task<ActionResult<ServiceResult<IEnumerable<LotSummaryDto>>>> GetSummaryByItemId(
             Guid itemId,
             CancellationToken ct = default)
