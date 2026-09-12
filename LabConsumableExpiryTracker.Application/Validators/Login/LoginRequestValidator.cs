@@ -11,6 +11,6 @@ public class LoginRequestValidator : AbstractValidator<LoginRequestDto>
             .NotEmpty().WithMessage("Username is required.");
 
         RuleFor(x => x.Password)
-            .NotEmpty().WithMessage("Password is requaired.");
+            .NotEmpty().WithMessage("Password is required.");
     }
 }

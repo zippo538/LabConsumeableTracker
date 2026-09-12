@@ -15,13 +15,11 @@ using LabConsumableExpiryTracker.Application.Services;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Application.Validators.ItemValidator;
 using LabConsumableExpiryTracker.Application.Validators.Login;
-using LabConsumableExpiryTracker.Application.Validators.LotValidator;
-using LabConsumableExpiryTracker.Application.Validators.Scientist;
 using LabConsumableExpiryTracker.Infrastructure.Repositories;
-using LabConsumableExpiryTracker.Mappings;
 using Microsoft.OpenApi.Models;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 using Serilog;
+using LabConsumableExpiryTracker.Mappings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -77,8 +75,6 @@ builder.Services
 
 // --- Application / Infrastructure Services ---
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-builder.Services.AddScoped<ILoginService, LoginService>();
-builder.Services.AddScoped<IScientistService, ScientistService>();
 builder.Services.AddScoped<ILotService, LotService>();
 builder.Services.AddScoped<IItemService, ItemService>();
 
@@ -93,15 +89,13 @@ builder.Services.AddScoped<IdentitySeeder>();
 
 // --- FluentValidation ---
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateScientistRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<UpdateScientistRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateItemValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UpdateItemValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateLotValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<UpdateLotValidator>();
+builder.Services.AddScoped<ILoginService, AuthService>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IdentitySeeder>();
-builder.Services.AddScoped<IScientistService, ScientistService>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // --- FluentValidation ---
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
@@ -124,8 +118,13 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 
+// --- JsonSerializer ---
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 // --- Controllers & Swagger ---
-builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {

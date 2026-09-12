@@ -2,11 +2,13 @@ using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Persistence;
 
 public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
 {
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
     public DbSet<Item> Items => Set<Item>();
     public DbSet<Lot> Lots => Set<Lot>();
@@ -22,6 +24,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
         ConfigureJob(builder);
         ConfigureConsumption(builder);
         ConfigureDisposal(builder);
+        ConfigureRefreshToken(builder);
     }
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
@@ -204,5 +207,15 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
         builder.Property(disposal => disposal.DisposedBy).HasColumnName("disposed_by").IsRequired();
 
         builder.HasIndex(disposal => disposal.SubLotId).HasDatabaseName("ix_disposals_lot_id");
+    }
+    private static void ConfigureRefreshToken(ModelBuilder modelBuilder)
+    {
+        var builder = modelBuilder.Entity<RefreshToken>();
+        builder.HasKey(r => r.Id);
+        builder.HasIndex(r => r.Token).IsUnique();
+        builder.HasOne(r => r.User)
+            .WithMany(u => u.RefreshTokens)
+            .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
