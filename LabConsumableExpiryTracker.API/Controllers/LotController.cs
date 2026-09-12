@@ -8,7 +8,7 @@ namespace LabConsumableExpiryTracker.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+// [Authorize]
 public class LotController : ControllerBase
 {
     private readonly ILotService _lotService;
@@ -19,7 +19,7 @@ public class LotController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "WarehouseAdmin")]
+    // [Authorize(Roles = "WarehouseAdmin")]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var response = await _lotService.GetAllLot(ct);
@@ -27,7 +27,7 @@ public class LotController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "WarehouseAdmin")]
+    // [Authorize(Roles = "WarehouseAdmin")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
         var response = await _lotService.GetByIdLot(id, ct);
@@ -37,7 +37,7 @@ public class LotController : ControllerBase
 
 
     [HttpPost]
-    [Authorize(Roles = "WarehouseAdmin")]
+    // [Authorize(Roles = "WarehouseAdmin")]
     public async Task<IActionResult> Create([FromBody] CreateLotDto request, CancellationToken ct)
     {
         var response = await _lotService.CreateLot(request, ct);
@@ -51,7 +51,7 @@ public class LotController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "WarehouseAdmin")]
+    // [Authorize(Roles = "WarehouseAdmin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateLotDto request, CancellationToken ct)
     {
         var response = await _lotService.UpdateLot(id, request, ct);
@@ -59,14 +59,14 @@ public class LotController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "WarehouseAdmin")]
+    // [Authorize(Roles = "WarehouseAdmin")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var response = await _lotService.DeleteLot(id, ct);
         return response.Success ? NoContent() : NotFound(response);
     }
     [HttpGet("summary")]
-    [Authorize(Roles = "WarehouseAdmin")]
+    // [Authorize(Roles = "WarehouseAdmin")]
     public async Task<ActionResult<ServiceResult<IEnumerable<LotSummaryDto>>>> GetAllSummary(
     CancellationToken ct = default)
     {

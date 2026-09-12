@@ -85,7 +85,8 @@ builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IdentitySeeder>();
 
-
+// --- Time Provider System  ---
+builder.Services.AddSingleton(TimeProvider.System);
 
 // --- FluentValidation ---
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
