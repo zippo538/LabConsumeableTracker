@@ -534,7 +534,7 @@ public class LotRepositoryTests
             initialQuantity: 100m,
             remainingQuantity: 40m,
             expiryDate: new DateOnly(2030, 1, 20),
-            status: LotStatus.Active);
+            status: LotAdministrativeStatus.Active);
 
         var activeUsableLot2 = CreateLot(
             itemId,
@@ -542,7 +542,7 @@ public class LotRepositoryTests
             initialQuantity: 100m,
             remainingQuantity: 30m,
             expiryDate: today,
-            status: LotStatus.Active);
+            status: LotAdministrativeStatus.Active);
 
         var expiredLot = CreateLot(
             itemId,
@@ -550,7 +550,7 @@ public class LotRepositoryTests
             initialQuantity: 100m,
             remainingQuantity: 50m,
             expiryDate: new DateOnly(2030, 1, 9),
-            status: LotStatus.Active);
+            status: LotAdministrativeStatus.Active);
 
         var zeroQuantityLot = CreateLot(
             itemId,
@@ -558,7 +558,7 @@ public class LotRepositoryTests
             initialQuantity: 100m,
             remainingQuantity: 0m,
             expiryDate: new DateOnly(2030, 1, 20),
-            status: LotStatus.Active);
+            status: LotAdministrativeStatus.Active);
 
         var inactiveLot = CreateLot(
             itemId,
@@ -566,7 +566,7 @@ public class LotRepositoryTests
             initialQuantity: 100m,
             remainingQuantity: 80m,
             expiryDate: new DateOnly(2030, 1, 20),
-            status: LotStatus.Disposed);
+            status: LotAdministrativeStatus.Disposed);
 
         _context.Lots.AddRange(
             activeUsableLot1,
@@ -602,7 +602,7 @@ public class LotRepositoryTests
             initialQuantity: 100m,
             remainingQuantity: 50m,
             expiryDate: new DateOnly(2030, 1, 9),
-            status: LotStatus.Active);
+            status: LotAdministrativeStatus.Active);
 
         _context.Lots.Add(expiredLot);
 
@@ -640,7 +640,7 @@ public class LotRepositoryTests
                 initialQuantity: 100m,
                 remainingQuantity: 20m,
                 expiryDate: new DateOnly(2030, 1, 20),
-                status: LotStatus.Active),
+                status: LotAdministrativeStatus.Active),
 
             CreateLot(
                 item1,
@@ -648,7 +648,7 @@ public class LotRepositoryTests
                 initialQuantity: 100m,
                 remainingQuantity: 30m,
                 expiryDate: new DateOnly(2030, 2, 1),
-                status: LotStatus.Active),
+                status: LotAdministrativeStatus.Active),
 
             CreateLot(
                 item1,
@@ -656,7 +656,7 @@ public class LotRepositoryTests
                 initialQuantity: 100m,
                 remainingQuantity: 50m,
                 expiryDate: new DateOnly(2030, 1, 9),
-                status: LotStatus.Active),
+                status: LotAdministrativeStatus.Active),
 
             CreateLot(
                 item2,
@@ -664,7 +664,7 @@ public class LotRepositoryTests
                 initialQuantity: 100m,
                 remainingQuantity: 40m,
                 expiryDate: new DateOnly(2030, 1, 20),
-                status: LotStatus.Active),
+                status: LotAdministrativeStatus.Active),
 
             CreateLot(
                 item2,
@@ -672,7 +672,7 @@ public class LotRepositoryTests
                 initialQuantity: 100m,
                 remainingQuantity: 60m,
                 expiryDate: new DateOnly(2030, 1, 20),
-                status: LotStatus.Disposed),
+                status: LotAdministrativeStatus.Disposed),
 
             CreateLot(
                 item3,
@@ -680,7 +680,7 @@ public class LotRepositoryTests
                 initialQuantity: 100m,
                 remainingQuantity: 0m,
                 expiryDate: new DateOnly(2030, 1, 20),
-                status: LotStatus.Active)
+                status: LotAdministrativeStatus.Active)
         );
 
         await _context.SaveChangesAsync(_ct);
@@ -727,7 +727,7 @@ public class LotRepositoryTests
             initialQuantity: 100m,
             remainingQuantity: 25m,
             expiryDate: new DateOnly(2030, 1, 20),
-            status: LotStatus.Active);
+            status: LotAdministrativeStatus.Active);
 
         _context.Lots.Add(lot);
         await _context.SaveChangesAsync(_ct);
@@ -802,7 +802,7 @@ public class LotRepositoryTests
         DateOnly? expiryDate = null,
         DateTimeOffset? receivedAt = null,
         string storageLocation = "TEST-RACK",
-        LotStatus status = LotStatus.Active)
+        LotAdministrativeStatus status = LotAdministrativeStatus.Active)
     {
         return new Lot(
             Guid.NewGuid(),
