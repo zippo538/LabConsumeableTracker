@@ -21,6 +21,9 @@ using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 using Serilog;
 using LabConsumableExpiryTracker.Mappings;
 using LabConsumableExpiryTracker.Application.Common.ErrorHandling;
+using LabConsumableExpiryTracker.Application.Validators.User;
+using LabConsumableExpiryTracker.Application.Validators.LotValidator;
+using LabConsumableExpiryTracker.Application.Validators.JobValidator;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -82,9 +85,12 @@ builder.Services
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<ILotService, LotService>();
 builder.Services.AddScoped<IItemService, ItemService>();
+builder.Services.AddScoped<IJobService, JobService>();
+
 
 builder.Services.AddScoped<ILotRepository, LotRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
+builder.Services.AddScoped<IJobRepository, JobRepository>();
 
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -105,6 +111,14 @@ builder.Services.AddScoped<IUserService, UserService>();
 
 // --- FluentValidation ---
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateUserRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateItemValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdateItemValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateLotValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdateLotValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateJobValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdateJobValidator>();
+
 builder.Services.AddFluentValidationAutoValidation();
 
 
@@ -112,7 +126,8 @@ builder.Services.AddAutoMapper(
     _ => { },
     typeof(UserMappingProfile).Assembly,
     typeof(ItemMappingProfile).Assembly,
-    typeof(LotMappingProfile).Assembly
+    typeof(LotMappingProfile).Assembly,
+    typeof(JobMappingProfile).Assembly
     );
 
 // --- Serilog ---
