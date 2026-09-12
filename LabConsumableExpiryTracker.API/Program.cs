@@ -20,9 +20,14 @@ using Microsoft.OpenApi.Models;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 using Serilog;
 using LabConsumableExpiryTracker.Mappings;
+using LabConsumableExpiryTracker.Application.Common.ErrorHandling;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --- GlobalExeptionHandler ---
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 // --- DbContext ---
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
@@ -171,7 +176,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

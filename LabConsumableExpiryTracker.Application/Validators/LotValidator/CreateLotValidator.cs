@@ -49,7 +49,7 @@ public class CreateLotValidator : AbstractValidator<CreateLotDto>
             .NotEqual(default(DateOnly))
             .WithMessage("ExpiryDate wajib diisi.")
             .GreaterThanOrEqualTo(x => DateOnly.FromDateTime(x.ReceivedAt.ToUniversalTime()))
-            .WithMessage("ExpiryDate tidak boleh mendahului tanggal penerimaan.");
+            .WithMessage("ExpiryDate  tidak boleh lebih awal daripada ReceiveAt.");
 
         RuleFor(x => x.StorageLocation)
             .Cascade(CascadeMode.Stop)
