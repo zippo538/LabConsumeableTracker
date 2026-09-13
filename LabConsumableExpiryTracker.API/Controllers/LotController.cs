@@ -48,7 +48,7 @@ public class LotController : ControllerBase
             return BadRequest(response);
         }
 
-        return CreatedAtAction(nameof(GetById), new { id = response.Data?.Id }, response);
+        return Ok(response);
     }
 
     [HttpPut("{id:guid}")]

@@ -14,4 +14,8 @@ public class LotHelperValidator
         }
         return value.ToUniversalTime() <= timeProvider.GetUtcNow().UtcDateTime;
     }
+    public static bool ValidateGuid(string guidString)
+    {
+        return Guid.TryParse(guidString, out _);
+    }
 }
