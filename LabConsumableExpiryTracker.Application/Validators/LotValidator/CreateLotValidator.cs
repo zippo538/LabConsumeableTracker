@@ -40,7 +40,8 @@ public class CreateLotValidator : AbstractValidator<CreateLotDto>
             .WithMessage("InitialQuantity melebihi batas yang diperbolehkan.");
 
         RuleFor(x => x.ReceivedAt)
-            .NotEqual(default(DateTime))
+            .Cascade(CascadeMode.Stop)
+            .NotEqual(default(DateTimeOffset))
             .WithMessage("ReceivedAt wajib diisi.")
             .Must(BeInThePastOrPresent)
             .WithMessage("ReceivedAt tidak boleh berada di masa depan.");
@@ -48,7 +49,7 @@ public class CreateLotValidator : AbstractValidator<CreateLotDto>
         RuleFor(x => x.ExpiryDate)
             .NotEqual(default(DateOnly))
             .WithMessage("ExpiryDate wajib diisi.")
-            .GreaterThanOrEqualTo(x => DateOnly.FromDateTime(x.ReceivedAt.ToUniversalTime()))
+            .GreaterThanOrEqualTo(x => DateOnly.FromDateTime(x.ReceivedAt.UtcDateTime))
             .WithMessage("ExpiryDate  tidak boleh lebih awal daripada ReceiveAt.");
 
         RuleFor(x => x.StorageLocation)
@@ -57,14 +58,14 @@ public class CreateLotValidator : AbstractValidator<CreateLotDto>
             .WithMessage("StorageLocation wajib diisi.")
             .MaximumLength(200)
             .WithMessage("StorageLocation maksimal 200 karakter.");
-      }
-    private bool BeInThePastOrPresent(DateTime value)
+    }
+    private bool BeInThePastOrPresent(DateTimeOffset value)
     {
         if (value == default)
         {
             return false;
         }
 
-        return value.ToUniversalTime() <= _timeProvider.GetUtcNow().UtcDateTime;
+        return value <= _timeProvider.GetUtcNow();
     }
-    }
+}

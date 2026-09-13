@@ -1,6 +1,6 @@
 namespace LabConsumableExpiryTracker.Domain.Enums;
 
-public enum LotStatus
+public enum LotAdministrativeStatus
 {
     Active = 1,
     Quarantined = 2,

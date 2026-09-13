@@ -333,7 +333,7 @@ public class LotControllerTests
         // Assert
         Assert.That(
             result,
-            Is.TypeOf<NoContentResult>()
+            Is.TypeOf<OkObjectResult>()
         );
 
         _lotServiceMock.Verify(
@@ -428,7 +428,7 @@ public class LotControllerTests
         // Assert
         Assert.That(
             result,
-            Is.TypeOf<NoContentResult>()
+            Is.TypeOf<OkObjectResult>()
         );
 
         _lotServiceMock.Verify(
@@ -533,7 +533,7 @@ public class LotControllerTests
     }
 
     [Test]
-    public async Task GetAllSummary_WhenServiceReturnsError_ReturnsOk()
+    public async Task GetAllSummary_WhenServiceReturnsError_ReturnsBadRequest()
     {
         // Arrange
         var cancellationToken = CancellationToken.None;
@@ -555,14 +555,14 @@ public class LotControllerTests
         // Assert
         Assert.That(
             result.Result,
-            Is.TypeOf<OkObjectResult>()
+            Is.TypeOf<BadRequestObjectResult>()
         );
 
-        var okResult =
-            (OkObjectResult)result.Result!;
+        var badRequestResult =
+            (BadRequestObjectResult)result.Result!;
 
         Assert.That(
-            okResult.Value,
+            badRequestResult.Value,
             Is.EqualTo(serviceResult)
         );
 

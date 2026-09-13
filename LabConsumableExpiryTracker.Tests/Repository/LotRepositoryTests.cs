@@ -1,8 +1,10 @@
+using DotNetEnv;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace LabConsumableExpiryTracker.Tests.Repository;
 
@@ -14,22 +16,22 @@ public class LotRepositoryTests
 
     private CancellationToken _ct;
 
-    private static string ConnectionString =>
-        Environment.GetEnvironmentVariable("CONNECTION_STRING");
+    private static string _connectionString ;
+        
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
-        DotEnv.Load(
-            FindDotEnvFile());
-
+        Env.TraversePath().Load();
+        _connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING_TEST") ?? throw new InvalidOperationException(
+                "Set CONNECTION_STRING before running repository tests.");
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(ConnectionString)
+            .UseNpgsql(_connectionString)
             .EnableSensitiveDataLogging()
             .Options;
 
         _context = new AppDbContext(options);
-        _repository = new LotRepository(_context);
+        _repository = new LotRepository(_context, NullLogger<LotRepository>.Instance);
 
         // Memastikan database dapat diakses.
         await _context.Database.CanConnectAsync();
@@ -534,7 +536,7 @@ public class LotRepositoryTests
             initialQuantity: 100m,
             remainingQuantity: 40m,
             expiryDate: new DateOnly(2030, 1, 20),
-            status: LotStatus.Active);
+            status: LotAdministrativeStatus.Active);
 
         var activeUsableLot2 = CreateLot(
             itemId,
@@ -542,7 +544,7 @@ public class LotRepositoryTests
             initialQuantity: 100m,
             remainingQuantity: 30m,
             expiryDate: today,
-            status: LotStatus.Active);
+            status: LotAdministrativeStatus.Active);
 
         var expiredLot = CreateLot(
             itemId,
@@ -550,7 +552,7 @@ public class LotRepositoryTests
             initialQuantity: 100m,
             remainingQuantity: 50m,
             expiryDate: new DateOnly(2030, 1, 9),
-            status: LotStatus.Active);
+            status: LotAdministrativeStatus.Active);
 
         var zeroQuantityLot = CreateLot(
             itemId,
@@ -558,7 +560,7 @@ public class LotRepositoryTests
             initialQuantity: 100m,
             remainingQuantity: 0m,
             expiryDate: new DateOnly(2030, 1, 20),
-            status: LotStatus.Active);
+            status: LotAdministrativeStatus.Active);
 
         var inactiveLot = CreateLot(
             itemId,
@@ -566,7 +568,7 @@ public class LotRepositoryTests
             initialQuantity: 100m,
             remainingQuantity: 80m,
             expiryDate: new DateOnly(2030, 1, 20),
-            status: LotStatus.Disposed);
+            status: LotAdministrativeStatus.Disposed);
 
         _context.Lots.AddRange(
             activeUsableLot1,
@@ -602,7 +604,7 @@ public class LotRepositoryTests
             initialQuantity: 100m,
             remainingQuantity: 50m,
             expiryDate: new DateOnly(2030, 1, 9),
-            status: LotStatus.Active);
+            status: LotAdministrativeStatus.Active);
 
         _context.Lots.Add(expiredLot);
 
@@ -640,7 +642,7 @@ public class LotRepositoryTests
                 initialQuantity: 100m,
                 remainingQuantity: 20m,
                 expiryDate: new DateOnly(2030, 1, 20),
-                status: LotStatus.Active),
+                status: LotAdministrativeStatus.Active),
 
             CreateLot(
                 item1,
@@ -648,7 +650,7 @@ public class LotRepositoryTests
                 initialQuantity: 100m,
                 remainingQuantity: 30m,
                 expiryDate: new DateOnly(2030, 2, 1),
-                status: LotStatus.Active),
+                status: LotAdministrativeStatus.Active),
 
             CreateLot(
                 item1,
@@ -656,7 +658,7 @@ public class LotRepositoryTests
                 initialQuantity: 100m,
                 remainingQuantity: 50m,
                 expiryDate: new DateOnly(2030, 1, 9),
-                status: LotStatus.Active),
+                status: LotAdministrativeStatus.Active),
 
             CreateLot(
                 item2,
@@ -664,7 +666,7 @@ public class LotRepositoryTests
                 initialQuantity: 100m,
                 remainingQuantity: 40m,
                 expiryDate: new DateOnly(2030, 1, 20),
-                status: LotStatus.Active),
+                status: LotAdministrativeStatus.Active),
 
             CreateLot(
                 item2,
@@ -672,7 +674,7 @@ public class LotRepositoryTests
                 initialQuantity: 100m,
                 remainingQuantity: 60m,
                 expiryDate: new DateOnly(2030, 1, 20),
-                status: LotStatus.Disposed),
+                status: LotAdministrativeStatus.Disposed),
 
             CreateLot(
                 item3,
@@ -680,7 +682,7 @@ public class LotRepositoryTests
                 initialQuantity: 100m,
                 remainingQuantity: 0m,
                 expiryDate: new DateOnly(2030, 1, 20),
-                status: LotStatus.Active)
+                status: LotAdministrativeStatus.Active)
         );
 
         await _context.SaveChangesAsync(_ct);
@@ -727,7 +729,7 @@ public class LotRepositoryTests
             initialQuantity: 100m,
             remainingQuantity: 25m,
             expiryDate: new DateOnly(2030, 1, 20),
-            status: LotStatus.Active);
+            status: LotAdministrativeStatus.Active);
 
         _context.Lots.Add(lot);
         await _context.SaveChangesAsync(_ct);
@@ -802,7 +804,7 @@ public class LotRepositoryTests
         DateOnly? expiryDate = null,
         DateTimeOffset? receivedAt = null,
         string storageLocation = "TEST-RACK",
-        LotStatus status = LotStatus.Active)
+        LotAdministrativeStatus status = LotAdministrativeStatus.Active)
     {
         return new Lot(
             Guid.NewGuid(),
@@ -859,29 +861,6 @@ public class LotRepositoryTests
         }
 
         _context.ChangeTracker.Clear();
-    }
-
-    private static string FindDotEnvFile()
-    {
-        var directory = new DirectoryInfo(
-            TestContext.CurrentContext.TestDirectory);
-
-        while (directory is not null)
-        {
-            var candidate = Path.Combine(
-                directory.FullName,
-                ".env");
-
-            if (File.Exists(candidate))
-            {
-                return candidate;
-            }
-
-            directory = directory.Parent;
-        }
-
-        throw new FileNotFoundException(
-            "File .env tidak ditemukan dari TestDirectory sampai root project.");
     }
 }
 

@@ -115,7 +115,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
         builder.Property(lot => lot.RemainingQuantity).HasColumnName("remaining_quantity").HasPrecision(18, 3).IsRequired();
         builder.Property(lot => lot.ExpiryDate).HasColumnName("expiry_date").HasColumnType("date").IsRequired();
         builder.Property(lot => lot.StorageLocation).HasColumnName("storage_location").HasMaxLength(200).IsRequired();
-        builder.Property(lot => lot.Status)
+        builder.Property(lot => lot.AdministrativeStatus)
             .HasColumnName("status")
             .HasConversion<string>()
             .HasMaxLength(50)
@@ -130,7 +130,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
         builder.HasIndex(lot => new { lot.ItemId, lot.LotNumber })
             .IsUnique()
             .HasDatabaseName("ux_lots_item_id_lot_number");
-        builder.HasIndex(lot => new { lot.ItemId, lot.Status, lot.ExpiryDate, lot.ReceivedAt })
+        builder.HasIndex(lot => new { lot.ItemId, lot.AdministrativeStatus, lot.ExpiryDate, lot.ReceivedAt })
             .HasDatabaseName("ix_lots_fefo");
 
         // SubLotId pada model lama diperlakukan sebagai FK menuju Lot.Id.

@@ -16,12 +16,11 @@ namespace LabConsumableExpiryTracker.Application.Mappings
                 source.ItemId,
                 source.LotNumber,
                 source.SupplierLotNumber,
-                new DateTimeOffset(source.ReceivedAt),
+                source.ReceivedAt,
                 source.SupplierName,
                 source.InitialQuantity,
                 source.ExpiryDate,
                 source.StorageLocation));
-
             CreateMap<UpdateLotDto, Lot>();
         }
 

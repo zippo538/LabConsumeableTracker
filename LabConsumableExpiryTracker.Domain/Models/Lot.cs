@@ -4,9 +4,9 @@ namespace LabConsumableExpiryTracker.Domain.Models;
 
 public class Lot
 {
+
     public Guid Id { get; private set; }
     public Guid ItemId { get; private set; }
-    public Item Item { get; private set; }
     public string LotNumber { get; private set; }
     public string? SupplierLotNumber { get; private set; }
     public DateTimeOffset ReceivedAt { get; private set; }
@@ -15,7 +15,7 @@ public class Lot
     public decimal RemainingQuantity { get; private set; }
     public DateOnly ExpiryDate { get; private set; }
     public string StorageLocation { get; private set; }
-    public LotStatus Status { get; private set; }
+    public LotAdministrativeStatus AdministrativeStatus { get; private set; }
     public byte[] RowVersion { get; private set; } = [];
 
     public Lot(
@@ -29,7 +29,7 @@ public class Lot
         decimal remainingQuantity,
         DateOnly expiryDate,
         string storageLocation,
-        LotStatus status)
+        LotAdministrativeStatus administrativeStatus)
     {
         if (remainingQuantity < 0)
         {
@@ -51,7 +51,7 @@ public class Lot
         RemainingQuantity = remainingQuantity;
         ExpiryDate = expiryDate;
         StorageLocation = storageLocation.Trim();
-        Status = status;
+        AdministrativeStatus = administrativeStatus;
     }
 
     public static Lot Create(
@@ -80,7 +80,7 @@ public class Lot
             initialQuantity,
             expiryDate,
             storageLocation,
-            LotStatus.Active);
+            LotAdministrativeStatus.Active);
     }
     public void UpdateRemainingQuantity(decimal quantity)
     {
@@ -110,23 +110,12 @@ public class Lot
     }
     public bool IsEligible(DateTimeOffset now)
     {
-        var today = DateOnly.FromDateTime(now.UtcDateTime);
-        return Status == LotStatus.Active && RemainingQuantity > 0 && today < ExpiryDate;
-    }
+        var today = DateOnly.FromDateTime(
+            now.UtcDateTime);
 
-    public ExpiryCondition GetExpiryCondition(DateTimeOffset now, int warningDays)
-    {
-        if (warningDays < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(warningDays), "Warning days cannot be negative.");
-        }
-        var today = DateOnly.FromDateTime(now.UtcDateTime);
-        if (today >= ExpiryDate)
-        {
-            return ExpiryCondition.Expired;
-        }
-
-        var warningStart = ExpiryDate.AddDays(-warningDays);
-        return today >= warningStart ? ExpiryCondition.ExpiringSoon : ExpiryCondition.Valid;
+        return AdministrativeStatus == LotAdministrativeStatus.Active
+            && RemainingQuantity > 0
+            && ExpiryDate >= today;
     }
 }
+

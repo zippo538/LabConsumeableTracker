@@ -8,7 +8,7 @@ namespace LabConsumableExpiryTracker.Application.DTOs.LotDTOs
         public string? SupplierLotNumber { get; set; }
         public string SupplierName { get; set; } = string.Empty;
         public decimal InitialQuantity { get; set; }
-        public DateTime ReceivedAt { get; set; }
+        public DateTimeOffset ReceivedAt { get; set; }
         public DateOnly ExpiryDate { get; set; }
         public string StorageLocation { get; set; } = string.Empty;
     }
