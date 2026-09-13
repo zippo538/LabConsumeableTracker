@@ -1,9 +1,8 @@
 using AutoMapper;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
-using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 
-namespace LabConsumableExpiryTracker.Mappings
+namespace LabConsumableExpiryTracker.Application.Mappings
 {
     public class LotMappingProfile : Profile
     {
@@ -17,12 +16,11 @@ namespace LabConsumableExpiryTracker.Mappings
                 source.ItemId,
                 source.LotNumber,
                 source.SupplierLotNumber,
-                new DateTimeOffset(source.ReceivedAt),
+                source.ReceivedAt,
                 source.SupplierName,
                 source.InitialQuantity,
                 source.ExpiryDate,
                 source.StorageLocation));
-
             CreateMap<UpdateLotDto, Lot>();
         }
 
