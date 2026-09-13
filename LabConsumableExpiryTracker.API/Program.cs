@@ -138,6 +138,18 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
+// --- policy CORS ---
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactDevelopment", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // URL aplikasi React Anda
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // Tambahkan ini jika nanti butuh cookies/session
+    });
+});
+
 
 // --- JsonSerializer ---
 builder.Services.AddControllers()
@@ -176,6 +188,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
 // ==================================================
 // Database Initialization / Seeder
 // ==================================================
@@ -192,6 +205,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseExceptionHandler();
+app.UseCors("ReactDevelopment");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
