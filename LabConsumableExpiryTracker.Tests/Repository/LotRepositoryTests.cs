@@ -1,9 +1,11 @@
+using DotNetEnv;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace LabConsumableExpiryTracker.Tests.Repository;
 
@@ -15,17 +17,17 @@ public class LotRepositoryTests
 
     private CancellationToken _ct;
 
-    private static string ConnectionString =>
-        Environment.GetEnvironmentVariable("CONNECTION_STRING");
+    private static string _connectionString ;
+        
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
-        DotEnv.Load(
-            FindDotEnvFile());
-
+        Env.TraversePath().Load();
+        _connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING_TEST") ?? throw new InvalidOperationException(
+                "Set CONNECTION_STRING before running repository tests.");
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(ConnectionString)
+            .UseNpgsql(_connectionString)
             .EnableSensitiveDataLogging()
             .Options;
 
@@ -854,29 +856,6 @@ public class LotRepositoryTests
         }
 
         _context.ChangeTracker.Clear();
-    }
-
-    private static string FindDotEnvFile()
-    {
-        var directory = new DirectoryInfo(
-            TestContext.CurrentContext.TestDirectory);
-
-        while (directory is not null)
-        {
-            var candidate = Path.Combine(
-                directory.FullName,
-                ".env");
-
-            if (File.Exists(candidate))
-            {
-                return candidate;
-            }
-
-            directory = directory.Parent;
-        }
-
-        throw new FileNotFoundException(
-            "File .env tidak ditemukan dari TestDirectory sampai root project.");
     }
 }
 
