@@ -45,7 +45,33 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
 
         return exists;
     }
+    
+    public new async Task<IReadOnlyList<Lot>> GetAllWithItemAsync(
+        CancellationToken ct = default)
+    {
+        _logger.LogDebug("Retrieving all lots with item navigation included");
 
+        var lots = await _context.Lots
+            .AsNoTracking()
+            .Include(lot => lot.Item)
+            .ToListAsync(ct);
+
+        _logger.LogDebug("Retrieved {LotCount} lots", lots.Count);
+
+        return lots;
+    }
+
+    public async Task<Lot?> GetByIdWithItemAsync(
+        Guid id,
+        CancellationToken ct = default)
+    {
+        _logger.LogDebug("Retrieving lot {LotId}", id);
+
+        return await _context.Lots
+            .AsNoTracking()
+            .Include(lot => lot.Item)
+            .FirstOrDefaultAsync(lot => lot.Id == id, ct);
+    }
     public async Task<IEnumerable<Lot>> GetByItemIdAsync(
         Guid itemId,
         CancellationToken ct = default)
@@ -54,6 +80,7 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
 
         var lots = await _context.Lots
             .AsNoTracking()
+            .Include(lot => lot.Item)
             .Where(lot => lot.ItemId == itemId)
             .OrderBy(lot => lot.ExpiryDate)
             .ThenBy(lot => lot.ReceivedAt)
@@ -98,12 +125,13 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
         return usableQuantity;
     }
 
-    public async Task<IReadOnlyDictionary<Guid, decimal>> GetUsableQuantityByItemIdsAsync(IEnumerable<Guid> itemIds, DateOnly today, CancellationToken ct = default)
+    public async Task<IReadOnlyDictionary<Guid, decimal>> GetUsableQuantityByItemIdsAsync(IEnumerable<Guid> itemIds,
+        DateOnly today, CancellationToken ct = default)
     {
         var ids = itemIds
-        .Where(id => id != Guid.Empty)
-        .Distinct()
-        .ToArray();
+            .Where(id => id != Guid.Empty)
+            .Distinct()
+            .ToArray();
 
         if (ids.Length == 0)
         {

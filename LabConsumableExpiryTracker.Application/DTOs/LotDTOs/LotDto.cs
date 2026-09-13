@@ -13,6 +13,9 @@ namespace LabConsumableExpiryTracker.Application.DTOs.LotDTOs
         public DateOnly ExpiryDate { get; init; }
         public  string StorageLocation { get; init; } = null!;
         public  LotStatus Status { get; init; } 
+        public ExpiryCondition ExpiryCondition { get; set; }
+        public bool IsEligible { get; set; }
+        public DateTimeOffset EvaluatedAt { get; set; }
         public byte[] RowVersion { get; init; } = [];
  
     }
