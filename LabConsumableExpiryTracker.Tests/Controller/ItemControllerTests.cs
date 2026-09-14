@@ -31,8 +31,6 @@ namespace LabConsumableExpiryTracker.Tests.Controller
 
             _sut = new ItemController(
                 _itemService.Object,
-                _createValidator.Object,
-                _updateValidator.Object,
                 _lotService.Object);
         }
 
