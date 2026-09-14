@@ -1,7 +1,4 @@
 
-using System.ComponentModel.DataAnnotations;
-using FluentValidation;
-using FluentValidation.Results;
 using LabConsumableExpiryTracker.API.Controllers;
 using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.JobDTOs;
@@ -16,8 +13,6 @@ namespace LabConsumableExpiryTracker.Tests.Controller
     public class JobControllerTests
     {
         private Mock<IJobService> _jobService = null!;
-        private Mock<IValidator<CreateJobDto>> _createValidator = null!;
-        private Mock<IValidator<UpdateJobDto>> _updateValidator = null!;
         private JobController _sut = null!;
 
         [SetUp]
@@ -119,7 +114,6 @@ namespace LabConsumableExpiryTracker.Tests.Controller
             var expected = ServiceResult<JobDto>.SuccessResult(
                 CreateJobDtoResult(), "Job created successfully.");
 
-            SetupValidCreateValidation(dto);
             _jobService.Setup(service => service.CreateAsync(dto, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expected);
 
@@ -139,19 +133,20 @@ namespace LabConsumableExpiryTracker.Tests.Controller
         }
 
         [Test]
-        public async Task Create_WhenValidationFails_ReturnsBadRequestWithMessageAndDoesNotCallService()
+        public async Task Create_WhenServiceReturnsError_ReturnsBadRequestWithMessage()
         {
             var dto = new CreateJobDto { JobNumber = "" };
-            var validationResult = new FluentValidation.Results.ValidationResult(new[]
-            {
-            new ValidationFailure(nameof(CreateJobDto.JobNumber), "JobNumber wajib diisi.")
-        });
 
-            _createValidator.Setup(validator => validator.ValidateAsync(
-                    dto, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(validationResult);
+            var serviceResult = ServiceResult<JobDto>.ErrorResult(
+                "Validation failed.",
+                new List<string> { "JobNumber wajib diisi." });
+
+            _jobService
+                .Setup(service => service.CreateAsync(dto, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(serviceResult);
 
             var result = await _sut.Create(dto, CancellationToken.None);
+
             var badRequest = result.Result as BadRequestObjectResult;
             var body = badRequest?.Value as ServiceResult<JobDto>;
 
@@ -165,27 +160,27 @@ namespace LabConsumableExpiryTracker.Tests.Controller
             });
 
             _jobService.Verify(
-                service => service.CreateAsync(
-                    It.IsAny<CreateJobDto>(), It.IsAny<CancellationToken>()), Times.Never);
+                service => service.CreateAsync(dto, It.IsAny<CancellationToken>()),
+                Times.Once);
         }
 
         [Test]
-        public async Task Create_WhenServiceFails_ReturnsConflictWithMessage()
+        public async Task Create_WhenServiceFails_ReturnsBadRequestWithMessage()
         {
             var dto = new CreateJobDto { JobNumber = "JOB-001" };
             var expected = ServiceResult<JobDto>.ErrorResult("Job number already exists.");
 
-            SetupValidCreateValidation(dto);
             _jobService.Setup(service => service.CreateAsync(dto, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expected);
 
             var result = await _sut.Create(dto, CancellationToken.None);
-            var conflict = result.Result as ConflictObjectResult;
+
+            var badRequest = result.Result as BadRequestObjectResult;
 
             Assert.Multiple(() =>
             {
-                Assert.That(conflict, Is.Not.Null);
-                Assert.That(conflict!.Value, Is.SameAs(expected));
+                Assert.That(badRequest, Is.Not.Null);
+                Assert.That(badRequest!.Value, Is.SameAs(expected));
             });
         }
 
@@ -197,7 +192,6 @@ namespace LabConsumableExpiryTracker.Tests.Controller
             var expected = ServiceResult<JobDto>.SuccessResult(
                 CreateJobDtoResult(id), "Job updated successfully.");
 
-            SetupValidUpdateValidation(dto);
             _jobService.Setup(service => service.UpdateStatusAsync(
                     id, dto, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expected);
@@ -217,27 +211,27 @@ namespace LabConsumableExpiryTracker.Tests.Controller
         }
 
         [Test]
-        public async Task Update_WhenValidationFails_ReturnsBadRequestWithMessageAndDoesNotCallService()
+        public async Task Update_WhenServiceReturnsValidationError_ReturnsNotFoundWithMessage()
         {
             var id = Guid.NewGuid();
             var dto = new UpdateJobDto { Status = JobStatus.Draft };
-            var validationResult = new FluentValidation.Results.ValidationResult(new[]
-            {
-            new ValidationFailure(nameof(UpdateJobDto.Status),
-                "Status hanya boleh InProgress atau Completed.")
-        });
 
-            _updateValidator.Setup(validator => validator.ValidateAsync(
-                    dto, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(validationResult);
+            var expected = ServiceResult<JobDto>.ErrorResult(
+                "Validation failed.",
+                new List<string> { "Status hanya boleh InProgress atau Completed." });
+
+            _jobService.Setup(service => service.UpdateStatusAsync(
+                    id, dto, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(expected);
 
             var result = await _sut.Update(id, dto, CancellationToken.None);
-            var badRequest = result.Result as BadRequestObjectResult;
-            var body = badRequest?.Value as ServiceResult<JobDto>;
+
+            var notFound = result.Result as NotFoundObjectResult;
+            var body = notFound?.Value as ServiceResult<JobDto>;
 
             Assert.Multiple(() =>
             {
-                Assert.That(badRequest, Is.Not.Null);
+                Assert.That(notFound, Is.Not.Null);
                 Assert.That(body, Is.Not.Null);
                 Assert.That(body!.Success, Is.False);
                 Assert.That(body.Message, Is.EqualTo("Validation failed."));
@@ -246,30 +240,29 @@ namespace LabConsumableExpiryTracker.Tests.Controller
             });
 
             _jobService.Verify(
-                service => service.UpdateStatusAsync(
-                    It.IsAny<Guid>(), It.IsAny<UpdateJobDto>(), It.IsAny<CancellationToken>()),
-                Times.Never);
+                service => service.UpdateStatusAsync(id, dto, It.IsAny<CancellationToken>()),
+                Times.Once);
         }
 
         [Test]
-        public async Task Update_WhenServiceFails_ReturnsConflictWithMessage()
+        public async Task Update_WhenServiceFails_ReturnsNotFoundWithMessage()
         {
             var id = Guid.NewGuid();
             var dto = new UpdateJobDto { Status = JobStatus.Completed };
             var expected = ServiceResult<JobDto>.ErrorResult("Invalid job state.");
 
-            SetupValidUpdateValidation(dto);
             _jobService.Setup(service => service.UpdateStatusAsync(
                     id, dto, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expected);
 
             var result = await _sut.Update(id, dto, CancellationToken.None);
-            var conflict = result.Result as ConflictObjectResult;
+
+            var notFound = result.Result as NotFoundObjectResult;
 
             Assert.Multiple(() =>
             {
-                Assert.That(conflict, Is.Not.Null);
-                Assert.That(conflict!.Value, Is.SameAs(expected));
+                Assert.That(notFound, Is.Not.Null);
+                Assert.That(notFound!.Value, Is.SameAs(expected));
             });
         }
 
@@ -349,20 +342,6 @@ namespace LabConsumableExpiryTracker.Tests.Controller
                 Assert.That(badRequest, Is.Not.Null);
                 Assert.That(badRequest!.Value, Is.SameAs(expected));
             });
-        }
-
-        private void SetupValidCreateValidation(CreateJobDto dto)
-        {
-            _createValidator.Setup(validator => validator.ValidateAsync(
-                    dto, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new FluentValidation.Results.ValidationResult());
-        }
-
-        private void SetupValidUpdateValidation(UpdateJobDto dto)
-        {
-            _updateValidator.Setup(validator => validator.ValidateAsync(
-                    dto, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new FluentValidation.Results.ValidationResult());
         }
 
         private static JobDto CreateJobDtoResult(Guid? id = null)

@@ -1,6 +1,4 @@
 
-using FluentValidation;
-using FluentValidation.Results;
 using LabConsumableExpiryTracker.API.Controllers;
 using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.ItemDTOs;
@@ -17,8 +15,6 @@ namespace LabConsumableExpiryTracker.Tests.Controller
     {
         private Mock<IItemService> _itemService = null!;
         private Mock<ILotService> _lotService = null!;
-        private Mock<IValidator<CreateItemDto>> _createValidator = null!;
-        private Mock<IValidator<UpdateItemDto>> _updateValidator = null!;
         private ItemController _sut = null!;
 
         [SetUp]
@@ -26,9 +22,6 @@ namespace LabConsumableExpiryTracker.Tests.Controller
         {
             _itemService = new Mock<IItemService>(MockBehavior.Strict);
             _lotService = new Mock<ILotService>(MockBehavior.Strict);
-            _createValidator = new Mock<IValidator<CreateItemDto>>(MockBehavior.Strict);
-            _updateValidator = new Mock<IValidator<UpdateItemDto>>(MockBehavior.Strict);
-
             _sut = new ItemController(
                 _itemService.Object,
                 _lotService.Object);
@@ -124,14 +117,13 @@ namespace LabConsumableExpiryTracker.Tests.Controller
         }
 
         [Test]
-        public async Task Create_WhenValidationSucceedsAndServiceSucceeds_ReturnsCreatedAtActionWithMessage()
+        public async Task Create_WhenServiceSucceeds_ReturnsCreatedAtActionWithMessage()
         {
             var dto = CreateRequest();
             var item = CreateItemResult();
             var expected = ServiceResult<ItemDto>.SuccessResult(
                 item, "Item created successfully.");
 
-            SetupValidCreateValidation(dto);
             _itemService.Setup(service => service.CreateItem(dto, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expected);
 
@@ -152,17 +144,15 @@ namespace LabConsumableExpiryTracker.Tests.Controller
         }
 
         [Test]
-        public async Task Create_WhenValidationFails_ReturnsBadRequestAndDoesNotCallService()
+        public async Task Create_WhenServiceReturnsValidationError_ReturnsBadRequestWithMessage()
         {
             var dto = CreateRequest();
-            var validation = new ValidationResult(new[]
-            {
-            new ValidationFailure(nameof(CreateItemDto.Code), "Item code is required.")
-        });
+            var expected = ServiceResult<ItemDto>.ErrorResult(
+                "Validation failed.",
+                new List<string> { "Item code is required." });
 
-            _createValidator.Setup(validator => validator.ValidateAsync(
-                    dto, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(validation);
+            _itemService.Setup(service => service.CreateItem(dto, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(expected);
 
             var result = await _sut.Create(dto, CancellationToken.None);
             var badRequest = result.Result as BadRequestObjectResult;
@@ -178,8 +168,7 @@ namespace LabConsumableExpiryTracker.Tests.Controller
             });
 
             _itemService.Verify(
-                service => service.CreateItem(
-                    It.IsAny<CreateItemDto>(), It.IsAny<CancellationToken>()), Times.Never);
+                service => service.CreateItem(dto, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -188,7 +177,6 @@ namespace LabConsumableExpiryTracker.Tests.Controller
             var dto = CreateRequest();
             var expected = ServiceResult<ItemDto>.ErrorResult("Item code already exists.");
 
-            SetupValidCreateValidation(dto);
             _itemService.Setup(service => service.CreateItem(dto, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expected);
 
@@ -204,14 +192,13 @@ namespace LabConsumableExpiryTracker.Tests.Controller
         }
 
         [Test]
-        public async Task Update_WhenValidationSucceedsAndServiceSucceeds_ReturnsOkWithMessage()
+        public async Task Update_WhenServiceSucceeds_ReturnsOkWithMessage()
         {
             var id = Guid.NewGuid();
             var dto = UpdateRequest();
             var expected = ServiceResult<ItemDto>.SuccessResult(
                 CreateItemResult(id), "Item updated successfully.");
 
-            SetupValidUpdateValidation(dto);
             _itemService.Setup(service => service.UpdateItem(id, dto, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expected);
 
@@ -230,26 +217,26 @@ namespace LabConsumableExpiryTracker.Tests.Controller
         }
 
         [Test]
-        public async Task Update_WhenValidationFails_ReturnsBadRequestAndDoesNotCallService()
+        public async Task Update_WhenServiceReturnsValidationError_ReturnsConflictWithMessage()
         {
             var id = Guid.NewGuid();
             var dto = UpdateRequest();
-            var validation = new ValidationResult(new[]
-            {
-            new ValidationFailure(nameof(UpdateItemDto.Name), "Item name is required.")
-        });
 
-            _updateValidator.Setup(validator => validator.ValidateAsync(
-                    dto, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(validation);
+            var expected = ServiceResult<ItemDto>.ErrorResult(
+                "Validation failed.",
+                new List<string> { "Item name is required." });
+
+            _itemService.Setup(service => service.UpdateItem(id, dto, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(expected);
 
             var result = await _sut.Update(id, dto, CancellationToken.None);
-            var badRequest = result.Result as BadRequestObjectResult;
-            var body = badRequest?.Value as ServiceResult<ItemDto>;
+
+            var conflict = result.Result as ConflictObjectResult;
+            var body = conflict?.Value as ServiceResult<ItemDto>;
 
             Assert.Multiple(() =>
             {
-                Assert.That(badRequest, Is.Not.Null);
+                Assert.That(conflict, Is.Not.Null);
                 Assert.That(body, Is.Not.Null);
                 Assert.That(body!.Success, Is.False);
                 Assert.That(body.Message, Is.EqualTo("Validation failed."));
@@ -257,29 +244,29 @@ namespace LabConsumableExpiryTracker.Tests.Controller
             });
 
             _itemService.Verify(
-                service => service.UpdateItem(
-                    It.IsAny<Guid>(), It.IsAny<UpdateItemDto>(), It.IsAny<CancellationToken>()),
-                Times.Never);
+                service => service.UpdateItem(id, dto, It.IsAny<CancellationToken>()),
+                Times.Once);
         }
 
         [Test]
-        public async Task Update_WhenServiceFails_ReturnsNotFoundWithMessage()
+        public async Task Update_WhenServiceFails_ReturnsConflictWithMessage()
         {
             var id = Guid.NewGuid();
             var dto = UpdateRequest();
+
             var expected = ServiceResult<ItemDto>.ErrorResult("Item not found.");
 
-            SetupValidUpdateValidation(dto);
             _itemService.Setup(service => service.UpdateItem(id, dto, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expected);
 
             var result = await _sut.Update(id, dto, CancellationToken.None);
-            var notFound = result.Result as NotFoundObjectResult;
+
+            var conflict = result.Result as ConflictObjectResult;
 
             Assert.Multiple(() =>
             {
-                Assert.That(notFound, Is.Not.Null);
-                Assert.That(notFound!.Value, Is.SameAs(expected));
+                Assert.That(conflict, Is.Not.Null);
+                Assert.That(conflict!.Value, Is.SameAs(expected));
                 Assert.That(expected.Message, Is.EqualTo("Item not found."));
             });
         }
@@ -366,20 +353,6 @@ namespace LabConsumableExpiryTracker.Tests.Controller
                 Assert.That(badRequest!.Value, Is.SameAs(expected));
                 Assert.That(expected.Message, Is.EqualTo("Lot summary could not be retrieved."));
             });
-        }
-
-        private void SetupValidCreateValidation(CreateItemDto dto)
-        {
-            _createValidator.Setup(validator => validator.ValidateAsync(
-                    dto, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new ValidationResult());
-        }
-
-        private void SetupValidUpdateValidation(UpdateItemDto dto)
-        {
-            _updateValidator.Setup(validator => validator.ValidateAsync(
-                    dto, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new ValidationResult());
         }
 
         private static ItemDto CreateItemResult(Guid? id = null)

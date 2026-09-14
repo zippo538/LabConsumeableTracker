@@ -52,7 +52,6 @@ namespace LabConsumableExpiryTracker.API.Controllers
             {
                 return BadRequest(response);
             }
-            // return CreatedAtAction(nameof(GetById), new { id = response.Data!.Id }, response);
             return response.Success
             ? CreatedAtAction(nameof(GetById), new { id = response.Data!.Id }, response)
             : Conflict(response);
