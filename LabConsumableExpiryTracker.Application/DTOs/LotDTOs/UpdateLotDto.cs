@@ -2,7 +2,6 @@ namespace LabConsumableExpiryTracker.Application.DTOs.LotDTOs
 {
     public class UpdateLotDto
     {
-        public Guid LotId { get; set; }
         public string LotNumber { get; set; } = string.Empty;
         public string? SupplierLotNumber { get; set; }
         public string SupplierName { get; set; } = string.Empty;
