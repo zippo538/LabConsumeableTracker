@@ -127,7 +127,6 @@ public class UserService : IUserService
     }
     public async Task<ServiceResult<bool>> SetUserActiveStatusAsync(Guid currentAdminId, Guid targetUserId, bool isActive)
     {
-        // 1. Cegah admin menonaktifkan akunnya sendiri
         if (currentAdminId == targetUserId && !isActive)
         {
             return ServiceResult<bool>.ErrorResult("You cannot deactivate your own account.");

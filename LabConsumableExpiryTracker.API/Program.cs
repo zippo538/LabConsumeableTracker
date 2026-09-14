@@ -95,7 +95,7 @@ builder.Services.AddScoped<IdentitySeeder>();
 // --- Time Provider System  ---
 builder.Services.AddSingleton(TimeProvider.System);
 
-builder.Services.AddScoped<ILoginService, AuthService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IdentitySeeder>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
