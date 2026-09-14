@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace LabConsumableExpiryTracker.Application.Services;
 
-public class AuthService : ILoginService
+public class AuthService : IAuthService
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IJwtTokenGenerator _tokenGenerator;
@@ -86,7 +86,7 @@ public class AuthService : ILoginService
         var existingToken = await _refreshTokenRepository.GetByTokenWithUserAsync(token);
         if (existingToken is null || !existingToken.IsActive || !existingToken.User.IsActive)
         {
-            return ServiceResult<LoginResponseDto>.ErrorResult("Refresh token tidak valid atau sudah kadaluarsa.");
+            return ServiceResult<LoginResponseDto>.ErrorResult("Refresh token not valid or has been expired.");
         }
         
         existingToken.IsRevoked = true;
@@ -120,13 +120,13 @@ public class AuthService : ILoginService
         var existingToken = await _refreshTokenRepository.GetByTokenWithUserAsync(token);
         if (existingToken is null || existingToken.IsRevoked)
         {
-            return ServiceResult<bool>.ErrorResult("Token tidak ditemukan atau sudah dicabut.");
+            return ServiceResult<bool>.ErrorResult("Token not found or has been revoked.");
         }
 
         existingToken.IsRevoked = true;
         existingToken.RevokedOnUtc = DateTime.UtcNow;
         await _refreshTokenRepository.UpdateAsync(existingToken);
 
-        return ServiceResult<bool>.SuccessResult(true, "Token berhasil dicabut.");
+        return ServiceResult<bool>.SuccessResult(true, "Token has been revoked..");
     }
 }

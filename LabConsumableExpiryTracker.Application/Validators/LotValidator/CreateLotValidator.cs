@@ -13,58 +13,60 @@ public class CreateLotValidator : AbstractValidator<CreateLotDto>
 
         RuleFor(x => x.ItemId)
             .NotEmpty()
-            .WithMessage("ItemId wajib diisi.");
+            .WithMessage("ItemId is required.");
 
         RuleFor(x => x.LotNumber)
             .Cascade(CascadeMode.Stop)
             .Must(LotHelperValidator.NotBeBlank)
-            .WithMessage("LotNumber wajib diisi.")
+            .WithMessage("LotNumber is required.")
             .MaximumLength(100)
-            .WithMessage("LotNumber maksimal 100 karakter.");
+            .WithMessage("LotNumber maximum 100 characters.");
 
         RuleFor(x => x.SupplierLotNumber)
+            .Must(LotHelperValidator.NotBeBlank)
             .MaximumLength(100)
-            .WithMessage("SupplierLotNumber maksimal 100 karakter.");
+            .WithMessage("SupplierLotNumber maximum 100 characters");
 
         RuleFor(x => x.SupplierName)
             .Cascade(CascadeMode.Stop)
             .Must(LotHelperValidator.NotBeBlank)
-            .WithMessage("SupplierName wajib diisi.")
+            .WithMessage("SupplierName is required")
             .MaximumLength(200)
-            .WithMessage("SupplierName maksimal 200 karakter.");
+            .WithMessage("SupplierName maximum 200 characters");
 
         RuleFor(x => x.InitialQuantity)
             .GreaterThan(0)
-            .WithMessage("InitialQuantity harus lebih besar dari 0.")
+            .WithMessage("InitialQuantity must greater than 0.")
             .LessThanOrEqualTo(999_999_999_999.9999m)
-            .WithMessage("InitialQuantity melebihi batas yang diperbolehkan.");
+            .WithMessage("InitialQuantity exceeds the allowed limit.");
 
         RuleFor(x => x.ReceivedAt)
-            .NotEqual(default(DateTime))
-            .WithMessage("ReceivedAt wajib diisi.")
+            .Cascade(CascadeMode.Stop)
+            .NotEqual(default(DateTimeOffset))
+            .WithMessage("ReceivedAt is required.")
             .Must(BeInThePastOrPresent)
-            .WithMessage("ReceivedAt tidak boleh berada di masa depan.");
+            .WithMessage("ReceiveAt cannot be later than the expiry date.");
 
         RuleFor(x => x.ExpiryDate)
             .NotEqual(default(DateOnly))
-            .WithMessage("ExpiryDate wajib diisi.")
-            .GreaterThanOrEqualTo(x => DateOnly.FromDateTime(x.ReceivedAt.ToUniversalTime()))
-            .WithMessage("ExpiryDate  tidak boleh lebih awal daripada ReceiveAt.");
+            .WithMessage("ExpiryDate is required.")
+            .GreaterThanOrEqualTo(x => DateOnly.FromDateTime(x.ReceivedAt.UtcDateTime))
+            .WithMessage("ExpiryDate cannot be earlier than ReceiveAt.");
 
         RuleFor(x => x.StorageLocation)
             .Cascade(CascadeMode.Stop)
             .Must(LotHelperValidator.NotBeBlank)
-            .WithMessage("StorageLocation wajib diisi.")
+            .WithMessage("StorageLocation is required")
             .MaximumLength(200)
-            .WithMessage("StorageLocation maksimal 200 karakter.");
-      }
-    private bool BeInThePastOrPresent(DateTime value)
+            .WithMessage("StorageLocation maximum 200 character.");
+    }
+    private bool BeInThePastOrPresent(DateTimeOffset value)
     {
         if (value == default)
         {
             return false;
         }
 
-        return value.ToUniversalTime() <= _timeProvider.GetUtcNow().UtcDateTime;
+        return value <= _timeProvider.GetUtcNow();
     }
-    }
+}

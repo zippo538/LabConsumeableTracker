@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LabConsumableExpiryTracker.Tests.Repository;
 
+[TestFixture]
 public class PostgreSqlTestFixture : IDisposable
 {
     public AppDbContext Context { get; }
