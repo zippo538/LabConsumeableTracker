@@ -5,6 +5,7 @@ using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using LabConsumableExpiryTracker.Tests.Helpers;
 
 namespace LabConsumableExpiryTracker.Tests.Repository;
 
@@ -22,9 +23,7 @@ public class LotRepositoryTests
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
-        Env.TraversePath().Load();
-        _connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING_TEST") ?? throw new InvalidOperationException(
-                "Set CONNECTION_STRING before running repository tests.");
+        _connectionString = Connection.GetConnection("UnitTestConnection");
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(_connectionString)
             .EnableSensitiveDataLogging()
