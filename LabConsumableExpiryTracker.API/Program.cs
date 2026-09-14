@@ -13,14 +13,22 @@ using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Mappings;
 using LabConsumableExpiryTracker.Application.Services;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
+using LabConsumableExpiryTracker.Application.Validators.ItemValidator;
 using LabConsumableExpiryTracker.Application.Validators.Login;
 using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using Microsoft.OpenApi.Models;
-using Serilog;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
+using Serilog;
+using LabConsumableExpiryTracker.Mappings;
+using LabConsumableExpiryTracker.Application.Common.ErrorHandling;
+using LabConsumableExpiryTracker.Application.Validators.Helpers;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --- GlobalExeptionHandler ---
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 // --- DbContext ---
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
@@ -63,9 +71,30 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
+// ---Serialize Json ---
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new SafeGuidConverter());
+    });
 
 // --- Application / Infrastructure Services ---
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddScoped<ILotService, LotService>();
+builder.Services.AddScoped<IItemService, ItemService>();
+
+builder.Services.AddScoped<ILotRepository, LotRepository>();
+builder.Services.AddScoped<IItemRepository, ItemRepository>();
+
+builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IdentitySeeder>();
+
+// --- Time Provider System  ---
+builder.Services.AddSingleton(TimeProvider.System);
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IdentitySeeder>();
@@ -79,8 +108,10 @@ builder.Services.AddFluentValidationAutoValidation();
 
 builder.Services.AddAutoMapper(
     _ => { },
-    typeof(UserMappingProfile).Assembly
-);
+    typeof(UserMappingProfile).Assembly,
+    typeof(ItemMappingProfile).Assembly,
+    typeof(LotMappingProfile).Assembly
+    );
 
 // --- Serilog ---
 Log.Logger = new LoggerConfiguration()
@@ -91,13 +122,13 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 
-// --- Controllers & Swagger ---
+// --- JsonSerializer ---
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+// --- Controllers & Swagger ---
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -128,13 +159,22 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+// ==================================================
+// Database Initialization / Seeder
+// ==================================================
+
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var initializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+    await initializer.InitializeAsync();
+}
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
