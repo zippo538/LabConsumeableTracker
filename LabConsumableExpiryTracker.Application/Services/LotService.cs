@@ -36,16 +36,16 @@ namespace LabConsumableExpiryTracker.Application.Services
         public async Task<ServiceResult<IEnumerable<LotDto>>> GetAllLot(CancellationToken ct)
         {
             _logger.LogDebug("Retrieving all lots");
- 
+
             var lots = await _lotRepository.GetAllWithItemAsync(ct);
             var now = _timeProvider.GetUtcNow();
- 
+
             var response = lots
                 .Select(lot => MapToDto(lot, lot.Item.ExpiringSoonDays, now))
                 .ToList();
- 
+
             _logger.LogInformation("All lots retrieved successfully");
- 
+
             return ServiceResult<IEnumerable<LotDto>>.SuccessResult(
                 response,
                 "Lots retrieved successfully.");
@@ -88,10 +88,12 @@ namespace LabConsumableExpiryTracker.Application.Services
         {
             _logger.LogDebug("Validating lot creation request for item {ItemId}", createLotDto.ItemId);
 
-            if (createLotDto.ItemId == Guid.Empty)
+            if (!Guid.TryParse(createLotDto.ItemId, out var itemId))
             {
                 _logger.LogWarning("Lot creation rejected because ItemId is empty");
-                return ServiceResult<LotDto>.ErrorResult("ItemId is required.");
+                return ServiceResult<LotDto>.ErrorResult(
+                    "Validation failed.",
+                    new List<string> { "ItemId harus berupa GUID yang valid." });
             }
 
             if (string.IsNullOrWhiteSpace(createLotDto.LotNumber))
@@ -111,7 +113,7 @@ namespace LabConsumableExpiryTracker.Application.Services
             }
 
             var duplicate = await _lotRepository.ExistsAsync(
-                createLotDto.ItemId,
+                itemId,
                 createLotDto.LotNumber.Trim(),
                 createLotDto.ExpiryDate,
                 ct);
@@ -128,7 +130,7 @@ namespace LabConsumableExpiryTracker.Application.Services
             var lot = _mapper.Map<Lot>(createLotDto);
             var created = await _lotRepository.AddAsync(lot, ct);
             await _unitOfWork.SaveChangesAsync(ct);
-            var item = await _itemRepository.GetByIdAsync(createLotDto.ItemId, ct);
+            var item = await _itemRepository.GetByIdAsync(itemId, ct);
             var now = _timeProvider.GetUtcNow();
             var response = MapToDto(created, item!.ExpiringSoonDays, now);
 
@@ -216,7 +218,7 @@ namespace LabConsumableExpiryTracker.Application.Services
                 summaries,
                 "Lot summaries retrieved successfully.");
         }
-        
+
         private LotDto MapToDto(
             Lot lot,
             int warningDays,
