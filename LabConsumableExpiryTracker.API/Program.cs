@@ -106,14 +106,6 @@ builder.Services.AddScoped<IUserService, UserService>();
 
 // --- FluentValidation ---
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateUserRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateItemValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<UpdateItemValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateLotValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<UpdateLotValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateJobValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<UpdateJobValidator>();
-
 builder.Services.AddFluentValidationAutoValidation();
 
 
