@@ -21,9 +21,7 @@ using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 using Serilog;
 using LabConsumableExpiryTracker.Mappings;
 using LabConsumableExpiryTracker.Application.Common.ErrorHandling;
-using LabConsumableExpiryTracker.Application.Validators.User;
-using LabConsumableExpiryTracker.Application.Validators.LotValidator;
-using LabConsumableExpiryTracker.Application.Validators.JobValidator;
+using LabConsumableExpiryTracker.Application.Validators.Helpers;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -79,6 +77,7 @@ builder.Services
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new SafeGuidConverter());
     });
 
 // --- Application / Infrastructure Services ---
@@ -99,10 +98,6 @@ builder.Services.AddScoped<IdentitySeeder>();
 // --- Time Provider System  ---
 builder.Services.AddSingleton(TimeProvider.System);
 
-// --- FluentValidation ---
-builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateItemValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<UpdateItemValidator>();
 builder.Services.AddScoped<ILoginService, AuthService>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IdentitySeeder>();

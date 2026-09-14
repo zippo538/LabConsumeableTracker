@@ -10,42 +10,42 @@ public class UpdateLotValidator : AbstractValidator<UpdateLotDto>
       {
             RuleFor(x => x.LotId)
                   .NotEmpty()
-                  .WithMessage("LotId wajib diisi.");
+                  .WithMessage("LotId is required.");
 
             RuleFor(x => x.LotNumber)
                   .Cascade(CascadeMode.Stop)
                   .Must(LotHelperValidator.NotBeBlank)
-                  .WithMessage("LotNumber wajib diisi.")
+                  .WithMessage("LotNumber is required.")
                   .MaximumLength(100)
-                  .WithMessage("LotNumber maksimal 100 karakter.");
+                  .WithMessage("LotNumber maximum 100 characters.");
 
             RuleFor(x => x.SupplierLotNumber)
                   .MaximumLength(100)
-                  .WithMessage("SupplierLotNumber maksimal 100 karakter.");
+                  .WithMessage("SupplierLotNumber maximum 100 characters.");
 
             RuleFor(x => x.SupplierName)
                   .Cascade(CascadeMode.Stop)
                   .Must(LotHelperValidator.NotBeBlank)
                   .WithMessage("SupplierName wajib diisi.")
                   .MaximumLength(200)
-                  .WithMessage("SupplierName maksimal 200 karakter.");
+                  .WithMessage("SupplierName maximum 200 characters.");
 
             RuleFor(x => x.ExpiryDate)
                   .NotEqual(default(DateOnly))
-                  .WithMessage("ExpiryDate wajib diisi.");
+                  .WithMessage("ExpiryDate is required.");
 
             RuleFor(x => x.StorageLocation)
                   .Cascade(CascadeMode.Stop)
                   .Must(LotHelperValidator.NotBeBlank)
-                  .WithMessage("StorageLocation wajib diisi.")
+                  .WithMessage("StorageLocation is required.")
                   .MaximumLength(200)
-                  .WithMessage("StorageLocation maksimal 200 karakter.");
+                  .WithMessage("StorageLocation maximum 200 character.");
 
             RuleFor(x => x.RowVersion)
                   .NotNull()
-                  .WithMessage("RowVersion wajib diisi.")
+                  .WithMessage("RowVersion is reuqired.")
                   .Must(value => value is { Length: > 0 })
-                  .WithMessage("RowVersion tidak boleh kosong.");
+                  .WithMessage("RowVersion cannot be empty.");
       }
 
 }
