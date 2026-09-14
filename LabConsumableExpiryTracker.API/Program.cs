@@ -66,7 +66,7 @@ builder.Services.AddAuthorization();
 
 // --- Application / Infrastructure Services ---
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-builder.Services.AddScoped<ILoginService, AuthService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IdentitySeeder>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
