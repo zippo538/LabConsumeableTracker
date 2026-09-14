@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace LabConsumableExpiryTracker.Application.Services;
 
-public class AuthService : ILoginService
+public class AuthService : IAuthService
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IJwtTokenGenerator _tokenGenerator;

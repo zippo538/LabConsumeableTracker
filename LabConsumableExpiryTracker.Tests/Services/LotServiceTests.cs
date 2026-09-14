@@ -594,7 +594,6 @@ namespace LabConsumableExpiryTracker.Tests.Services
         {
             return new UpdateLotDto
             {
-                LotId = Guid.NewGuid(),
                 LotNumber = "LOT-001",
                 SupplierLotNumber = "SUP-LOT-001",
                 SupplierName = "Supplier",
