@@ -24,13 +24,9 @@ namespace LabConsumableExpiryTracker.Tests.Controller
         public void SetUp()
         {
             _jobService = new Mock<IJobService>(MockBehavior.Strict);
-            _createValidator = new Mock<IValidator<CreateJobDto>>(MockBehavior.Strict);
-            _updateValidator = new Mock<IValidator<UpdateJobDto>>(MockBehavior.Strict);
 
             _sut = new JobController(
-                _jobService.Object,
-                _createValidator.Object,
-                _updateValidator.Object);
+                _jobService.Object);
         }
 
         [Test]

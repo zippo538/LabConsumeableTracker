@@ -17,9 +17,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
     {
         private readonly IJobService _jobService;
         public JobController(
-            IJobService jobService,
-            IValidator<CreateJobDto> createJobValidator,
-            IValidator<UpdateJobDto> updateJobValidator)
+            IJobService jobService)
         {
             _jobService = jobService;
         }
