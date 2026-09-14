@@ -9,13 +9,13 @@ namespace LabConsumableExpiryTracker.Infrastructure.Persistence;
 public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
 {
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
     public DbSet<Item> Items => Set<Item>();
     public DbSet<Lot> Lots => Set<Lot>();
     public DbSet<Job> Jobs => Set<Job>();
     public DbSet<Consumption> Consumptions => Set<Consumption>();
     public DbSet<Disposal> Disposals => Set<Disposal>();
 
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -141,7 +141,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
 
         builder.HasMany<Disposal>()
             .WithOne()
-            .HasForeignKey(disposal => disposal.SubLotId)
+            .HasForeignKey(disposal => disposal.LotId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 
@@ -200,13 +200,14 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
 
         builder.HasKey(disposal => disposal.Id);
         builder.Property(disposal => disposal.Id).HasColumnName("id").ValueGeneratedNever();
-        builder.Property(disposal => disposal.SubLotId).HasColumnName("lot_id").IsRequired();
+        builder.Property(x => x.LotId).HasColumnName("lot_id").IsRequired();
+        builder.HasOne(disposal => disposal.Lot).WithMany().HasForeignKey(disposal => disposal.LotId).OnDelete(DeleteBehavior.Restrict);
         builder.Property(disposal => disposal.Quantity).HasColumnName("quantity").HasPrecision(18, 3).IsRequired();
         builder.Property(disposal => disposal.Reason).HasColumnName("reason").HasMaxLength(500).IsRequired();
         builder.Property(disposal => disposal.DisposedAt).HasColumnName("disposed_at").HasColumnType("timestamp with time zone").IsRequired();
         builder.Property(disposal => disposal.DisposedBy).HasColumnName("disposed_by").IsRequired();
 
-        builder.HasIndex(disposal => disposal.SubLotId).HasDatabaseName("ix_disposals_lot_id");
+        builder.HasIndex(disposal => disposal.LotId).HasDatabaseName("ix_disposals_lot_id");
     }
     private static void ConfigureRefreshToken(ModelBuilder modelBuilder)
     {
