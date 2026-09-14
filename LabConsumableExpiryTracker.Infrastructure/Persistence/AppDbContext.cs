@@ -83,7 +83,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
         builder.HasIndex(item => item.Code).IsUnique().HasDatabaseName("ux_items_code");
 
         builder.HasMany(item => item.Lots)
-            .WithOne()
+            .WithOne(lot => lot.Item)
             .HasForeignKey(lot => lot.ItemId)
             .OnDelete(DeleteBehavior.Restrict);
 

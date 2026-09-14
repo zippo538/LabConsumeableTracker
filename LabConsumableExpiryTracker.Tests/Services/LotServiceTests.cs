@@ -7,42 +7,55 @@ using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using System.Reflection;
 
 namespace LabConsumableExpiryTracker.Tests.Services
 {
     [TestFixture]
     public class LotServiceTests
     {
+        private static readonly DateTimeOffset FixedNow =
+            new DateTimeOffset(2026, 9, 13, 10, 0, 0, TimeSpan.Zero);
+
         private Mock<ILotRepository> _lotRepository = null!;
+        private Mock<IItemRepository> _itemRepository = null!;
         private Mock<IMapper> _mapper = null!;
         private Mock<IUnitOfWork> _unitOfWork = null!;
+        private Mock<TimeProvider> _timeProvider = null!;
         private LotService _sut = null!;
 
         [SetUp]
         public void SetUp()
         {
             _lotRepository = new Mock<ILotRepository>(MockBehavior.Strict);
+            _itemRepository = new Mock<IItemRepository>(MockBehavior.Strict);
             _mapper = new Mock<IMapper>(MockBehavior.Strict);
             _unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+            _timeProvider = new Mock<TimeProvider>(MockBehavior.Strict);
+
+            _timeProvider.Setup(timeProvider => timeProvider.GetUtcNow())
+                .Returns(FixedNow);
 
             _sut = new LotService(
                 _lotRepository.Object,
+                _itemRepository.Object,
                 _mapper.Object,
                 _unitOfWork.Object,
-                NullLogger<LotService>.Instance);
+                NullLogger<LotService>.Instance,
+                _timeProvider.Object);
         }
 
         [Test]
         public async Task GetAllLot_WhenRepositoryReturnsLots_ReturnsSuccessWithMappedData()
         {
-            var lots = new List<Lot> { CreateLot() };
-            var expectedData = new List<LotDto> { CreateLotDto(lots[0].Id) };
+            var lot = CreateLotWithItem(expiringSoonDays: 30);
+            var lots = new List<Lot> { lot };
+            var expectedData = CreateLotDto(lot.Id);
 
-            _lotRepository.Setup(repository => repository.GetAllAsync(
+            _lotRepository.Setup(repository => repository.GetAllWithItemAsync(
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(lots);
-            _mapper.Setup(mapper => mapper.Map<IEnumerable<LotDto>>(It.IsAny<object>()))
-                .Returns(expectedData);
+            _mapper.Setup(mapper => mapper.Map<LotDto>(lot)).Returns(expectedData);
 
             var result = await _sut.GetAllLot(CancellationToken.None);
 
@@ -50,7 +63,11 @@ namespace LabConsumableExpiryTracker.Tests.Services
             {
                 Assert.That(result.Success, Is.True);
                 Assert.That(result.Message, Is.EqualTo("Lots retrieved successfully."));
-                Assert.That(result.Data, Is.SameAs(expectedData));
+                Assert.That(result.Data, Is.Not.Null);
+                Assert.That(result.Data!.Single(), Is.SameAs(expectedData));
+                Assert.That(expectedData.ExpiryCondition, Is.EqualTo(ExpiryCondition.Valid));
+                Assert.That(expectedData.IsEligible, Is.True);
+                Assert.That(expectedData.EvaluatedAt, Is.EqualTo(FixedNow));
             });
         }
 
@@ -59,7 +76,7 @@ namespace LabConsumableExpiryTracker.Tests.Services
         {
             var exception = new InvalidOperationException("Database unavailable.");
 
-            _lotRepository.Setup(repository => repository.GetAllAsync(
+            _lotRepository.Setup(repository => repository.GetAllWithItemAsync(
                     It.IsAny<CancellationToken>()))
                 .ThrowsAsync(exception);
 
@@ -67,8 +84,7 @@ namespace LabConsumableExpiryTracker.Tests.Services
                 () => _sut.GetAllLot(CancellationToken.None));
 
             Assert.That(actual, Is.SameAs(exception));
-            _mapper.Verify(mapper => mapper.Map<IEnumerable<LotDto>>(
-                It.IsAny<object>()), Times.Never);
+            _mapper.Verify(mapper => mapper.Map<LotDto>(It.IsAny<Lot>()), Times.Never);
         }
 
         [Test]
@@ -76,7 +92,7 @@ namespace LabConsumableExpiryTracker.Tests.Services
         {
             var id = Guid.NewGuid();
 
-            _lotRepository.Setup(repository => repository.GetByIdAsync(
+            _lotRepository.Setup(repository => repository.GetByIdWithItemAsync(
                     id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Lot?)null);
 
@@ -89,16 +105,16 @@ namespace LabConsumableExpiryTracker.Tests.Services
                 Assert.That(result.Data, Is.Null);
             });
 
-            _mapper.Verify(mapper => mapper.Map<LotDto>(It.IsAny<object>()), Times.Never);
+            _mapper.Verify(mapper => mapper.Map<LotDto>(It.IsAny<Lot>()), Times.Never);
         }
 
         [Test]
         public async Task GetByIdLot_WhenLotExists_ReturnsSuccessWithMappedData()
         {
-            var lot = CreateLot();
+            var lot = CreateLotWithItem(expiringSoonDays: 30);
             var expectedData = CreateLotDto(lot.Id);
 
-            _lotRepository.Setup(repository => repository.GetByIdAsync(
+            _lotRepository.Setup(repository => repository.GetByIdWithItemAsync(
                     lot.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(lot);
             _mapper.Setup(mapper => mapper.Map<LotDto>(lot)).Returns(expectedData);
@@ -108,8 +124,9 @@ namespace LabConsumableExpiryTracker.Tests.Services
             Assert.Multiple(() =>
             {
                 Assert.That(result.Success, Is.True);
-                Assert.That(result.Message, Is.EqualTo("Success"));
+                Assert.That(result.Message, Is.EqualTo("Lot retrieved successfully."));
                 Assert.That(result.Data, Is.SameAs(expectedData));
+                Assert.That(expectedData.EvaluatedAt, Is.EqualTo(FixedNow));
             });
         }
 
@@ -119,7 +136,7 @@ namespace LabConsumableExpiryTracker.Tests.Services
             var id = Guid.NewGuid();
             var exception = new TimeoutException("Query timed out.");
 
-            _lotRepository.Setup(repository => repository.GetByIdAsync(
+            _lotRepository.Setup(repository => repository.GetByIdWithItemAsync(
                     id, It.IsAny<CancellationToken>()))
                 .ThrowsAsync(exception);
 
@@ -187,6 +204,8 @@ namespace LabConsumableExpiryTracker.Tests.Services
                 It.IsAny<Lot>(), It.IsAny<CancellationToken>()), Times.Never);
             _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(
                 It.IsAny<CancellationToken>()), Times.Never);
+            _itemRepository.Verify(repository => repository.GetByIdAsync(
+                It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Test]
@@ -194,7 +213,14 @@ namespace LabConsumableExpiryTracker.Tests.Services
         {
             var dto = CreateRequest();
             var mappedLot = CreateLot();
-            var createdLot = CreateLot();
+            var createdLot = CreateLot(id: mappedLot.Id, itemId: dto.ItemId);
+            var item = new Item(
+                dto.ItemId,
+                "ITM-001",
+                "Item Name",
+                UnitOfMeasure.Unit,
+                10m,
+                30);
             var expectedData = CreateLotDto(createdLot.Id);
 
             _lotRepository.Setup(repository => repository.ExistsAsync(
@@ -210,6 +236,9 @@ namespace LabConsumableExpiryTracker.Tests.Services
             _unitOfWork.Setup(unitOfWork => unitOfWork.SaveChangesAsync(
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(1);
+            _itemRepository.Setup(repository => repository.GetByIdAsync(
+                    dto.ItemId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(item);
             _mapper.Setup(mapper => mapper.Map<LotDto>(createdLot)).Returns(expectedData);
 
             var result = await _sut.CreateLot(dto, CancellationToken.None);
@@ -219,10 +248,13 @@ namespace LabConsumableExpiryTracker.Tests.Services
                 Assert.That(result.Success, Is.True);
                 Assert.That(result.Message, Is.EqualTo("Lot created successfully."));
                 Assert.That(result.Data, Is.SameAs(expectedData));
+                Assert.That(expectedData.EvaluatedAt, Is.EqualTo(FixedNow));
             });
 
             _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(
                 It.IsAny<CancellationToken>()), Times.Once);
+            _itemRepository.Verify(repository => repository.GetByIdAsync(
+                dto.ItemId, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -244,6 +276,8 @@ namespace LabConsumableExpiryTracker.Tests.Services
             Assert.That(actual, Is.SameAs(exception));
             _lotRepository.Verify(repository => repository.AddAsync(
                 It.IsAny<Lot>(), It.IsAny<CancellationToken>()), Times.Never);
+            _itemRepository.Verify(repository => repository.GetByIdAsync(
+                It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Test]
@@ -271,7 +305,9 @@ namespace LabConsumableExpiryTracker.Tests.Services
                 () => _sut.CreateLot(dto, CancellationToken.None));
 
             Assert.That(actual, Is.SameAs(exception));
-            _mapper.Verify(mapper => mapper.Map<LotDto>(It.IsAny<object>()), Times.Never);
+            _mapper.Verify(mapper => mapper.Map<LotDto>(It.IsAny<Lot>()), Times.Never);
+            _itemRepository.Verify(repository => repository.GetByIdAsync(
+                It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Test]
@@ -280,7 +316,7 @@ namespace LabConsumableExpiryTracker.Tests.Services
             var id = Guid.NewGuid();
             var dto = UpdateRequest();
 
-            _lotRepository.Setup(repository => repository.GetByIdAsync(
+            _lotRepository.Setup(repository => repository.GetByIdWithItemAsync(
                     id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Lot?)null);
 
@@ -296,11 +332,11 @@ namespace LabConsumableExpiryTracker.Tests.Services
         [Test]
         public async Task UpdateLot_WhenRequestIsValid_UpdatesStorageCommitsAndReturnsSuccess()
         {
-            var lot = CreateLot();
+            var lot = CreateLotWithItem(expiringSoonDays: 30);
             var dto = UpdateRequest();
             var expectedData = CreateLotDto(lot.Id);
 
-            _lotRepository.Setup(repository => repository.GetByIdAsync(
+            _lotRepository.Setup(repository => repository.GetByIdWithItemAsync(
                     lot.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(lot);
             _lotRepository.Setup(repository => repository.UpdateAsync(
@@ -319,6 +355,7 @@ namespace LabConsumableExpiryTracker.Tests.Services
                 Assert.That(result.Message, Is.EqualTo("Lot updated successfully."));
                 Assert.That(result.Data, Is.SameAs(expectedData));
                 Assert.That(lot.StorageLocation, Is.EqualTo(dto.StorageLocation.Trim()));
+                Assert.That(expectedData.EvaluatedAt, Is.EqualTo(FixedNow));
             });
 
             _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(
@@ -328,11 +365,11 @@ namespace LabConsumableExpiryTracker.Tests.Services
         [Test]
         public void UpdateLot_WhenStorageLocationIsInvalid_PropagatesDomainException()
         {
-            var lot = CreateLot();
+            var lot = CreateLotWithItem(expiringSoonDays: 30);
             var dto = UpdateRequest();
             dto.StorageLocation = " ";
 
-            _lotRepository.Setup(repository => repository.GetByIdAsync(
+            _lotRepository.Setup(repository => repository.GetByIdWithItemAsync(
                     lot.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(lot);
 
@@ -499,6 +536,45 @@ namespace LabConsumableExpiryTracker.Tests.Services
                 LotAdministrativeStatus.Active);
         }
 
+        // Lot.Item has a private setter with no public API to attach it, so tests
+        // that rely on lot.Item (GetAllLot/GetByIdLot/UpdateLot mapping) build the
+        // lot via reflection to simulate what EF Core would populate via navigation.
+        private static Lot CreateLotWithItem(
+            Guid? id = null,
+            Guid? itemId = null,
+            int expiringSoonDays = 30,
+            DateOnly? expiryDate = null)
+        {
+            var resolvedItemId = itemId ?? Guid.NewGuid();
+
+            var lot = new Lot(
+                id ?? Guid.NewGuid(),
+                resolvedItemId,
+                "LOT-001",
+                "SUP-LOT-001",
+                new DateTimeOffset(2026, 9, 1, 8, 0, 0, TimeSpan.Zero),
+                "Supplier",
+                100m,
+                100m,
+                expiryDate ?? new DateOnly(2026, 12, 1),
+                "Rack-A1",
+                LotAdministrativeStatus.Active);
+
+            var item = new Item(
+                resolvedItemId,
+                "ITM-001",
+                "Item Name",
+                UnitOfMeasure.Unit,
+                10m,
+                expiringSoonDays);
+
+            typeof(Lot)
+                .GetProperty(nameof(Lot.Item), BindingFlags.Public | BindingFlags.Instance)!
+                .SetValue(lot, item);
+
+            return lot;
+        }
+
         private static CreateLotDto CreateRequest()
         {
             return new CreateLotDto
@@ -518,7 +594,6 @@ namespace LabConsumableExpiryTracker.Tests.Services
         {
             return new UpdateLotDto
             {
-                LotId = Guid.NewGuid(),
                 LotNumber = "LOT-001",
                 SupplierLotNumber = "SUP-LOT-001",
                 SupplierName = "Supplier",
@@ -549,7 +624,7 @@ namespace LabConsumableExpiryTracker.Tests.Services
             {
                 Assert.That(result.Success, Is.False);
                 Assert.That(result.Message, Is.EqualTo(message));
-                });
+            });
         }
 
         private void VerifyCreateWasNotContinued()
@@ -561,6 +636,8 @@ namespace LabConsumableExpiryTracker.Tests.Services
                 It.IsAny<Lot>(), It.IsAny<CancellationToken>()), Times.Never);
             _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(
                 It.IsAny<CancellationToken>()), Times.Never);
+            _itemRepository.Verify(repository => repository.GetByIdAsync(
+                It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 }
