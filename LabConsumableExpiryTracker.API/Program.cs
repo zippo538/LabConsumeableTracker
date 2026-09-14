@@ -22,6 +22,8 @@ using Serilog;
 using LabConsumableExpiryTracker.Mappings;
 using LabConsumableExpiryTracker.Application.Common.ErrorHandling;
 using LabConsumableExpiryTracker.Application.Validators.Helpers;
+using LabConsumableExpiryTracker.Domain.Services;
+using LabConsumableExpiryTracker.Domain.Services.Interfaces;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -80,7 +82,7 @@ builder.Services
         options.JsonSerializerOptions.Converters.Add(new SafeGuidConverter());
     });
 
-// --- Application / Infrastructure Services ---
+// --- Application / Domain / Infrastructure Services ---
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<ILotService, LotService>();
 builder.Services.AddScoped<IItemService, ItemService>();
@@ -90,6 +92,8 @@ builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<ILotRepository, LotRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IJobRepository, JobRepository>();
+builder.Services.AddScoped<ILotService, LotService>();
+builder.Services.AddScoped<ILotSelectionService, LotSelectionService>();
 
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();

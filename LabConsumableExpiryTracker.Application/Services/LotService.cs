@@ -1,9 +1,12 @@
 using AutoMapper;
 using LabConsumableExpiryTracker.Application.Common.Result;
+using LabConsumableExpiryTracker.Application.DTOs.FefoDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
+using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Domain.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace LabConsumableExpiryTracker.Application.Services
@@ -11,77 +14,80 @@ namespace LabConsumableExpiryTracker.Application.Services
     public class LotService : ILotService
     {
         private readonly ILotRepository _lotRepository;
-        private readonly IItemRepository _itemRepository;
+        private readonly IJobRepository _jobRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<LotService> _logger;
+        private readonly ILotSelectionService _lotSelectionService;
         private readonly TimeProvider _timeProvider;
 
         public LotService(
             ILotRepository lotRepository,
-            IItemRepository itemRepository,
+            IJobRepository jobRepository,
             IMapper mapper,
             IUnitOfWork unitOfWork,
             ILogger<LotService> logger,
+            ILotSelectionService lotSelectionService,
             TimeProvider timeProvider)
         {
             _lotRepository = lotRepository;
-            _itemRepository = itemRepository;
+            _jobRepository = jobRepository;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _lotSelectionService = lotSelectionService;
             _timeProvider = timeProvider;
+        }
+
+        private LotDto MapToDtoWithExpiryEngine(
+            Lot lot,
+            int warningDays,
+            DateTimeOffset now)
+        {
+            var response = _mapper.Map<LotDto>(lot);
+
+            response.ExpiryCondition = lot.GetExpiryCondition(now, warningDays);
+            response.IsEligible = lot.IsEligible(now);
+            response.EvaluatedAt = now;
+
+            return response;
         }
 
         public async Task<ServiceResult<IEnumerable<LotDto>>> GetAllLot(CancellationToken ct)
         {
             _logger.LogDebug("Retrieving all lots");
- 
+
             var lots = await _lotRepository.GetAllWithItemAsync(ct);
             var now = _timeProvider.GetUtcNow();
- 
+
             var response = lots
-                .Select(lot => MapToDto(lot, lot.Item.ExpiringSoonDays, now))
+                .Select(lot => MapToDtoWithExpiryEngine(lot, lot.Item.ExpiringSoonDays, now))
                 .ToList();
- 
+
             _logger.LogInformation("All lots retrieved successfully");
- 
+
             return ServiceResult<IEnumerable<LotDto>>.SuccessResult(
                 response,
                 "Lots retrieved successfully.");
         }
 
-        public async Task<ServiceResult<LotDto>> GetByIdLot(
-            Guid id,
-            CancellationToken ct)
+        public async Task<ServiceResult<LotDto>> GetByIdLot(Guid id, CancellationToken ct)
         {
             _logger.LogDebug("Retrieving lot {LotId}", id);
 
             var lot = await _lotRepository.GetByIdWithItemAsync(id, ct);
-
             if (lot is null)
             {
-                _logger.LogWarning(
-                    "Lot {LotId} was not found",
-                    id);
-
+                _logger.LogWarning("Lot {LotId} was not found", id);
                 return ServiceResult<LotDto>.ErrorResult("NotFound");
             }
 
             var now = _timeProvider.GetUtcNow();
+            var response = MapToDtoWithExpiryEngine(lot, lot.Item.ExpiringSoonDays, now);
 
-            var response = MapToDto(
-                lot,
-                lot.Item.ExpiringSoonDays,
-                now);
+            _logger.LogInformation("Lot {LotId} retrieved successfully", id);
 
-            _logger.LogInformation(
-                "Lot {LotId} retrieved successfully",
-                id);
-
-            return ServiceResult<LotDto>.SuccessResult(
-                response,
-                "Lot retrieved successfully.");
+            return ServiceResult<LotDto>.SuccessResult(response);
         }
 
         public async Task<ServiceResult<LotDto>> CreateLot(CreateLotDto createLotDto, CancellationToken ct)
@@ -128,9 +134,7 @@ namespace LabConsumableExpiryTracker.Application.Services
             var lot = _mapper.Map<Lot>(createLotDto);
             var created = await _lotRepository.AddAsync(lot, ct);
             await _unitOfWork.SaveChangesAsync(ct);
-            var item = await _itemRepository.GetByIdAsync(createLotDto.ItemId, ct);
-            var now = _timeProvider.GetUtcNow();
-            var response = MapToDto(created, item!.ExpiringSoonDays, now);
+            var response = _mapper.Map<LotDto>(created);
 
             _logger.LogInformation(
                 "Lot {LotId} created successfully for item {ItemId}",
@@ -157,8 +161,9 @@ namespace LabConsumableExpiryTracker.Application.Services
 
             var updated = await _lotRepository.UpdateAsync(existing, ct);
             await _unitOfWork.SaveChangesAsync(ct);
+
             var now = _timeProvider.GetUtcNow();
-            var response = MapToDto(updated, updated.Item.ExpiringSoonDays, now);
+            var response = MapToDtoWithExpiryEngine(updated, updated.Item.ExpiringSoonDays, now);
 
             _logger.LogInformation("Lot {LotId} updated successfully", id);
 
@@ -217,23 +222,101 @@ namespace LabConsumableExpiryTracker.Application.Services
                 "Lot summaries retrieved successfully.");
         }
         
-        private LotDto MapToDto(
-            Lot lot,
-            int warningDays,
-            DateTimeOffset now)
+        public async Task<ServiceResult<FefoAllocationPreviewDto>> RequestFefoAllocation(
+            Guid jobId,
+            Guid itemId,
+            decimal requestedQuantity,
+            CancellationToken ct)
         {
-            var response = _mapper.Map<LotDto>(lot);
+            _logger.LogDebug(
+                "Requesting FEFO allocation for job {JobId}, item {ItemId}, quantity {RequestedQuantity}",
+                jobId,
+                itemId,
+                requestedQuantity);
 
-            response.ExpiryCondition =
-                lot.GetExpiryCondition(now, warningDays);
+            var job = await _jobRepository.GetByIdAsync(jobId, ct);
+            if (job is null)
+            {
+                _logger.LogWarning("FEFO allocation rejected because job {JobId} was not found", jobId);
+                return ServiceResult<FefoAllocationPreviewDto>.ErrorResult("Job not found.");
+            }
+            if (job.Status != JobStatus.InProgress)
+            {
+                _logger.LogWarning(
+                    "FEFO allocation rejected because job {JobId} is not InProgress (status: {Status})",
+                    jobId,
+                    job.Status);
+                return ServiceResult<FefoAllocationPreviewDto>.ErrorResult(
+                    $"Job must be InProgress to request FEFO allocation. Current status: {job.Status}.");
+            }
 
-            response.IsEligible =
-                lot.IsEligible(now);
+            if (requestedQuantity <= 0)
+            {
+                _logger.LogWarning(
+                    "FEFO allocation rejected because requestedQuantity is not positive for item {ItemId}",
+                    itemId);
+                return ServiceResult<FefoAllocationPreviewDto>.ErrorResult(
+                    "Requested quantity must be greater than zero.");
+            }
 
-            response.EvaluatedAt = now;
+            var candidates = (await _lotRepository.GetByItemIdAsync(itemId, ct)).ToList();
+            var now = _timeProvider.GetUtcNow();
 
-            return response;
+            IReadOnlyList<LotAllocation> allocations;
+            try
+            {
+                allocations = _lotSelectionService.Allocate(candidates, requestedQuantity, now);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(
+                    "FEFO allocation rejected for item {ItemId}: {Reason}",
+                    itemId,
+                    ex.Message);
+                return ServiceResult<FefoAllocationPreviewDto>.ErrorResult(ex.Message);
+            }
+            
+            var candidatesById = candidates.ToDictionary(lot => lot.Id);
+
+            var lines = allocations
+                .Select(allocation =>
+                {
+                    var lot = candidatesById[allocation.LotId];
+                    return new LotAllocationDto
+                    {
+                        LotId = lot.Id,
+                        LotNumber = lot.LotNumber,
+                        ExpiryDate = lot.ExpiryDate,
+                        RemainingQuantity = lot.RemainingQuantity,
+                        Quantity = allocation.Quantity,
+                        RowVersion = lot.RowVersion
+                    };
+                })
+                .ToList();
+            
+            var baseUnit = candidates[0].Item.BaseUnit;
+
+            var response = new FefoAllocationPreviewDto
+            {
+                JobId = jobId,
+                ItemId = itemId,
+                BaseUnit = baseUnit,
+                RequestedQuantity = requestedQuantity,
+                AllocatedQuantity = lines.Sum(line => line.Quantity),
+                IsReservation = false,
+                Allocations = lines,
+                PreviewedAt = now
+            };
+
+            _logger.LogInformation(
+                "FEFO allocation for job {JobId}, item {ItemId} recommended across {LotCount} lot(s)",
+                jobId,
+                itemId,
+                lines.Count);
+
+            return ServiceResult<FefoAllocationPreviewDto>.SuccessResult(
+                response,
+                "Lots allocated successfully.");
         }
-
     }
 }
