@@ -16,16 +16,12 @@ namespace LabConsumableExpiryTracker.API.Controllers
     public class JobController : ControllerBase
     {
         private readonly IJobService _jobService;
-        private readonly IValidator<CreateJobDto> _createJobValidator;
-        private readonly IValidator<UpdateJobDto> _updateJobValidator;
         public JobController(
             IJobService jobService,
             IValidator<CreateJobDto> createJobValidator,
             IValidator<UpdateJobDto> updateJobValidator)
         {
             _jobService = jobService;
-            _createJobValidator = createJobValidator;
-            _updateJobValidator = updateJobValidator;
         }
         [HttpGet]
         [Authorize(Roles = nameof(UserRole.Scientist))]
@@ -52,16 +48,12 @@ namespace LabConsumableExpiryTracker.API.Controllers
         [Authorize(Roles = nameof(UserRole.Scientist))]
         public async Task<ActionResult<ServiceResult<JobDto>>> Create(CreateJobDto dto, CancellationToken ct)
         {
-            var validation = await _createJobValidator.ValidateAsync(dto, ct);
-            if (!validation.IsValid)
-            {
-                return BadRequest(ServiceResult<JobDto>.ErrorResult(
-                    "Validation failed.",
-                    validation.Errors
-                        .Select(error => error.ErrorMessage)
-                        .ToList()));
-            }
+
             var response = await _jobService.CreateAsync(dto, ct);
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
             // return CreatedAtAction(nameof(GetById), new { id = response.Data!.Id }, response);
             return response.Success
             ? CreatedAtAction(nameof(GetById), new { id = response.Data!.Id }, response)
@@ -73,17 +65,11 @@ namespace LabConsumableExpiryTracker.API.Controllers
         [Authorize(Roles = nameof(UserRole.Scientist))]
         public async Task<ActionResult<ServiceResult<JobDto>>> Update(Guid id, UpdateJobDto dto, CancellationToken ct)
         {
-            var validation = await _updateJobValidator.ValidateAsync(dto, ct);
-            if (!validation.IsValid)
-            {
-                return BadRequest(ServiceResult<JobDto>.ErrorResult(
-                    "Validation failed.",
-                    validation.Errors
-                        .Select(error => error.ErrorMessage)
-                        .ToList()
-                ));
-            }
             var response = await _jobService.UpdateStatusAsync(id, dto, ct);
+            if (!response.Success)
+            {
+                return NotFound(response);
+            }
             return response.Success
             ? Ok(response)
             : Conflict(response);
