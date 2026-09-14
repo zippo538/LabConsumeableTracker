@@ -100,16 +100,16 @@ namespace LabConsumableExpiryTracker.Infrastructure.Persistence.Seeders
             return lots;
         }
         private static readonly (
-    LotStatus Status,
+    LotAdministrativeStatus Status,
     int ExpiryDayOffset,
     bool MustBeEmpty)[] LotScenarios =
     [
-    (LotStatus.Active, 180, false),
-    (LotStatus.Active, 7, false),
-    (LotStatus.Quarantined, 90, false),
-    (LotStatus.ManuallyBlocked, 120, false),
-    (LotStatus.Disposed, 180, true),
-    (LotStatus.Active, -30, false)
+    (LotAdministrativeStatus.Active, 180, false),
+    (LotAdministrativeStatus.Active, 7, false),
+    (LotAdministrativeStatus.Quarantined, 90, false),
+    (LotAdministrativeStatus.ManuallyBlocked, 120, false),
+    (LotAdministrativeStatus.Disposed, 180, true),
+    (LotAdministrativeStatus.Active, -30, false)
     ];
     }
 

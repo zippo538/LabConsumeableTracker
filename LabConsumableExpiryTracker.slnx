@@ -3,4 +3,5 @@
   <Project Path="LabConsumableExpiryTracker.Application/LabConsumableExpiryTracker.Application.csproj" />
   <Project Path="LabConsumableExpiryTracker.Domain/LabConsumableExpiryTracker.Domain.csproj" />
   <Project Path="LabConsumableExpiryTracker.Infrastructure/LabConsumableExpiryTracker.Infrastructure.csproj" />
+  <Project Path="LabConsumableExpiryTracker.Tests/LabConsumableExpiryTracker.Tests.csproj" />
 </Solution>

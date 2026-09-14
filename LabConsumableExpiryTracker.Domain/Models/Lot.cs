@@ -15,7 +15,7 @@ public class Lot
     public decimal RemainingQuantity { get; private set; }
     public DateOnly ExpiryDate { get; private set; }
     public string StorageLocation { get; private set; }
-    public LotStatus Status { get; private set; }
+    public LotAdministrativeStatus AdministrativeStatus { get; private set; }
     public byte[] RowVersion { get; private set; } = [];
 
     public Lot(
@@ -29,7 +29,7 @@ public class Lot
         decimal remainingQuantity,
         DateOnly expiryDate,
         string storageLocation,
-        LotStatus status)
+        LotAdministrativeStatus administrativeStatus)
     {
         if (remainingQuantity < 0)
         {
@@ -51,7 +51,7 @@ public class Lot
         RemainingQuantity = remainingQuantity;
         ExpiryDate = expiryDate;
         StorageLocation = storageLocation.Trim();
-        Status = status;
+        AdministrativeStatus = administrativeStatus;
     }
 
     public static Lot Create(
@@ -80,7 +80,7 @@ public class Lot
             initialQuantity,
             expiryDate,
             storageLocation,
-            LotStatus.Active);
+            LotAdministrativeStatus.Active);
     }
     public void UpdateRemainingQuantity(decimal quantity)
     {
@@ -113,7 +113,7 @@ public class Lot
         var today = DateOnly.FromDateTime(
             now.UtcDateTime);
 
-        return Status == LotStatus.Active
+        return AdministrativeStatus == LotAdministrativeStatus.Active
             && RemainingQuantity > 0
             && ExpiryDate >= today;
     }
