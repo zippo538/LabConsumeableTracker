@@ -1,3 +1,4 @@
+using LabConsumableExpiryTracker.Application.DTOs.FefoDtos;
 using LabConsumableExpiryTracker.Domain.Enums;
 
 namespace LabConsumableExpiryTracker.Application.DTOs.FefoDTOs;
@@ -10,7 +11,7 @@ public class FefoAllocationPreviewDto
     public UnitOfMeasure BaseUnit { get; set; }
     public decimal RequestedQuantity { get; set; }
     public decimal AllocatedQuantity { get; set; }
+    public DateTimeOffset PreviewedAt { get; set; }
     public bool IsReservation { get; set; } = false;
     public IReadOnlyList<LotAllocationDto> Allocations { get; set; } = [];
-    public DateTimeOffset PreviewedAt { get; set; }
 }
