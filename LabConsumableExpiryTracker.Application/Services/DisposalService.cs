@@ -40,8 +40,6 @@ public class DisposalService : IDisposalService
     {
         _logger.LogDebug("Creating disposal for lot {LotId}", request.LotId);
 
-        // The validator handles request shape; these guards keep the service safe
-        // when it is called outside the HTTP pipeline (for example, from a job).
         if (!Guid.TryParse(request.LotId, out var lotId))
         {
             return ServiceResult<DisposalDto>.ErrorResult(
@@ -62,8 +60,6 @@ public class DisposalService : IDisposalService
             return ServiceResult<DisposalDto>.ErrorResult("Lot not found.");
         }
 
-        // AC-F07-02: blocked and quarantined lots (and any non-active status)
-        // are not eligible for disposal allocation.
         if (lot.AdministrativeStatus != LotAdministrativeStatus.Active)
         {
             _logger.LogWarning(
@@ -88,11 +84,11 @@ public class DisposalService : IDisposalService
             var now = _timeProvider.GetUtcNow();
             var disposal = Disposal.Create(lotId, request.Quantity, request.Reason, now);
 
-            // Both changes are tracked by the same DbContext. No repository commits;
-            // SaveChangesAsync below commits the stock deduction and disposal together.
             lot.UpdateRemainingQuantity(request.Quantity);
             await _lotRepository.UpdateAsync(lot, ct);
+            lot.Dispose();
             var created = await _disposalRepository.AddAsync(disposal, ct);
+            
             await _unitOfWork.SaveChangesAsync(ct);
 
             _logger.LogInformation(
