@@ -13,7 +13,6 @@ using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Mappings;
 using LabConsumableExpiryTracker.Application.Services;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
-using LabConsumableExpiryTracker.Application.Validators.ItemValidator;
 using LabConsumableExpiryTracker.Application.Validators.Login;
 using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using Microsoft.OpenApi.Models;
@@ -22,10 +21,6 @@ using Serilog;
 using LabConsumableExpiryTracker.Mappings;
 using LabConsumableExpiryTracker.Application.Common.ErrorHandling;
 using LabConsumableExpiryTracker.Application.Validators.Helpers;
-using Microsoft.AspNetCore.Mvc;
-using LabConsumableExpiryTracker.Application.Common.Result;
-using Microsoft.Extensions.Options;
-using LabConsumableExpiryTracker.Application.Common;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -82,11 +77,12 @@ builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<ILotService, LotService>();
 builder.Services.AddScoped<IItemService, ItemService>();
 builder.Services.AddScoped<IJobService, JobService>();
-
+builder.Services.AddScoped<ILotSelectionService, LotSelectionService>();
 
 builder.Services.AddScoped<ILotRepository, LotRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IJobRepository, JobRepository>();
+builder.Services.AddScoped<ILotSelectionRepository, LotSelectionRepository>();
 
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
