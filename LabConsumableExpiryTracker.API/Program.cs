@@ -21,6 +21,8 @@ using Serilog;
 using LabConsumableExpiryTracker.Mappings;
 using LabConsumableExpiryTracker.Application.Common.ErrorHandling;
 using LabConsumableExpiryTracker.Application.Validators.Helpers;
+using LabConsumableExpiryTracker.Application.Common.CurrentUser;
+using LabConsumableExpiryTracker.API.CurrentUser;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -87,7 +89,9 @@ builder.Services.AddScoped<ILotSelectionRepository, LotSelectionRepository>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IdentitySeeder>();
-
+builder.Services.AddScoped<ICurrentUserContext, HttpContextCurrentUserContext>();
+builder.Services.AddScoped<IDashboardAlertRepository, DashboardAlertRepository>();
+builder.Services.AddScoped<IDashboardAlertService, DashboardAlertService>();
 
 builder.Services.AddSingleton(TimeProvider.System);
 
@@ -97,6 +101,8 @@ builder.Services.AddScoped<IdentitySeeder>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 
+// --- HttpContext ---
+builder.Services.AddHttpContextAccessor();
 // --- FluentValidation ---
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 builder.Services.AddFluentValidationAutoValidation();
