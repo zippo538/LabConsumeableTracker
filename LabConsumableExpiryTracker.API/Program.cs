@@ -13,7 +13,6 @@ using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Mappings;
 using LabConsumableExpiryTracker.Application.Services;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
-using LabConsumableExpiryTracker.Application.Validators.ItemValidator;
 using LabConsumableExpiryTracker.Application.Validators.Login;
 using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using Microsoft.OpenApi.Models;
@@ -22,8 +21,6 @@ using Serilog;
 using LabConsumableExpiryTracker.Mappings;
 using LabConsumableExpiryTracker.Application.Common.ErrorHandling;
 using LabConsumableExpiryTracker.Application.Validators.Helpers;
-using LabConsumableExpiryTracker.Domain.Services;
-using LabConsumableExpiryTracker.Domain.Services.Interfaces;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -73,34 +70,30 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
-// ---Serialize Json ---
-builder.Services
-    .AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-        options.JsonSerializerOptions.Converters.Add(new SafeGuidConverter());
-    });
+
 
 // --- Application / Domain / Infrastructure Services ---
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<ILotService, LotService>();
 builder.Services.AddScoped<IItemService, ItemService>();
 builder.Services.AddScoped<IJobService, JobService>();
+builder.Services.AddScoped<ILotSelectionService, LotSelectionService>();
+
 builder.Services.AddScoped<ILotRepository, LotRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IJobRepository, JobRepository>();
-builder.Services.AddScoped<ILotService, LotService>();
-builder.Services.AddScoped<ILotSelectionService, LotSelectionService>();
+builder.Services.AddScoped<ILotSelectionRepository, LotSelectionRepository>();
+builder.Services.AddScoped<IDisposalRepository, DisposalRepository>();
+builder.Services.AddScoped<IDisposalService, DisposalService>();
+
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IdentitySeeder>();
-builder.Services.AddScoped<IDisposalRepository, DisposalRepository>();
-builder.Services.AddScoped<IDisposalService, DisposalService>();
-// --- Time Provider System  ---
+
+
 builder.Services.AddSingleton(TimeProvider.System);
 
-builder.Services.AddScoped<ILoginService, AuthService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IdentitySeeder>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
@@ -133,6 +126,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new SafeGuidConverter());
     });
 // --- Controllers & Swagger ---
 builder.Services.AddEndpointsApiExplorer();

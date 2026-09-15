@@ -1,7 +1,5 @@
-using Bogus.DataSets;
-using FluentValidation;
 using LabConsumableExpiryTracker.Application.Common.Result;
-using LabConsumableExpiryTracker.Application.DTOs.FefoDTOs;
+using LabConsumableExpiryTracker.Application.DTOs.FefoDtos;
 using LabConsumableExpiryTracker.Application.DTOs.JobDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
@@ -17,11 +15,8 @@ namespace LabConsumableExpiryTracker.API.Controllers
     {
         private readonly IJobService _jobService;
         private readonly ILotService _lotService;
-
         public JobController(
-            IJobService jobService,
-            ILotService lotService
-        )
+            IJobService jobService, ILotService lotService)
         {
             _jobService = jobService;
             _lotService = lotService;
@@ -57,8 +52,6 @@ namespace LabConsumableExpiryTracker.API.Controllers
             {
                 return BadRequest(response);
             }
-
-            // return CreatedAtAction(nameof(GetById), new { id = response.Data!.Id }, response);
             return response.Success
                 ? CreatedAtAction(nameof(GetById), new { id = response.Data!.Id }, response)
                 : Conflict(response);
@@ -111,5 +104,8 @@ namespace LabConsumableExpiryTracker.API.Controllers
 
             return response.Success ? Ok(response) : BadRequest(response);
         }
+        
+       
+
     }
 }

@@ -1,28 +1,30 @@
 using AutoMapper;
 using LabConsumableExpiryTracker.Application.Common.Result;
-using LabConsumableExpiryTracker.Application.DTOs.FefoDTOs;
+using LabConsumableExpiryTracker.Application.DTOs.FefoDtos;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
-using LabConsumableExpiryTracker.Domain.Services.Interfaces;
 using Microsoft.Extensions.Logging;
+using ILotSelectionService = LabConsumableExpiryTracker.Application.Services.Interfaces.ILotSelectionService;
 
 namespace LabConsumableExpiryTracker.Application.Services
 {
     public class LotService : ILotService
     {
         private readonly ILotRepository _lotRepository;
+        private readonly IItemRepository _itemRepository;
+        private readonly ILotSelectionService _lotSelectionService;
         private readonly IJobRepository _jobRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<LotService> _logger;
-        private readonly ILotSelectionService _lotSelectionService;
         private readonly TimeProvider _timeProvider;
 
         public LotService(
             ILotRepository lotRepository,
+            IItemRepository itemRepository,
             IJobRepository jobRepository,
             IMapper mapper,
             IUnitOfWork unitOfWork,
@@ -31,6 +33,8 @@ namespace LabConsumableExpiryTracker.Application.Services
             TimeProvider timeProvider)
         {
             _lotRepository = lotRepository;
+            _itemRepository = itemRepository;
+            _lotSelectionService = lotSelectionService;
             _jobRepository = jobRepository;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
@@ -94,11 +98,14 @@ namespace LabConsumableExpiryTracker.Application.Services
         {
             _logger.LogDebug("Validating lot creation request for item {ItemId}", createLotDto.ItemId);
 
-            if (createLotDto.ItemId == Guid.Empty)
+            if (!Guid.TryParse(createLotDto.ItemId, out var itemId))
             {
                 _logger.LogWarning("Lot creation rejected because ItemId is empty");
-                return ServiceResult<LotDto>.ErrorResult("ItemId is required.");
+                return ServiceResult<LotDto>.ErrorResult(
+                    "Validation failed.",
+                    new List<string> { "ItemId must be a valid GUID.." });
             }
+
 
             if (string.IsNullOrWhiteSpace(createLotDto.LotNumber))
             {
@@ -117,7 +124,7 @@ namespace LabConsumableExpiryTracker.Application.Services
             }
 
             var duplicate = await _lotRepository.ExistsAsync(
-                createLotDto.ItemId,
+                itemId,
                 createLotDto.LotNumber.Trim(),
                 createLotDto.ExpiryDate,
                 ct);
@@ -128,13 +135,16 @@ namespace LabConsumableExpiryTracker.Application.Services
                     "Duplicate lot creation rejected for item {ItemId} with expiry date {ExpiryDate}",
                     createLotDto.ItemId,
                     createLotDto.ExpiryDate);
-                return ServiceResult<LotDto>.ErrorResult("A lot with the same item, lot number, and expiry date already exists.");
+                return ServiceResult<LotDto>.ErrorResult(
+                    "A lot with the same item, lot number, and expiry date already exists.");
             }
 
             var lot = _mapper.Map<Lot>(createLotDto);
             var created = await _lotRepository.AddAsync(lot, ct);
             await _unitOfWork.SaveChangesAsync(ct);
-            var response = _mapper.Map<LotDto>(created);
+            var item = await _itemRepository.GetByIdAsync(itemId, ct);
+            var now = _timeProvider.GetUtcNow();
+            var response = MapToDto(created, item!.ExpiringSoonDays, now);
 
             _logger.LogInformation(
                 "Lot {LotId} created successfully for item {ItemId}",
@@ -193,7 +203,8 @@ namespace LabConsumableExpiryTracker.Application.Services
         }
 
         // Lot Summary 
-        public async Task<ServiceResult<IEnumerable<LotSummaryDto>>> GetSummaryByItemId(Guid itemId, CancellationToken ct)
+        public async Task<ServiceResult<IEnumerable<LotSummaryDto>>> GetSummaryByItemId(Guid itemId,
+            CancellationToken ct)
         {
             _logger.LogDebug("Retrieving lot summaries for item {ItemId}", itemId);
 
@@ -221,7 +232,6 @@ namespace LabConsumableExpiryTracker.Application.Services
                 summaries,
                 "Lot summaries retrieved successfully.");
         }
-        
         public async Task<ServiceResult<FefoAllocationPreviewDto>> RequestFefoAllocation(
             Guid jobId,
             Guid itemId,
@@ -240,6 +250,7 @@ namespace LabConsumableExpiryTracker.Application.Services
                 _logger.LogWarning("FEFO allocation rejected because job {JobId} was not found", jobId);
                 return ServiceResult<FefoAllocationPreviewDto>.ErrorResult("Job not found.");
             }
+
             if (job.Status != JobStatus.InProgress)
             {
                 _logger.LogWarning(
@@ -262,20 +273,18 @@ namespace LabConsumableExpiryTracker.Application.Services
             var candidates = (await _lotRepository.GetByItemIdAsync(itemId, ct)).ToList();
             var now = _timeProvider.GetUtcNow();
 
-            IReadOnlyList<LotAllocation> allocations;
-            try
-            {
-                allocations = _lotSelectionService.Allocate(candidates, requestedQuantity, now);
-            }
-            catch (InvalidOperationException ex)
+            var allocationResult = await _lotSelectionService.AllocateAsync(itemId, requestedQuantity, now, ct);
+
+            if (!allocationResult.Success)
             {
                 _logger.LogWarning(
                     "FEFO allocation rejected for item {ItemId}: {Reason}",
                     itemId,
-                    ex.Message);
-                return ServiceResult<FefoAllocationPreviewDto>.ErrorResult(ex.Message);
+                    allocationResult.Message);
+                return ServiceResult<FefoAllocationPreviewDto>.ErrorResult(allocationResult.Message);
             }
-            
+
+            var allocations = allocationResult.Data!;
             var candidatesById = candidates.ToDictionary(lot => lot.Id);
 
             var lines = allocations
@@ -293,7 +302,7 @@ namespace LabConsumableExpiryTracker.Application.Services
                     };
                 })
                 .ToList();
-            
+
             var baseUnit = candidates[0].Item.BaseUnit;
 
             var response = new FefoAllocationPreviewDto
@@ -317,6 +326,24 @@ namespace LabConsumableExpiryTracker.Application.Services
             return ServiceResult<FefoAllocationPreviewDto>.SuccessResult(
                 response,
                 "Lots allocated successfully.");
+        }
+
+        private LotDto MapToDto(
+           Lot lot,
+           int warningDays,
+           DateTimeOffset now)
+        {
+            var response = _mapper.Map<LotDto>(lot);
+
+            response.ExpiryCondition =
+                lot.GetExpiryCondition(now, warningDays);
+
+            response.IsEligible =
+                lot.IsEligible(now);
+
+            response.EvaluatedAt = now;
+
+            return response;
         }
     }
 }

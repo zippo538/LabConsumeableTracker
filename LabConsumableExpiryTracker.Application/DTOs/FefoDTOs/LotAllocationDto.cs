@@ -1,4 +1,6 @@
-namespace LabConsumableExpiryTracker.Application.DTOs.FefoDTOs;
+using LabConsumableExpiryTracker.Domain.Enums;
+
+namespace LabConsumableExpiryTracker.Application.DTOs.FefoDtos;
 
 public class LotAllocationDto
 {
