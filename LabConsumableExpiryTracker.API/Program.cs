@@ -22,8 +22,10 @@ using Serilog;
 using LabConsumableExpiryTracker.Mappings;
 using LabConsumableExpiryTracker.Application.Common.ErrorHandling;
 using LabConsumableExpiryTracker.Application.Validators.Helpers;
-using ILotSelectionService = LabConsumableExpiryTracker.Application.Services.Interfaces.ILotSelectionService;
-using LotSelectionService = LabConsumableExpiryTracker.Application.Services.LotSelectionService;
+using Microsoft.AspNetCore.Mvc;
+using LabConsumableExpiryTracker.Application.Common.Result;
+using Microsoft.Extensions.Options;
+using LabConsumableExpiryTracker.Application.Common;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -73,14 +75,7 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
-// ---Serialize Json ---
-builder.Services
-    .AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-        options.JsonSerializerOptions.Converters.Add(new SafeGuidConverter());
-    });
+
 
 // --- Application / Infrastructure Services ---
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
@@ -93,14 +88,11 @@ builder.Services.AddScoped<ILotRepository, LotRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IJobRepository, JobRepository>();
 
-builder.Services.AddScoped<ILotSelectionService, LotSelectionService>();
-builder.Services.AddScoped<ILotSelectionRepository, LotSelectionRepository>();
-
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IdentitySeeder>();
 
-// --- Time Provider System  ---
+
 builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -136,6 +128,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new SafeGuidConverter());
     });
 // --- Controllers & Swagger ---
 builder.Services.AddEndpointsApiExplorer();

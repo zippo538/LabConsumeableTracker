@@ -2,6 +2,7 @@
 using AutoMapper;
 using LabConsumableExpiryTracker.Application.DTOs.ItemDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
+using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 
 namespace LabConsumableExpiryTracker.Mappings
@@ -23,22 +24,13 @@ namespace LabConsumableExpiryTracker.Mappings
             destination => destination.StockStatus,
             options => options.Ignore());
 
-            CreateMap<CreateItemDto, Item>()
-                .ConstructUsing(source => new Item(
-                    Guid.NewGuid(),
-                    source.Code,
-                    source.Name,
-                    source.BaseUnit,
-                    source.MinimumStock,
-                    source.ExpiringSoonDays));
-
             CreateMap<UpdateItemDto, Item>();
 
             CreateMap<Lot, LotSummaryDto>()
-        .ForMember(
+            .ForMember(
             destination => destination.LotId,
             options => options.MapFrom(source => source.Id))
-        .ForMember(
+            .ForMember(
             destination => destination.Status,
             options => options.MapFrom(source => source.AdministrativeStatus.ToString()));
 
