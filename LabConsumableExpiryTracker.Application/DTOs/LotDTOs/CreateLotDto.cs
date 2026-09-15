@@ -3,7 +3,7 @@ namespace LabConsumableExpiryTracker.Application.DTOs.LotDTOs
 {
     public class CreateLotDto
     {
-        public Guid ItemId { get; set; }
+        public string ItemId { get; set; } = string.Empty;
         public string LotNumber { get; set; } = string.Empty;
         public string? SupplierLotNumber { get; set; }
         public string SupplierName { get; set; } = string.Empty;

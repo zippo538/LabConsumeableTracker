@@ -8,7 +8,7 @@ namespace LabConsumableExpiryTracker.Application.DTOs.ItemDTOs
 
         public string Name { get; set; } = string.Empty;
 
-        public UnitOfMeasure BaseUnit { get; set; }
+        public string BaseUnit { get; set; } = string.Empty;
 
         public decimal MinimumStock { get; set; }
 

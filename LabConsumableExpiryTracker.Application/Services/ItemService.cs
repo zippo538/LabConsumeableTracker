@@ -3,6 +3,7 @@ using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.ItemDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
+using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.Extensions.Logging;
 
@@ -98,7 +99,6 @@ namespace LabConsumableExpiryTracker.Application.Services
         public async Task<ServiceResult<ItemDto>> CreateItem(CreateItemDto dto, CancellationToken ct)
         {
             _logger.LogDebug("Validating item creation request for code {ItemCode}", dto.Code);
-
             var existing = await _itemRepository.GetByCodeAsync(dto.Code, ct);
             if (existing is not null)
             {
@@ -107,8 +107,21 @@ namespace LabConsumableExpiryTracker.Application.Services
                     dto.Code);
                 return ServiceResult<ItemDto>.ErrorResult("Item code already exists.");
             }
+            
+            if (!Enum.TryParse<UnitOfMeasure>(dto.BaseUnit, true, out var baseUnit))
+            {
+                return ServiceResult<ItemDto>.ErrorResult(
+                    "Validation failed.",
+                    new List<string> { "BaseUnit tidak valid." });
+            }
 
-            var item = _mapper.Map<Item>(dto);
+            var item = new Item(
+                Guid.NewGuid(),
+                dto.Code,
+                dto.Name,
+                baseUnit,
+                dto.MinimumStock,
+                dto.ExpiringSoonDays);
             var created = await _itemRepository.AddAsync(item, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             var response = _mapper.Map<ItemDto>(created);
