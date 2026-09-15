@@ -1,7 +1,5 @@
-
-using Bogus.DataSets;
-using FluentValidation;
 using LabConsumableExpiryTracker.Application.Common.Result;
+using LabConsumableExpiryTracker.Application.DTOs.FefoDtos;
 using LabConsumableExpiryTracker.Application.DTOs.JobDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
@@ -16,10 +14,12 @@ namespace LabConsumableExpiryTracker.API.Controllers
     public class JobController : ControllerBase
     {
         private readonly IJobService _jobService;
+        private readonly ILotService _lotService;
         public JobController(
-            IJobService jobService)
+            IJobService jobService, ILotService lotService)
         {
             _jobService = jobService;
+            _lotService = lotService;
         }
         [HttpGet]
         [Authorize(Roles = nameof(UserRole.Scientist))]
@@ -94,5 +94,20 @@ namespace LabConsumableExpiryTracker.API.Controllers
             ? Ok(response)
             : BadRequest(response);
         }
+        
+        [HttpPost("{jobId:guid}/allocations/preview")]
+        [Authorize(Roles = nameof(UserRole.Scientist))]
+        public async Task<ActionResult<ServiceResult<FefoAllocationPreviewDto>>> PreviewAllocation(
+            Guid jobId,
+            [FromBody] RequestFefoAllocationDto request,
+            CancellationToken ct)
+        {
+            var response = await _lotService.RequestFefoAllocation(
+                jobId, request.ItemId, request.RequestedQuantity, ct);
+
+            return response.Success ? Ok(response) : BadRequest(response);
+        }
+
+
     }
 }
