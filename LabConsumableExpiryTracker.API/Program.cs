@@ -22,6 +22,8 @@ using Serilog;
 using LabConsumableExpiryTracker.Mappings;
 using LabConsumableExpiryTracker.Application.Common.ErrorHandling;
 using LabConsumableExpiryTracker.Application.Validators.Helpers;
+using ILotSelectionService = LabConsumableExpiryTracker.Application.Services.Interfaces.ILotSelectionService;
+using LotSelectionService = LabConsumableExpiryTracker.Application.Services.LotSelectionService;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -90,6 +92,9 @@ builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<ILotRepository, LotRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IJobRepository, JobRepository>();
+
+builder.Services.AddScoped<ILotSelectionService, LotSelectionService>();
+builder.Services.AddScoped<ILotSelectionRepository, LotSelectionRepository>();
 
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
