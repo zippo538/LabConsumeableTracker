@@ -4,6 +4,7 @@ using LabConsumableExpiryTracker.Application.DTOs.ItemDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
+using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -30,7 +31,8 @@ namespace LabConsumableExpiryTracker.API.Controllers
 
         [HttpGet]
         [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
-        public async Task<ActionResult<ServiceResult<IEnumerable<ItemDto>>>> GetAll(
+        public async Task<ActionResult<ServiceResult<IEnumerable<ItemDto>>>> GetAll
+        (
             CancellationToken ct = default)
         {
             var response = await _itemService.GetAllItem(ct);
@@ -56,7 +58,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
             [FromBody] CreateItemDto dto,
             CancellationToken ct = default)
         {
-          
+
             var response = await _itemService.CreateItem(dto, ct);
 
             if (!response.Success)
@@ -64,7 +66,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
                 return BadRequest(response);
             }
 
-            return response.Success 
+            return response.Success
             ? CreatedAtAction(nameof(GetById), new { id = response.Data!.Id }, response)
             : Conflict(response);
 
@@ -77,7 +79,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
             [FromBody] UpdateItemDto dto,
             CancellationToken ct = default)
         {
-           
+
             var response = await _itemService.UpdateItem(id, dto, ct);
 
             return response.Success ? Ok(response) : Conflict(response);
@@ -103,6 +105,18 @@ namespace LabConsumableExpiryTracker.API.Controllers
         {
             var response = await _lotService.GetSummaryByItemId(itemId, ct);
             return response.Success ? Ok(response) : BadRequest(response);
+        }
+        [HttpGet("paged")]
+        [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
+        public async Task<ActionResult<ServiceResult<OffsetPagedResult<ItemDto>>>> GetAllOffsetPage(
+            [FromQuery] int offset = 0,
+            [FromQuery] int limit = 20,
+            CancellationToken ct = default)
+        {
+            var response = await _itemService.GetAllItemOffsetPage(offset, limit, ct);
+            return response.Success
+                ? Ok(response)
+                : BadRequest(response);
         }
     }
 }

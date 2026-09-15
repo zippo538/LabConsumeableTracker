@@ -32,7 +32,7 @@ namespace LabConsumableExpiryTracker.Infrastructure.Persistence.Seeders
         private static readonly IReadOnlyList<(string Name, string Code, UnitOfMeasure Unit)>
         SeedData =
         [
-            ("CONSTELLATION® dPCR Master Mix 2X", "DPCR-MM-001", UnitOfMeasure.Milliliter),
+        ("CONSTELLATION® dPCR Master Mix 2X", "DPCR-MM-001", UnitOfMeasure.Milliliter),
         ("Nuclease-Free Water (PCR Grade)", "DPCR-NFW-002", UnitOfMeasure.Milliliter),
         ("dPCR Partitioning Oil", "DPCR-OIL-003", UnitOfMeasure.Milliliter),
         ("Positive Control DNA Standard", "DPCR-STD-004", UnitOfMeasure.Vial),

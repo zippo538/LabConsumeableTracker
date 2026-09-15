@@ -326,6 +326,51 @@ namespace LabConsumableExpiryTracker.Application.Services
                 response,
                 "Lots allocated successfully.");
         }
+        public async Task<ServiceResult<OffsetPagedResult<LotDto>>> GetAllLotOffsetPage(int offset, int limit, CancellationToken ct)
+        {
+            if (offset < 0)
+            {
+                return ServiceResult<OffsetPagedResult<LotDto>>.ErrorResult(
+                    "Offset tidak boleh kurang dari 0.");
+            }
+
+            if (limit is < 1 or > 100)
+            {
+                return ServiceResult<OffsetPagedResult<LotDto>>.ErrorResult(
+                    "Limit harus berada antara 1 sampai 100.");
+            }
+
+            _logger.LogDebug(
+                "Retrieving lots with offset {Offset} and limit {Limit}",
+                offset,
+                limit);
+
+            var lotPage = await _lotRepository
+                .GetAllWithItemAsyncOffsetPage(offset, limit, ct);
+
+            var data = lotPage.Items
+                .Select(lot => _mapper.Map<LotDto>(lot))
+                .ToList();
+
+            var responseData = new OffsetPagedResult<LotDto>
+            {
+                Items = data,
+                Offset = lotPage.Offset,
+                Limit = lotPage.Limit,
+                TotalCount = lotPage.TotalCount
+            };
+
+            _logger.LogInformation(
+                "Retrieved {LotCount} lots with offset {Offset} and limit {Limit}",
+                data.Count,
+                offset,
+                limit);
+
+            return ServiceResult<OffsetPagedResult<LotDto>>.SuccessResult(
+                responseData,
+                "Lots retrieved successfully.");
+        }
+
 
         private LotDto MapToDto(
             Lot lot,
@@ -344,5 +389,7 @@ namespace LabConsumableExpiryTracker.Application.Services
 
             return response;
         }
+
+
     }
 }

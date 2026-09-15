@@ -36,6 +36,40 @@ namespace LabConsumableExpiryTracker.Infrastructure.Repositories
             return items;
         }
 
+        public async Task<OffsetPagedResult<Item>> GetAllWithLotsAsyncOffsetPaged(
+            int offset, 
+            int limit, 
+            CancellationToken ct = default)
+        {
+            _logger.LogDebug($"Retrieving items of {limit}");
+            if (offset < 0)
+                throw new ArgumentOutOfRangeException(nameof(offset));
+
+            if (limit is < 1 or > 100)
+                throw new ArgumentOutOfRangeException(nameof(limit));
+
+            var query = _context.Items
+                .AsNoTracking()
+                .Include(item => item.Lots)
+                .OrderBy(item => item.Code);
+
+            var totalCount = await query.CountAsync(ct);
+
+            var items = await query
+                .Skip(offset)
+                .Take(limit)
+                .ToListAsync(ct);
+            _logger.LogDebug($"Querry success retrive {items} with total count {totalCount}");
+
+            return new OffsetPagedResult<Item>
+            {
+                Items = items,
+                Offset = offset,
+                Limit = limit,
+                TotalCount = totalCount
+            };
+        }
+
         public async Task<Item?> GetByCodeAsync(
             string code,
             CancellationToken ct = default)

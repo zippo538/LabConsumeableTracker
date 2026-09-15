@@ -45,8 +45,8 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
 
         return exists;
     }
-    
-    public new async Task<IReadOnlyList<Lot>> GetAllWithItemAsync(
+
+    public async Task<IReadOnlyList<Lot>> GetAllWithItemAsync(
         CancellationToken ct = default)
     {
         _logger.LogDebug("Retrieving all lots with item navigation included");
@@ -59,6 +59,37 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
         _logger.LogDebug("Retrieved {LotCount} lots", lots.Count);
 
         return lots;
+    }
+
+    public async Task<OffsetPagedResult<Lot>> GetAllWithItemAsyncOffsetPage(int offset, int limit, CancellationToken ct = default)
+    {
+        if (offset < 0)
+            throw new ArgumentOutOfRangeException(nameof(offset));
+
+        if (limit is < 1 or > 100)
+            throw new ArgumentOutOfRangeException(nameof(limit));
+        _logger.LogDebug($"Retrieving lot of {limit}");
+
+        var query = _context.Lots
+            .AsNoTracking()
+            .OrderBy(lot => lot.ExpiryDate)
+            .ThenBy(lot => lot.LotNumber);
+
+        var totalCount = await query.CountAsync(ct);
+
+        var lots = await query
+            .Skip(offset)
+            .Take(limit)
+            .ToListAsync(ct);
+        _logger.LogDebug($"Querry success retrive {lots} with total count {totalCount}");
+
+        return new OffsetPagedResult<Lot>
+        {
+            Items = lots,
+            Offset = offset,
+            Limit = limit,
+            TotalCount = totalCount
+        };
     }
 
     public async Task<Lot?> GetByIdWithItemAsync(

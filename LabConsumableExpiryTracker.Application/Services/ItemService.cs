@@ -107,7 +107,7 @@ namespace LabConsumableExpiryTracker.Application.Services
                     dto.Code);
                 return ServiceResult<ItemDto>.ErrorResult("Item code already exists.");
             }
-            
+
             if (!Enum.TryParse<UnitOfMeasure>(dto.BaseUnit, true, out var baseUnit))
             {
                 return ServiceResult<ItemDto>.ErrorResult(
@@ -204,6 +204,73 @@ namespace LabConsumableExpiryTracker.Application.Services
             return ServiceResult<bool>.SuccessResult(
                 true,
                 "Item deleted successfully.");
+        }
+
+        public async Task<ServiceResult<OffsetPagedResult<ItemDto>>> GetAllItemOffsetPage(int offset, int limit, CancellationToken ct)
+        {
+            if (offset < 0)
+            {
+                return ServiceResult<OffsetPagedResult<ItemDto>>.ErrorResult(
+                    "Offset tidak boleh kurang dari 0.");
+            }
+
+            if (limit is < 1 or > 100)
+            {
+                return ServiceResult<OffsetPagedResult<ItemDto>>.ErrorResult(
+                    "Limit harus berada antara 1 sampai 100.");
+            }
+
+            
+            _logger.LogDebug("Retrieving items with offset {Offset} and limit {Limit}",offset,limit);
+
+            var itemPage = await _itemRepository
+                .GetAllWithLotsAsyncOffsetPaged(offset, limit, ct);
+
+            var today = DateOnly.FromDateTime(
+                _timeProvider.GetUtcNow().UtcDateTime);
+
+            var itemIds = itemPage.Items
+                .Select(item => item.Id)
+                .ToArray();
+
+            var usableQuantities =
+                await _lotRepository.GetUsableQuantityByItemIdsAsync(
+                    itemIds,
+                    today,
+                    ct);
+
+            var data = itemPage.Items
+                .Select(item =>
+                {
+                    var totalUsableQuantity =
+                        usableQuantities.GetValueOrDefault(item.Id, 0m);
+
+                    var dto = _mapper.Map<ItemDto>(item);
+
+                    dto.TotalRemainingQuantity = totalUsableQuantity;
+                    dto.StockStatus = item.GetStockStatus(
+                        totalUsableQuantity);
+
+                    return dto;
+                })
+                .ToList();
+
+            var responseData = new OffsetPagedResult<ItemDto>
+            {
+                Items = data,
+                Offset = itemPage.Offset,
+                Limit = itemPage.Limit,
+                TotalCount = itemPage.TotalCount
+            };
+
+            _logger.LogInformation(
+                "Retrieved {ItemCount} items with stock evaluated on {EvaluationDate}",
+                data.Count,
+                today);
+
+            return ServiceResult<OffsetPagedResult<ItemDto>>.SuccessResult(
+                responseData,
+                "Items retrieved successfully.");
         }
     }
 }
