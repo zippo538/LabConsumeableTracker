@@ -132,11 +132,10 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
             .HasDatabaseName("ux_lots_item_id_lot_number");
         builder.HasIndex(lot => new { lot.ItemId, lot.AdministrativeStatus, lot.ExpiryDate, lot.ReceivedAt })
             .HasDatabaseName("ix_lots_fefo");
-
-        // SubLotId pada model lama diperlakukan sebagai FK menuju Lot.Id.
+        
         builder.HasMany<Consumption>()
             .WithOne()
-            .HasForeignKey(consumption => consumption.SubLotId)
+            .HasForeignKey(consumption => consumption.LotId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany<Disposal>()
@@ -182,13 +181,13 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
         builder.HasKey(consumption => consumption.Id);
         builder.Property(consumption => consumption.Id).HasColumnName("id").ValueGeneratedNever();
         builder.Property(consumption => consumption.JobId).HasColumnName("job_id").IsRequired();
-        builder.Property(consumption => consumption.SubLotId).HasColumnName("lot_id").IsRequired();
+        builder.Property(consumption => consumption.LotId).HasColumnName("lot_id").IsRequired();
         builder.Property(consumption => consumption.Quantity).HasColumnName("quantity").HasPrecision(18, 3).IsRequired();
         builder.Property(consumption => consumption.ConsumedAt).HasColumnName("consumed_at").HasColumnType("timestamp with time zone").IsRequired();
         builder.Property(consumption => consumption.ConsumedBy).HasColumnName("consumed_by").IsRequired();
 
         builder.HasIndex(consumption => consumption.JobId).HasDatabaseName("ix_consumptions_job_id");
-        builder.HasIndex(consumption => consumption.SubLotId).HasDatabaseName("ix_consumptions_lot_id");
+        builder.HasIndex(consumption => consumption.LotId).HasDatabaseName("ix_consumptions_lot_id");
     }
 
     private static void ConfigureDisposal(ModelBuilder modelBuilder)

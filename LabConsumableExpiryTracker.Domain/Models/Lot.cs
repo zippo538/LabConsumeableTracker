@@ -97,6 +97,25 @@ public class Lot
 
         RemainingQuantity -= quantity;
     }
+
+    public Consumption Consume(Guid jobId, decimal quantity, DateTimeOffset now, Guid consumedBy)
+    {
+        
+        if (!IsEligible(now))
+        {
+            throw new InvalidOperationException(
+                $"Lot '{LotNumber}' is no longer eligible for consumption.");
+        }
+        UpdateRemainingQuantity(quantity);
+
+        if (RemainingQuantity  <= 0)
+        {
+            AdministrativeStatus = LotAdministrativeStatus.Depleted;
+        }
+ 
+        return new Consumption(Guid.NewGuid(), jobId, Id, quantity, now, consumedBy);
+    }
+    
     public void UpdateStorageLocation(string storageLocation)
     {
         if (string.IsNullOrWhiteSpace(storageLocation))
