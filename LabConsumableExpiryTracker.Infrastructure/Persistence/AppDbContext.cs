@@ -157,6 +157,11 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
             .HasConversion<string>()
             .HasMaxLength(50)
             .IsRequired();
+        builder.Property(j => j.Description)
+            .HasColumnName("description")
+            .IsRequired();
+
+        
         builder.Property(job => job.StartedAt).HasColumnName("started_at").HasColumnType("timestamp with time zone");
         builder.Property(job => job.CompletedAt).HasColumnName("completed_at").HasColumnType("timestamp with time zone");
 

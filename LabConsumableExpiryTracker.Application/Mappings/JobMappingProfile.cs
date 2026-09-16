@@ -14,6 +14,11 @@ namespace LabConsumableExpiryTracker.Application.Mappings
                 option => option.MapFrom(
                 source => source.JobNumber
                 )
+            ) .ForMember(
+                destination => destination.Description,
+                option => option.MapFrom(
+                    source => source.Description
+                )
             )
             .ForMember(
                 destination => destination.Status,

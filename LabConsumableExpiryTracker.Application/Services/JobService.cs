@@ -33,24 +33,20 @@ namespace LabConsumableExpiryTracker.Application.Services
         {
             if (dto == null)
             {
-                return ServiceResult<JobDto>.ErrorResult(
-               "Request cannot be null."
-           );
+                return ServiceResult<JobDto>.ErrorResult("Request cannot be null." );
             }
-
             if (string.IsNullOrWhiteSpace(dto.JobNumber))
             {
                 return ServiceResult<JobDto>.ErrorResult("Job number is required.");
             }
             var jobNumber = dto.JobNumber.Trim();
-
+ 
             var existing = await _jobRepository.ExistsByJobNumberAsync(jobNumber, ct);
             if (existing)
             {
                 return ServiceResult<JobDto>.ErrorResult($"Job number '{jobNumber}' already exists.");
             }
-
-            var job = new Job(Guid.NewGuid(), jobNumber);
+            var job = new Job(Guid.NewGuid(), jobNumber, dto.Description);
             var created = await _jobRepository.AddAsync(job, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             var response = _mapper.Map<JobDto>(created);
@@ -85,16 +81,32 @@ namespace LabConsumableExpiryTracker.Application.Services
                 response);
 
         }
-        public async Task<ServiceResult<JobDto>> UpdateStatusAsync(Guid id, UpdateJobDto dto, CancellationToken ct = default)
+        public async Task<ServiceResult<JobDto>> UpdateStatusAsync(
+            Guid id,
+            UpdateJobDto dto,
+            CancellationToken ct = default)
         {
             ArgumentNullException.ThrowIfNull(dto);
-            return dto.Status switch
+
+            var job = await _jobRepository.GetByIdAsync(id, ct);
+
+            if (job is null)
+                return ServiceResult<JobDto>.ErrorResult("Job not found.");
+
+            if (!string.IsNullOrWhiteSpace(dto.Description))
+            {
+                job.UpdateDescription(dto.Description);
+            }
+
+            var result = dto.Status switch
             {
                 JobStatus.InProgress => await StartAsync(id, ct),
                 JobStatus.Completed => await CompleteAsync(id, ct),
-                _ => throw new InvalidOperationException("Only InProgress and Completed are valid lifecycle updates.")
+                _ => throw new InvalidOperationException(
+                    "Only InProgress and Completed are valid lifecycle updates.")
             };
 
+            return result;
         }
 
         public async Task<ServiceResult<JobDto>> StartAsync(Guid id, CancellationToken ct = default)
