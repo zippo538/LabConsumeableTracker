@@ -1,6 +1,6 @@
 using FluentValidation;
 using LabConsumableExpiryTracker.Application.Common.Result;
-using LabConsumableExpiryTracker.Application.DTOs.AuditDTOs;
+using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
@@ -29,8 +29,13 @@ public sealed class AuditService : IAuditService
             ? new AuditQuery
             {
                 EventType = AuditEventType.Consumption,
-                ItemId = query.ItemId, LotId = query.LotId, JobId = query.JobId,
-                From = query.From, To = query.To, Page = query.Page, PageSize = query.PageSize
+                ItemId = query.ItemId,
+                LotId = query.LotId,
+                JobId = query.JobId,
+                From = query.From,
+                To = query.To,
+                Page = query.Page,
+                PageSize = query.PageSize
             }
             : query;
 

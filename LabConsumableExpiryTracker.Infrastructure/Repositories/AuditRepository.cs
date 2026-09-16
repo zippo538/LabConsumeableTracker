@@ -1,4 +1,4 @@
-using LabConsumableExpiryTracker.Application.DTOs.AuditDTOs;
+using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
@@ -117,9 +117,15 @@ public sealed class AuditRepository : IAuditRepository
          where consumption.Id == id
          select new ConsumptionAuditDto
          {
-             Id = consumption.Id, JobId = consumption.JobId, LotId = lot.Id, ItemId = lot.ItemId,
-             LotNumber = lot.LotNumber, Quantity = consumption.Quantity, BaseUnit = item.BaseUnit,
-             ConsumedAt = consumption.ConsumedAt, ConsumedBy = consumption.ConsumedBy
+             Id = consumption.Id,
+             JobId = consumption.JobId,
+             LotId = lot.Id,
+             ItemId = lot.ItemId,
+             LotNumber = lot.LotNumber,
+             Quantity = consumption.Quantity,
+             BaseUnit = item.BaseUnit,
+             ConsumedAt = consumption.ConsumedAt,
+             ConsumedBy = consumption.ConsumedBy
          }).FirstOrDefaultAsync(ct);
 
     public async Task<PagedResult<DisposalAuditDto>> GetDisposalsAsync(AuditQuery query, CancellationToken ct = default)
@@ -142,9 +148,15 @@ public sealed class AuditRepository : IAuditRepository
         join item in _context.Items.AsNoTracking() on lot.ItemId equals item.Id
         select new DisposalAuditDto
         {
-            Id = disposal.Id, LotId = lot.Id, ItemId = lot.ItemId, LotNumber = lot.LotNumber,
-            Quantity = disposal.Quantity, BaseUnit = item.BaseUnit, Reason = disposal.Reason,
-            DisposedAt = disposal.DisposedAt, DisposedBy = disposal.DisposedBy
+            Id = disposal.Id,
+            LotId = lot.Id,
+            ItemId = lot.ItemId,
+            LotNumber = lot.LotNumber,
+            Quantity = disposal.Quantity,
+            BaseUnit = item.BaseUnit,
+            Reason = disposal.Reason,
+            DisposedAt = disposal.DisposedAt,
+            DisposedBy = disposal.DisposedBy
         };
 
     private static IQueryable<AuditEventDto> ApplyEventFilters(IQueryable<AuditEventDto> source, AuditQuery query)

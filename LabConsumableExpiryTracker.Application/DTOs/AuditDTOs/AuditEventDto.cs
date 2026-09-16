@@ -1,6 +1,6 @@
 using LabConsumableExpiryTracker.Domain.Enums;
 
-namespace LabConsumableExpiryTracker.Application.DTOs.AuditDTOs;
+namespace LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 
 /// <summary>Unified, immutable read model for Consumption and Disposal.</summary>
 public sealed class AuditEventDto

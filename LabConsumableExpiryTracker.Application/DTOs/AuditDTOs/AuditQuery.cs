@@ -1,6 +1,6 @@
 using LabConsumableExpiryTracker.Domain.Enums;
 
-namespace LabConsumableExpiryTracker.Application.DTOs.AuditDTOs;
+namespace LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 
 /// <summary>Read-only filters shared by the audit endpoints.</summary>
 public sealed record AuditQuery
