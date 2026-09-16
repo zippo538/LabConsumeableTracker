@@ -48,7 +48,10 @@ public class LotController : ControllerBase
             return BadRequest(response);
         }
 
-        return CreatedAtAction(nameof(GetById), new { id = response.Data?.Id }, response);
+        return response.Success
+        ? CreatedAtAction(nameof(GetById), new { id = response.Data!.Id }, response)
+        : Conflict(response);
+
     }
 
     [HttpPut("{id:guid}")]
@@ -77,7 +80,7 @@ public class LotController : ControllerBase
     CancellationToken ct = default)
     {
         var response = await _lotService.GetAllSummary(ct);
-        return response.Success ? Ok(response): BadRequest(response);
+        return response.Success ? Ok(response) : BadRequest(response);
     }
 }
 

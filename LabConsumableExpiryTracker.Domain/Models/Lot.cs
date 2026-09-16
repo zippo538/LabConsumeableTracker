@@ -4,9 +4,9 @@ namespace LabConsumableExpiryTracker.Domain.Models;
 
 public class Lot
 {
-
     public Guid Id { get; private set; }
     public Guid ItemId { get; private set; }
+    public Item Item { get; private set; }
     public string LotNumber { get; private set; }
     public string? SupplierLotNumber { get; private set; }
     public DateTimeOffset ReceivedAt { get; private set; }
@@ -97,6 +97,25 @@ public class Lot
 
         RemainingQuantity -= quantity;
     }
+
+    public Consumption Consume(Guid jobId, decimal quantity, DateTimeOffset now, Guid consumedBy)
+    {
+        
+        if (!IsEligible(now))
+        {
+            throw new InvalidOperationException(
+                $"Lot '{LotNumber}' is no longer eligible for consumption.");
+        }
+        UpdateRemainingQuantity(quantity);
+
+        if (RemainingQuantity  <= 0)
+        {
+            AdministrativeStatus = LotAdministrativeStatus.Depleted;
+        }
+ 
+        return new Consumption(Guid.NewGuid(), jobId, Id, quantity, now, consumedBy);
+    }
+    
     public void UpdateStorageLocation(string storageLocation)
     {
         if (string.IsNullOrWhiteSpace(storageLocation))
@@ -110,12 +129,33 @@ public class Lot
     }
     public bool IsEligible(DateTimeOffset now)
     {
-        var today = DateOnly.FromDateTime(
-            now.UtcDateTime);
-
-        return AdministrativeStatus == LotAdministrativeStatus.Active
-            && RemainingQuantity > 0
-            && ExpiryDate >= today;
+        var today = DateOnly.FromDateTime(now.UtcDateTime);
+        return AdministrativeStatus == LotAdministrativeStatus.Active && RemainingQuantity > 0 && today < ExpiryDate;
     }
+
+    public ExpiryCondition GetExpiryCondition(DateTimeOffset now, int warningDays)
+    {
+        if (warningDays < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(warningDays), "Warning days cannot be negative.");
+        }
+        var today = DateOnly.FromDateTime(now.UtcDateTime);
+        if (today >= ExpiryDate)
+        {
+            return ExpiryCondition.Expired;
+        }
+
+        var warningStart = ExpiryDate.AddDays(-warningDays);
+        return today >= warningStart ? ExpiryCondition.ExpiringSoon : ExpiryCondition.Valid;
+    }
+    public void Dispose()
+    {
+        if (RemainingQuantity == 0)
+        {
+            AdministrativeStatus = LotAdministrativeStatus.Disposed;
+        }
+    }
+
+
 }
 

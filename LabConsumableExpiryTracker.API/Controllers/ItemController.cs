@@ -16,25 +16,20 @@ namespace LabConsumableExpiryTracker.API.Controllers
     {
         private readonly IItemService _itemService;
         private readonly ILotService _lotService;
-        private readonly IValidator<CreateItemDto> _createItemValidator;
-        private readonly IValidator<UpdateItemDto> _updateItemValidator;
+
 
 
         public ItemController(
             IItemService itemService,
-            IValidator<CreateItemDto> createItemValidator,
-            IValidator<UpdateItemDto> updateItemValidator,
             ILotService lotService
             )
         {
             _itemService = itemService;
-            _createItemValidator = createItemValidator;
-            _updateItemValidator = updateItemValidator;
             _lotService = lotService;
         }
 
         [HttpGet]
-        [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
+        [Authorize]
         public async Task<ActionResult<ServiceResult<IEnumerable<ItemDto>>>> GetAll(
             CancellationToken ct = default)
         {
@@ -61,17 +56,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
             [FromBody] CreateItemDto dto,
             CancellationToken ct = default)
         {
-            var validation = await _createItemValidator.ValidateAsync(dto, ct);
-
-            if (!validation.IsValid)
-            {
-                return BadRequest(ServiceResult<ItemDto>.ErrorResult(
-                    "Validation failed.",
-                    validation.Errors
-                        .Select(error => error.ErrorMessage)
-                        .ToList()));
-            }
-
+          
             var response = await _itemService.CreateItem(dto, ct);
 
             if (!response.Success)
@@ -79,7 +64,10 @@ namespace LabConsumableExpiryTracker.API.Controllers
                 return BadRequest(response);
             }
 
-            return CreatedAtAction(nameof(GetById),new { id = response.Data!.Id },response);
+            return response.Success 
+            ? CreatedAtAction(nameof(GetById), new { id = response.Data!.Id }, response)
+            : Conflict(response);
+
         }
 
         [HttpPut("{id:guid}")]
@@ -89,20 +77,10 @@ namespace LabConsumableExpiryTracker.API.Controllers
             [FromBody] UpdateItemDto dto,
             CancellationToken ct = default)
         {
-            var validation = await _updateItemValidator.ValidateAsync(dto, ct);
-
-            if (!validation.IsValid)
-            {
-                return BadRequest(ServiceResult<ItemDto>.ErrorResult(
-                    "Validation failed.",
-                    validation.Errors
-                        .Select(error => error.ErrorMessage)
-                        .ToList()));
-            }
-
+           
             var response = await _itemService.UpdateItem(id, dto, ct);
 
-            return response.Success ? Ok(response) : NotFound(response);
+            return response.Success ? Ok(response) : Conflict(response);
         }
 
         [HttpDelete("{id:guid}")]
@@ -124,7 +102,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
             CancellationToken ct = default)
         {
             var response = await _lotService.GetSummaryByItemId(itemId, ct);
-            return response.Success ? Ok(response): BadRequest(response);
+            return response.Success ? Ok(response) : BadRequest(response);
         }
     }
 }
