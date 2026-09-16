@@ -21,7 +21,7 @@ public class LotController : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
-    public async Task<IActionResult> GetAll(CancellationToken ct)
+    public async Task<ActionResult<ServiceResult<IEnumerable<LotDto>>>> GetAll(CancellationToken ct)
     {
         var response = await _lotService.GetAllLot(ct);
         return response.Success ? Ok(response) : BadRequest(response);
@@ -29,7 +29,7 @@ public class LotController : ControllerBase
 
     [HttpGet("{id:guid}")]
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
+    public async Task<ActionResult<ServiceResult<LotDto>>> GetById(Guid id, CancellationToken ct)
     {
         var response = await _lotService.GetByIdLot(id, ct);
         return response.Success ? Ok(response) : NotFound(response);
@@ -39,7 +39,7 @@ public class LotController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
-    public async Task<IActionResult> Create([FromBody] CreateLotDto request, CancellationToken ct)
+    public async Task<ActionResult<ServiceResult<LotDto>>> Create([FromBody] CreateLotDto request, CancellationToken ct)
     {
         var response = await _lotService.CreateLot(request, ct);
 
@@ -56,7 +56,7 @@ public class LotController : ControllerBase
 
     [HttpPut("{id:guid}")]
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateLotDto request, CancellationToken ct)
+    public async Task<ActionResult<ServiceResult<LotDto>>> Update(Guid id, [FromBody] UpdateLotDto request, CancellationToken ct)
     {
         var response = await _lotService.UpdateLot(id, request, ct);
         return response.Success ? Ok(response) : NotFound(response);
@@ -64,7 +64,7 @@ public class LotController : ControllerBase
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    public async Task<ActionResult<ServiceResult<bool>>> Delete(Guid id, CancellationToken ct)
     {
         var response = await _lotService.DeleteLot(id, ct);
         if (!response.Success)

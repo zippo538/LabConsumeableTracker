@@ -21,8 +21,7 @@ using Serilog;
 using LabConsumableExpiryTracker.Mappings;
 using LabConsumableExpiryTracker.Application.Common.ErrorHandling;
 using LabConsumableExpiryTracker.Application.Validators.Helpers;
-using LabConsumableExpiryTracker.Application.Common.CurrentUser;
-using LabConsumableExpiryTracker.API.CurrentUser;
+using LabConsumableExpiryTracker.Infrastructure.Persistence.Seeders;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -74,7 +73,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 
-// --- Application / Infrastructure Services ---
+// --- Application / Domain / Infrastructure Services ---
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<ILotService, LotService>();
 builder.Services.AddScoped<IItemService, ItemService>();
@@ -85,13 +84,16 @@ builder.Services.AddScoped<ILotRepository, LotRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IJobRepository, JobRepository>();
 builder.Services.AddScoped<ILotSelectionRepository, LotSelectionRepository>();
+builder.Services.AddScoped<IDisposalRepository, DisposalRepository>();
+builder.Services.AddScoped<IDisposalService, DisposalService>();
+builder.Services.AddScoped<IConsumptionRepository, ConsumptionRepository>();
+builder.Services.AddScoped<IAuditRepository, AuditRepository>();
+builder.Services.AddScoped<IAuditService, AuditService>();
 
-builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IdentitySeeder>();
-builder.Services.AddScoped<ICurrentUserContext, HttpContextCurrentUserContext>();
-builder.Services.AddScoped<IDashboardAlertRepository, DashboardAlertRepository>();
-builder.Services.AddScoped<IDashboardAlertService, DashboardAlertService>();
+builder.Services.AddScoped<UserSeeder>();
+
 
 builder.Services.AddSingleton(TimeProvider.System);
 

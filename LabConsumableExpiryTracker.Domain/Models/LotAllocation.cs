@@ -1,5 +1,4 @@
 namespace LabConsumableExpiryTracker.Domain.Models;
-
 public class LotAllocation
 {
     public Guid LotId { get; }
