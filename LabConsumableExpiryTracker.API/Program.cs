@@ -72,7 +72,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 
-// --- Application / Infrastructure Services ---
+// --- Application / Domain / Infrastructure Services ---
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<ILotService, LotService>();
 builder.Services.AddScoped<IItemService, ItemService>();
@@ -83,6 +83,8 @@ builder.Services.AddScoped<ILotRepository, LotRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IJobRepository, JobRepository>();
 builder.Services.AddScoped<ILotSelectionRepository, LotSelectionRepository>();
+builder.Services.AddScoped<IDisposalRepository, DisposalRepository>();
+builder.Services.AddScoped<IDisposalService, DisposalService>();
 builder.Services.AddScoped<IConsumptionRepository, ConsumptionRepository>();
 
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();

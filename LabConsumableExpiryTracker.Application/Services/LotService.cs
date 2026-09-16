@@ -27,12 +27,12 @@ namespace LabConsumableExpiryTracker.Application.Services
         public LotService(
             ILotRepository lotRepository,
             IItemRepository itemRepository,
-            ILotSelectionService lotSelectionService,
             IJobRepository jobRepository,
             IConsumptionRepository consumptionRepository,
             IMapper mapper,
             IUnitOfWork unitOfWork,
             ILogger<LotService> logger,
+            ILotSelectionService lotSelectionService,
             TimeProvider timeProvider)
         {
             _lotRepository = lotRepository;
@@ -43,7 +43,22 @@ namespace LabConsumableExpiryTracker.Application.Services
             _mapper = mapper;
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _lotSelectionService = lotSelectionService;
             _timeProvider = timeProvider;
+        }
+
+        private LotDto MapToDtoWithExpiryEngine(
+            Lot lot,
+            int warningDays,
+            DateTimeOffset now)
+        {
+            var response = _mapper.Map<LotDto>(lot);
+
+            response.ExpiryCondition = lot.GetExpiryCondition(now, warningDays);
+            response.IsEligible = lot.IsEligible(now);
+            response.EvaluatedAt = now;
+
+            return response;
         }
 
         public async Task<ServiceResult<IEnumerable<LotDto>>> GetAllLot(CancellationToken ct)
@@ -54,7 +69,7 @@ namespace LabConsumableExpiryTracker.Application.Services
             var now = _timeProvider.GetUtcNow();
 
             var response = lots
-                .Select(lot => MapToDto(lot, lot.Item.ExpiringSoonDays, now))
+                .Select(lot => MapToDtoWithExpiryEngine(lot, lot.Item.ExpiringSoonDays, now))
                 .ToList();
 
             _logger.LogInformation("All lots retrieved successfully");
@@ -64,37 +79,23 @@ namespace LabConsumableExpiryTracker.Application.Services
                 "Lots retrieved successfully.");
         }
 
-        public async Task<ServiceResult<LotDto>> GetByIdLot(
-            Guid id,
-            CancellationToken ct)
+        public async Task<ServiceResult<LotDto>> GetByIdLot(Guid id, CancellationToken ct)
         {
             _logger.LogDebug("Retrieving lot {LotId}", id);
 
             var lot = await _lotRepository.GetByIdWithItemAsync(id, ct);
-
             if (lot is null)
             {
-                _logger.LogWarning(
-                    "Lot {LotId} was not found",
-                    id);
-
+                _logger.LogWarning("Lot {LotId} was not found", id);
                 return ServiceResult<LotDto>.ErrorResult("NotFound");
             }
 
             var now = _timeProvider.GetUtcNow();
+            var response = MapToDtoWithExpiryEngine(lot, lot.Item.ExpiringSoonDays, now);
 
-            var response = MapToDto(
-                lot,
-                lot.Item.ExpiringSoonDays,
-                now);
+            _logger.LogInformation("Lot {LotId} retrieved successfully", id);
 
-            _logger.LogInformation(
-                "Lot {LotId} retrieved successfully",
-                id);
-
-            return ServiceResult<LotDto>.SuccessResult(
-                response,
-                "Lot retrieved successfully.");
+            return ServiceResult<LotDto>.SuccessResult(response);
         }
 
         public async Task<ServiceResult<LotDto>> CreateLot(CreateLotDto createLotDto, CancellationToken ct)
@@ -174,8 +175,9 @@ namespace LabConsumableExpiryTracker.Application.Services
 
             var updated = await _lotRepository.UpdateAsync(existing, ct);
             await _unitOfWork.SaveChangesAsync(ct);
+
             var now = _timeProvider.GetUtcNow();
-            var response = MapToDto(updated, updated.Item.ExpiringSoonDays, now);
+            var response = MapToDtoWithExpiryEngine(updated, updated.Item.ExpiringSoonDays, now);
 
             _logger.LogInformation("Lot {LotId} updated successfully", id);
 
@@ -234,7 +236,6 @@ namespace LabConsumableExpiryTracker.Application.Services
                 summaries,
                 "Lot summaries retrieved successfully.");
         }
-
         public async Task<ServiceResult<FefoAllocationPreviewDto>> RequestFefoAllocation(
             Guid jobId,
             Guid itemId,
@@ -486,9 +487,9 @@ namespace LabConsumableExpiryTracker.Application.Services
         }
 
         private LotDto MapToDto(
-            Lot lot,
-            int warningDays,
-            DateTimeOffset now)
+           Lot lot,
+           int warningDays,
+           DateTimeOffset now)
         {
             var response = _mapper.Map<LotDto>(lot);
 

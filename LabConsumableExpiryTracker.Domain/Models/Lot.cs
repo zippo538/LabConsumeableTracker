@@ -148,6 +148,13 @@ public class Lot
         var warningStart = ExpiryDate.AddDays(-warningDays);
         return today >= warningStart ? ExpiryCondition.ExpiringSoon : ExpiryCondition.Valid;
     }
+    public void Dispose()
+    {
+        if (RemainingQuantity == 0)
+        {
+            AdministrativeStatus = LotAdministrativeStatus.Disposed;
+        }
+    }
 
 
 }

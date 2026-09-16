@@ -1,7 +1,6 @@
 using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.ConsumptionDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.FefoDtos;
-using LabConsumableExpiryTracker.Application.DTOs.FefoDtos;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
 
 namespace LabConsumableExpiryTracker.Application.Services.Interfaces
