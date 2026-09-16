@@ -31,6 +31,20 @@ public class Disposal
         Reason = reason.Trim();
         DisposedAt = disposedAt;
     }
+    public Disposal(
+        Guid id,
+        Guid lotId,
+        decimal quantity,
+        string reason,
+        DateTimeOffset disposedAt,
+        Guid disposedBy)
+        : this(id, lotId, quantity, reason, disposedAt)
+    {
+        if (disposedBy == Guid.Empty)
+            throw new ArgumentException("Disposed by is required.", nameof(disposedBy));
+
+        DisposedBy = disposedBy;
+    }
     public static Disposal Create(Guid lotId, decimal quantity, string reason, DateTimeOffset disposedAt) =>
             new(Guid.NewGuid(), lotId, quantity, reason, disposedAt);
 

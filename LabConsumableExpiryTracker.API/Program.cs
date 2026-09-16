@@ -21,6 +21,7 @@ using Serilog;
 using LabConsumableExpiryTracker.Mappings;
 using LabConsumableExpiryTracker.Application.Common.ErrorHandling;
 using LabConsumableExpiryTracker.Application.Validators.Helpers;
+using LabConsumableExpiryTracker.Infrastructure.Persistence.Seeders;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -86,10 +87,12 @@ builder.Services.AddScoped<ILotSelectionRepository, LotSelectionRepository>();
 builder.Services.AddScoped<IDisposalRepository, DisposalRepository>();
 builder.Services.AddScoped<IDisposalService, DisposalService>();
 builder.Services.AddScoped<IConsumptionRepository, ConsumptionRepository>();
+builder.Services.AddScoped<IAuditRepository, AuditRepository>();
+builder.Services.AddScoped<IAuditService, AuditService>();
 
-builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IdentitySeeder>();
+builder.Services.AddScoped<UserSeeder>();
 
 
 builder.Services.AddSingleton(TimeProvider.System);

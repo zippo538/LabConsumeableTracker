@@ -7,7 +7,7 @@ namespace LabConsumableExpiryTracker.API.Controllers;
 
 [ApiController]
 [Route("api")]
-[Authorize(Roles = "scientis,WarehouseAdmin")]
+[Authorize]
 public sealed class AuditReadController : ControllerBase
 {
     private readonly IAuditService _auditService;
