@@ -1,4 +1,5 @@
 using LabConsumableExpiryTracker.Application.DTOs.DashboardDTOs;
+using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 
 namespace LabConsumableExpiryTracker.Application.Interfaces;
 
