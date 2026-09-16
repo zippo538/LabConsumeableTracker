@@ -1,5 +1,6 @@
 using LabConsumableExpiryTracker.Application.Common.Result;
-using LabConsumableExpiryTracker.Application.DTOs.FefoDTOs;
+using LabConsumableExpiryTracker.Application.DTOs.ConsumptionDTOs;
+using LabConsumableExpiryTracker.Application.DTOs.FefoDtos;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
 
 namespace LabConsumableExpiryTracker.Application.Services.Interfaces
@@ -16,5 +17,12 @@ namespace LabConsumableExpiryTracker.Application.Services.Interfaces
         Task<ServiceResult<bool>> DeleteLot(Guid id, CancellationToken ct);
         Task<ServiceResult<FefoAllocationPreviewDto>> RequestFefoAllocation(
             Guid jobId, Guid itemId, decimal requestedQuantity, CancellationToken ct);
+
+        Task<ServiceResult<ConsumptionResponseDto>> ConfirmConsumption(Guid jobId,
+            ConfirmConsumptionRequestDto request,
+            Guid consumedBy,
+            CancellationToken ct);
+
+
     }
 }

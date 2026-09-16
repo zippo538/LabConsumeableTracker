@@ -3,7 +3,7 @@ using LabConsumableExpiryTracker.Application.DTOs.LoginDTOs;
 
 namespace LabConsumableExpiryTracker.Application.Services.Interfaces;
 
-public interface ILoginService
+public interface IAuthService
 {
     Task<ServiceResult<LoginResponseDto>> LoginAsync(LoginRequestDto request);
     Task<ServiceResult<LoginResponseDto>> RefreshTokenAsync(string refreshToken);

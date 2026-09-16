@@ -64,7 +64,10 @@ namespace LabConsumableExpiryTracker.API.Controllers
                 return BadRequest(response);
             }
 
-            return CreatedAtAction(nameof(GetById), new { id = response.Data!.Id }, response);
+            return response.Success 
+            ? CreatedAtAction(nameof(GetById), new { id = response.Data!.Id }, response)
+            : Conflict(response);
+
         }
 
         [HttpPut("{id:guid}")]
@@ -77,7 +80,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
            
             var response = await _itemService.UpdateItem(id, dto, ct);
 
-            return response.Success ? Ok(response) : NotFound(response);
+            return response.Success ? Ok(response) : Conflict(response);
         }
 
         [HttpDelete("{id:guid}")]

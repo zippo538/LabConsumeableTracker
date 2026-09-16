@@ -1,10 +1,11 @@
-using DotNetEnv;
+using Microsoft.Extensions.Configuration;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using LabConsumableExpiryTracker.Tests.Helpers;
 
 namespace LabConsumableExpiryTracker.Tests.Repository
 {
@@ -16,14 +17,12 @@ namespace LabConsumableExpiryTracker.Tests.Repository
         private ItemRepository _repository = null!;
         private readonly List<Guid> _createdItemIds = new();
         private static string _connectionString;
-        
+
 
         [OneTimeSetUp]
         public async Task OneTimeSetUp()
         {
-        Env.TraversePath().Load();
-        _connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING_TEST") ?? throw new InvalidOperationException(
-                "Set CONNECTION_STRING before running repository tests.");
+            _connectionString = Connection.GetConnection("UnitTestConnection");
             var options = new DbContextOptionsBuilder<AppDbContext>()
                 .UseNpgsql(_connectionString)
                 .EnableSensitiveDataLogging()

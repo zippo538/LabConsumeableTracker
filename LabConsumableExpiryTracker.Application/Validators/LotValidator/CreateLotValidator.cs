@@ -13,7 +13,9 @@ public class CreateLotValidator : AbstractValidator<CreateLotDto>
 
         RuleFor(x => x.ItemId)
             .NotEmpty()
-            .WithMessage("ItemId is required.");
+            .WithMessage("ItemId is required.")
+            .Must(LotHelperValidator.ValidateGuid)
+            .WithMessage("ItemId harus berupa GUID yang valid.");
 
         RuleFor(x => x.LotNumber)
             .Cascade(CascadeMode.Stop)

@@ -8,10 +8,6 @@ public class UpdateLotValidator : AbstractValidator<UpdateLotDto>
 {
       public UpdateLotValidator()
       {
-            RuleFor(x => x.LotId)
-                  .NotEmpty()
-                  .WithMessage("LotId is required.");
-
             RuleFor(x => x.LotNumber)
                   .Cascade(CascadeMode.Stop)
                   .Must(LotHelperValidator.NotBeBlank)

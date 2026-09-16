@@ -19,8 +19,10 @@ namespace LabConsumableExpiryTracker.Application.Validators.ItemValidator
                 .MaximumLength(200).WithMessage("Item name cannot exceed 200 characters.");
 
             RuleFor(item => item.BaseUnit)
-                .Must(unit => Enum.IsDefined(typeof(UnitOfMeasure), unit))
-                .WithMessage("Base unit is invalid.");
+                .NotEmpty()
+                .WithMessage("BaseUnit wajib diisi.")
+                .Must(value => Enum.TryParse<UnitOfMeasure>(value,ignoreCase: true,out _))
+                .WithMessage("BaseUnit tidak valid.");;
 
             RuleFor(item => item.MinimumStock)
                 .GreaterThanOrEqualTo(0)

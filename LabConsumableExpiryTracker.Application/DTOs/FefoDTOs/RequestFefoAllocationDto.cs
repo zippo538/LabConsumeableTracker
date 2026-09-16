@@ -1,4 +1,4 @@
-namespace LabConsumableExpiryTracker.Application.DTOs.FefoDTOs;
+namespace LabConsumableExpiryTracker.Application.DTOs.FefoDtos;
 
 public class RequestFefoAllocationDto
 {
