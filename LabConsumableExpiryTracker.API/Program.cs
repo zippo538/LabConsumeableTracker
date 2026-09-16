@@ -85,6 +85,7 @@ builder.Services.AddScoped<IJobRepository, JobRepository>();
 builder.Services.AddScoped<ILotSelectionRepository, LotSelectionRepository>();
 builder.Services.AddScoped<IDisposalRepository, DisposalRepository>();
 builder.Services.AddScoped<IDisposalService, DisposalService>();
+builder.Services.AddScoped<IConsumptionRepository, ConsumptionRepository>();
 
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();

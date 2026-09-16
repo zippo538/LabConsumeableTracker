@@ -9,7 +9,7 @@ public class Consumption
     internal Consumption(
         Guid id,
         Guid jobId,
-        Guid subLotId,
+        Guid lotId,
         decimal quantity,
         DateTimeOffset consumedAt,
         Guid consumedBy)
@@ -17,7 +17,7 @@ public class Consumption
 
         Id = id;
         JobId = jobId;
-        SubLotId = subLotId;
+        LotId = lotId;
         Quantity = quantity;
         ConsumedAt = consumedAt;
         ConsumedBy = consumedBy;
@@ -25,7 +25,7 @@ public class Consumption
 
     public Guid Id { get; private set; }
     public Guid JobId { get; private set; }
-    public Guid SubLotId { get; private set; }
+    public Guid LotId { get; private set; }
     public decimal Quantity { get; private set; }
     public DateTimeOffset ConsumedAt { get; private set; }
     public Guid ConsumedBy { get; private set; }

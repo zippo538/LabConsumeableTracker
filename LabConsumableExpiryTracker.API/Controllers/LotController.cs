@@ -28,7 +28,6 @@ public class LotController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
         var response = await _lotService.GetByIdLot(id, ct);
