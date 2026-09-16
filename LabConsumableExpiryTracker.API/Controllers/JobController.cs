@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using LabConsumableExpiryTracker.Application.Common.Result;
+using LabConsumableExpiryTracker.Application.DTOs.ConsumptionDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.FefoDtos;
 using LabConsumableExpiryTracker.Application.DTOs.JobDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
@@ -106,6 +108,26 @@ namespace LabConsumableExpiryTracker.API.Controllers
                 jobId, request.ItemId, request.RequestedQuantity, ct);
 
             return response.Success ? Ok(response) : BadRequest(response);
+        }
+        
+        [HttpPost("{jobId:guid}/consumptions")]
+        [Authorize(Roles = nameof(UserRole.Scientist))]
+        public async Task<ActionResult<ServiceResult<ConsumptionResponseDto>>> ConfirmConsumption(
+            Guid jobId,
+            [FromBody] ConfirmConsumptionRequestDto request,
+            CancellationToken ct)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var consumedBy))
+            {
+                return Unauthorized(ServiceResult<ConsumptionResponseDto>.ErrorResult("Invalid user token."));
+            }
+ 
+            var response = await _lotService.ConfirmConsumption(jobId, request, consumedBy, ct);
+ 
+            return response.Success
+                ? Created($"/api/consumptions", response)
+                : Conflict(response);
         }
 
 
