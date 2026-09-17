@@ -1,4 +1,4 @@
-export type AppRole = 'scientis' | 'WarehouseAdmin'
+export type AppRole = 'Scientis' | 'WarehouseAdmin'
 
 export interface UserProfile {
   id: string
