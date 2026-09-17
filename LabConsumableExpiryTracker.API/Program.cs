@@ -21,6 +21,10 @@ using Serilog;
 using LabConsumableExpiryTracker.Mappings;
 using LabConsumableExpiryTracker.Application.Common.ErrorHandling;
 using LabConsumableExpiryTracker.Application.Validators.Helpers;
+using LabConsumableExpiryTracker.Infrastructure.Persistence.Seeders;
+using LabConsumableExpiryTracker.Application.Common.Mappings;
+using LabConsumableExpiryTracker.API.CurrentUser;
+using LabConsumableExpiryTracker.Application.Common.CurrentUser;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -78,18 +82,26 @@ builder.Services.AddScoped<ILotService, LotService>();
 builder.Services.AddScoped<IItemService, ItemService>();
 builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<ILotSelectionService, LotSelectionService>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IDisposalService, DisposalService>();
+builder.Services.AddScoped<IDashboardAlertService, DashboardAlertService>();
+
+
 
 builder.Services.AddScoped<ILotRepository, LotRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IJobRepository, JobRepository>();
 builder.Services.AddScoped<ILotSelectionRepository, LotSelectionRepository>();
 builder.Services.AddScoped<IDisposalRepository, DisposalRepository>();
-builder.Services.AddScoped<IDisposalService, DisposalService>();
 builder.Services.AddScoped<IConsumptionRepository, ConsumptionRepository>();
+builder.Services.AddScoped<IAuditRepository, AuditRepository>();
+builder.Services.AddScoped<IDashboardAlertRepository, DashboardAlertRepository>();
 
-builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IdentitySeeder>();
+builder.Services.AddScoped<UserSeeder>();
+builder.Services.AddScoped<ICurrentUserContext,HttpContextCurrentUserContext>(); 
 
 
 builder.Services.AddSingleton(TimeProvider.System);
@@ -100,6 +112,8 @@ builder.Services.AddScoped<IdentitySeeder>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 
+// --- HttpContext ---
+builder.Services.AddHttpContextAccessor();
 // --- FluentValidation ---
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 builder.Services.AddFluentValidationAutoValidation();
@@ -110,7 +124,9 @@ builder.Services.AddAutoMapper(
     typeof(UserMappingProfile).Assembly,
     typeof(ItemMappingProfile).Assembly,
     typeof(LotMappingProfile).Assembly,
-    typeof(JobMappingProfile).Assembly
+    typeof(JobMappingProfile).Assembly,
+    typeof(DisposalMappingProfile).Assembly,
+    typeof(UserMappingProfile).Assembly
     );
 
 // --- Serilog ---

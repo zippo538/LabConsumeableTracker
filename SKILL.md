@@ -1,10 +1,10 @@
 ---
 description: Implement or review the .NET 8 Lab Consumable Expiry
-  Tracker application according to PRD v1.3, SRS v1.2.1, and agent.md
-  v1.2.0. Preserve the canonical Item-Lot inventory model, FEFO
+  Tracker application according to PRD v1.5, SRS , and agent.md
+  . Preserve the canonical Item-Lot inventory model, FEFO
   allocation, expiry eligibility, role security, atomic transactions,
   auditability, and Clean Architecture rules.
-name: lab-consumable-expiry-tracker
+name: consumabletracker
 ---
 
 # Lab Consumable Expiry Tracker
@@ -13,7 +13,7 @@ name: lab-consumable-expiry-tracker
 
 Use these sources according to their responsibility:
 
-1.  `PRD_Lab_Consumable_Expiry_Tracker_v1_3.pdf` --- product goals,
+1.  `PRD_Lab_Consumable_Expiry_Tracker_v1_5.pdf` --- product goals,
     scope, user stories, features, acceptance criteria, and product
     decisions.
 2.  `srs.md` --- implementation requirements, requirement IDs,

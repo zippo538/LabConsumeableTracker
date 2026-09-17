@@ -6,7 +6,7 @@ public class Consumption
     {
     }
 
-    internal Consumption(
+    public Consumption(
         Guid id,
         Guid jobId,
         Guid lotId,
