@@ -5,6 +5,7 @@ using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace LabConsumableExpiryTracker.Application.Services
@@ -13,6 +14,7 @@ namespace LabConsumableExpiryTracker.Application.Services
     {
         private readonly IItemRepository _itemRepository;
         private readonly ILotRepository _lotRepository;
+        private readonly IFileStorageService _fileStorageService;
         private readonly IMapper _mapper;
         private readonly TimeProvider _timeProvider;
         private readonly IUnitOfWork _unitOfWork;
@@ -20,6 +22,7 @@ namespace LabConsumableExpiryTracker.Application.Services
 
         public ItemService(
             IItemRepository itemRepository,
+            IFileStorageService fileStorageService,
             IMapper mapper,
             TimeProvider timeProvider,
             ILotRepository lotRepository,
@@ -27,6 +30,7 @@ namespace LabConsumableExpiryTracker.Application.Services
             ILogger<ItemService> logger)
         {
             _itemRepository = itemRepository;
+            _fileStorageService = fileStorageService;
             _mapper = mapper;
             _timeProvider = timeProvider;
             _lotRepository = lotRepository;
@@ -96,23 +100,46 @@ namespace LabConsumableExpiryTracker.Application.Services
                 "Item retrieved successfully.");
         }
 
-        public async Task<ServiceResult<ItemDto>> CreateItem(CreateItemDto dto, CancellationToken ct)
+        public async Task<ServiceResult<ItemDto>> CreateItem(
+            CreateItemDto dto,
+            CancellationToken ct)
         {
-            _logger.LogDebug("Validating item creation request for code {ItemCode}", dto.Code);
+            _logger.LogDebug(
+                "Validating item creation request for code {ItemCode}",
+                dto.Code);
+
             var existing = await _itemRepository.GetByCodeAsync(dto.Code, ct);
+
             if (existing is not null)
             {
                 _logger.LogWarning(
                     "Item creation rejected because code {ItemCode} already exists",
                     dto.Code);
-                return ServiceResult<ItemDto>.ErrorResult("Item code already exists.");
+
+                return ServiceResult<ItemDto>.ErrorResult(
+                    "Item code already exists.");
             }
-            
-            if (!Enum.TryParse<UnitOfMeasure>(dto.BaseUnit, true, out var baseUnit))
+
+            if (!Enum.TryParse<UnitOfMeasure>(
+                    dto.BaseUnit,
+                    true,
+                    out var baseUnit))
             {
                 return ServiceResult<ItemDto>.ErrorResult(
                     "Validation failed.",
                     new List<string> { "BaseUnit tidak valid." });
+            }
+
+            if (dto.Image is not null)
+            {
+                var imageValidation = ValidateImage(dto.Image);
+
+                if (imageValidation is not null)
+                {
+                    return ServiceResult<ItemDto>.ErrorResult(
+                        "Validation failed.",
+                        new List<string> { imageValidation });
+                }
             }
 
             var item = new Item(
@@ -122,8 +149,32 @@ namespace LabConsumableExpiryTracker.Application.Services
                 baseUnit,
                 dto.MinimumStock,
                 dto.ExpiringSoonDays);
+
             var created = await _itemRepository.AddAsync(item, ct);
+
+            if (dto.Image is not null)
+            {
+                var extension = Path.GetExtension(dto.Image.FileName);
+                var fileName = $"{Guid.NewGuid()}{extension}";
+
+                var folder = Path.Combine(
+                    "uploads",
+                    "items",
+                    created.Id.ToString());
+
+                await using var stream = dto.Image.OpenReadStream();
+
+                var imagePath = await _fileStorageService.SaveAsync(
+                    stream,
+                    fileName,
+                    folder,
+                    ct);
+
+                created.ImagePath = imagePath;
+            }
+
             await _unitOfWork.SaveChangesAsync(ct);
+
             var response = _mapper.Map<ItemDto>(created);
 
             _logger.LogInformation(
@@ -136,53 +187,91 @@ namespace LabConsumableExpiryTracker.Application.Services
                 "Item created successfully.");
         }
 
-        public async Task<ServiceResult<ItemDto>> UpdateItem(
-            Guid id,
-            UpdateItemDto request,
-            CancellationToken ct)
+    public async Task<ServiceResult<ItemDto>> UpdateItem(
+    Guid id,
+    UpdateItemDto request,
+    CancellationToken ct)
+{
+    _logger.LogDebug("Updating item {ItemId}", id);
+
+    var item = await _itemRepository.GetByIdAsync(id, ct);
+
+    if (item is null)
+    {
+        _logger.LogWarning(
+            "Item update rejected because item {ItemId} was not found",
+            id);
+
+        return ServiceResult<ItemDto>.ErrorResult(
+            "Item not found.");
+    }
+
+    var now = _timeProvider.GetUtcNow();
+
+    var totalUsableQuantity = item.Lots
+        .Where(lot => lot.IsEligible(now))
+        .Sum(lot => lot.RemainingQuantity);
+
+    var stockStatus = item.GetStockStatus(totalUsableQuantity);
+
+    _logger.LogDebug(
+        "Item {ItemId} currently has usable quantity {UsableQuantity} and stock status {StockStatus}",
+        id,
+        totalUsableQuantity,
+        stockStatus);
+
+    item.UpdateDetails(
+        request.Name,
+        request.BaseUnit,
+        request.MinimumStock,
+        request.ExpiringSoonDays);
+
+    // Replace image if a new image is uploaded
+    if (request.Image is not null)
+    {
+        var oldImagePath = item.ImagePath;
+
+        var extension = Path.GetExtension(request.Image.FileName);
+
+        var fileName = $"{Guid.NewGuid()}{extension}";
+        var folder = $"uploads/items/{item.Id}";
+
+        await using var stream = request.Image.OpenReadStream();
+
+        var newImagePath = await _fileStorageService.SaveAsync(
+            stream,
+            fileName,
+            folder,
+            ct);
+
+        item.SetImagePath(newImagePath);
+
+        if (!string.IsNullOrWhiteSpace(oldImagePath))
         {
-            _logger.LogDebug("Updating item {ItemId}", id);
-
-            var item = await _itemRepository.GetByIdAsync(id, ct);
-
-            if (item is null)
-            {
-                _logger.LogWarning("Item update rejected because item {ItemId} was not found", id);
-                return ServiceResult<ItemDto>.ErrorResult(
-                    "Item not found.");
-            }
-
-            var now = _timeProvider.GetUtcNow();
-
-            var totalUsableQuantity = item.Lots
-                .Where(lot => lot.IsEligible(now))
-                .Sum(lot => lot.RemainingQuantity);
-
-            var stockStatus = item.GetStockStatus(
-                totalUsableQuantity);
-
-            _logger.LogDebug(
-                "Item {ItemId} currently has usable quantity {UsableQuantity} and stock status {StockStatus}",
-                id,
-                totalUsableQuantity,
-                stockStatus);
-
-            item.UpdateDetails(
-                request.Name,
-                request.BaseUnit,
-                request.MinimumStock,
-                request.ExpiringSoonDays);
-
-            var updated = await _itemRepository.UpdateAsync(item, ct);
-            await _unitOfWork.SaveChangesAsync(ct);
-            var response = _mapper.Map<ItemDto>(updated);
-
-            _logger.LogInformation("Item {ItemId} updated successfully", id);
-
-            return ServiceResult<ItemDto>.SuccessResult(
-                response,
-                "Item updated successfully.");
+            await _fileStorageService.DeleteAsync(
+                oldImagePath,
+                ct);
         }
+
+        _logger.LogInformation(
+            "Image for item {ItemId} replaced successfully",
+            id);
+    }
+
+    var updated = await _itemRepository.UpdateAsync(item, ct);
+
+    await _unitOfWork.SaveChangesAsync(ct);
+
+    var response = _mapper.Map<ItemDto>(updated);
+
+    _logger.LogInformation(
+        "Item {ItemId} updated successfully",
+        id);
+
+    return ServiceResult<ItemDto>.SuccessResult(
+        response,
+        "Item updated successfully.");
+}
 
         public async Task<ServiceResult<bool>> DeleteItem(
             Guid id,
@@ -204,6 +293,29 @@ namespace LabConsumableExpiryTracker.Application.Services
             return ServiceResult<bool>.SuccessResult(
                 true,
                 "Item deleted successfully.");
+        }
+
+        private static string? ValidateImage(IFormFile image)
+        {
+            const long maxFileSize = 5 * 1024 * 1024;
+
+            var allowedTypes = new[]
+            {
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            };
+
+            if (image.Length == 0)
+                return "Image cannot be empty.";
+
+            if (image.Length > maxFileSize)
+                return "Image cannot exceed 5 MB.";
+
+            if (!allowedTypes.Contains(image.ContentType))
+                return "Invalid image type.";
+
+            return null;
         }
     }
 }

@@ -197,6 +197,9 @@ namespace LabConsumableExpiryTracker.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("expiring_soon_days");
 
+                    b.Property<string>("ImagePath")
+                        .HasColumnType("text");
+
                     b.Property<decimal>("MinimumStock")
                         .HasPrecision(18, 3)
                         .HasColumnType("numeric(18,3)")
