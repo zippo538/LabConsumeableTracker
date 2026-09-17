@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using LabConsumableExpiryTracker.Application.Common.Result;
+using LabConsumableExpiryTracker.Application.DTOs.ConsumptionDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.FefoDtos;
 using LabConsumableExpiryTracker.Application.DTOs.JobDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
@@ -21,14 +23,15 @@ namespace LabConsumableExpiryTracker.API.Controllers
             _jobService = jobService;
             _lotService = lotService;
         }
+
         [HttpGet]
         [Authorize(Roles = nameof(UserRole.Scientist))]
         public async Task<ActionResult<ServiceResult<IReadOnlyList<JobDto>>>> GetAll(CancellationToken ct)
         {
             var response = await _jobService.GetAllAsync(ct);
             return response.Success
-            ? Ok(response)
-            : NotFound(response);
+                ? Ok(response)
+                : NotFound(response);
         }
 
 
@@ -38,26 +41,24 @@ namespace LabConsumableExpiryTracker.API.Controllers
         {
             var response = await _jobService.GetByIdAsync(id, ct);
             return response.Success
-            ? Ok(response)
-            : NotFound(response);
+                ? Ok(response)
+                : NotFound(response);
         }
 
         [HttpPost]
         [Authorize(Roles = nameof(UserRole.Scientist))]
         public async Task<ActionResult<ServiceResult<JobDto>>> Create(CreateJobDto dto, CancellationToken ct)
         {
-
             var response = await _jobService.CreateAsync(dto, ct);
             if (!response.Success)
             {
                 return BadRequest(response);
             }
             return response.Success
-            ? CreatedAtAction(nameof(GetById), new { id = response.Data!.Id }, response)
-            : Conflict(response);
-
-
+                ? CreatedAtAction(nameof(GetById), new { id = response.Data!.Id }, response)
+                : Conflict(response);
         }
+
         [HttpPut]
         [Authorize(Roles = nameof(UserRole.Scientist))]
         public async Task<ActionResult<ServiceResult<JobDto>>> Update(Guid id, UpdateJobDto dto, CancellationToken ct)
@@ -67,11 +68,10 @@ namespace LabConsumableExpiryTracker.API.Controllers
             {
                 return NotFound(response);
             }
+
             return response.Success
-            ? Ok(response)
-            : Conflict(response);
-
-
+                ? Ok(response)
+                : Conflict(response);
         }
 
         [HttpPost("{id:guid}/start")]
@@ -80,9 +80,8 @@ namespace LabConsumableExpiryTracker.API.Controllers
         {
             var response = await _jobService.StartAsync(id, ct);
             return response.Success
-            ? Ok(response)
-            : BadRequest(response);
-
+                ? Ok(response)
+                : BadRequest(response);
         }
 
         [HttpPost("{id:guid}/complete")]
@@ -91,10 +90,10 @@ namespace LabConsumableExpiryTracker.API.Controllers
         {
             var response = await _jobService.CompleteAsync(id, ct);
             return response.Success
-            ? Ok(response)
-            : BadRequest(response);
+                ? Ok(response)
+                : BadRequest(response);
         }
-        
+
         [HttpPost("{jobId:guid}/allocations/preview")]
         [Authorize(Roles = nameof(UserRole.Scientist))]
         public async Task<ActionResult<ServiceResult<FefoAllocationPreviewDto>>> PreviewAllocation(
@@ -106,6 +105,26 @@ namespace LabConsumableExpiryTracker.API.Controllers
                 jobId, request.ItemId, request.RequestedQuantity, ct);
 
             return response.Success ? Ok(response) : BadRequest(response);
+        }
+        
+        [HttpPost("{jobId:guid}/consumptions")]
+        [Authorize(Roles = nameof(UserRole.Scientist))]
+        public async Task<ActionResult<ServiceResult<ConsumptionResponseDto>>> ConfirmConsumption(
+            Guid jobId,
+            [FromBody] ConfirmConsumptionRequestDto request,
+            CancellationToken ct)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var consumedBy))
+            {
+                return Unauthorized(ServiceResult<ConsumptionResponseDto>.ErrorResult("Invalid user token."));
+            }
+ 
+            var response = await _lotService.ConfirmConsumption(jobId, request, consumedBy, ct);
+ 
+            return response.Success
+                ? Created($"/api/consumptions", response)
+                : Conflict(response);
         }
 
 

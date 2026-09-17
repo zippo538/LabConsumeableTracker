@@ -8,6 +8,7 @@ using LabConsumableExpiryTracker.Application.DTOs.UserDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
+
 namespace LabConsumableExpiryTracker.Application.Services;
 
 public class UserService : IUserService

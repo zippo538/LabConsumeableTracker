@@ -1,4 +1,3 @@
-using FluentValidation;
 using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.ItemDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
@@ -53,33 +52,26 @@ namespace LabConsumableExpiryTracker.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
         public async Task<ActionResult<ServiceResult<ItemDto>>> Create(
-            [FromBody] CreateItemDto dto,
-            CancellationToken ct = default)
+            [FromForm] CreateItemDto dto,
+            CancellationToken ct)
         {
+            var result = await _itemService.CreateItem(dto, ct);
 
-            var response = await _itemService.CreateItem(dto, ct);
-
-            if (!response.Success)
+            if (result.Data?.ImagePath is not null)
             {
-                return BadRequest(response);
+                result.Data.ImagePath = $"{Request.Scheme}://{Request.Host}/{result.Data.ImagePath}";
             }
-
-            return response.Success
-            ? CreatedAtAction(nameof(GetById), new { id = response.Data!.Id }, response)
-            : Conflict(response);
-
+            return Ok(result);
         }
 
         [HttpPut("{id:guid}")]
         [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
         public async Task<ActionResult<ServiceResult<ItemDto>>> Update(
             Guid id,
-            [FromBody] UpdateItemDto dto,
+            [FromForm] UpdateItemDto dto,
             CancellationToken ct = default)
         {
-
             var response = await _itemService.UpdateItem(id, dto, ct);
 
             return response.Success ? Ok(response) : Conflict(response);
@@ -113,7 +105,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
             [FromQuery] int limit = 20,
             CancellationToken ct = default)
         {
-            var response = await _itemService.GetAllItemOffsetPage(offset, limit, ct);
+            var response = await _itemService.GetAllItemPage(offset, limit, ct);
             return response.Success
                 ? Ok(response)
                 : BadRequest(response);

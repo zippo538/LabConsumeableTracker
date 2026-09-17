@@ -94,6 +94,258 @@ namespace LabConsumableExpiryTracker.Infrastructure.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.Consumption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("consumed_at");
+
+                    b.Property<Guid>("ConsumedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("consumed_by");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_id");
+
+                    b.Property<Guid>("LotId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lot_id");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)")
+                        .HasColumnName("quantity");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobId")
+                        .HasDatabaseName("ix_consumptions_job_id");
+
+                    b.HasIndex("LotId")
+                        .HasDatabaseName("ix_consumptions_lot_id");
+
+                    b.ToTable("consumptions", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_consumptions_quantity", "\"quantity\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.Disposal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("DisposedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("disposed_at");
+
+                    b.Property<Guid>("DisposedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("disposed_by");
+
+                    b.Property<Guid>("LotId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lot_id");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)")
+                        .HasColumnName("quantity");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("reason");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LotId")
+                        .HasDatabaseName("ix_disposals_lot_id");
+
+                    b.ToTable("disposals", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_disposals_quantity", "\"quantity\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.Item", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BaseUnit")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("base_unit");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<int>("ExpiringSoonDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("expiring_soon_days");
+
+                    b.Property<string>("ImagePath")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("MinimumStock")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)")
+                        .HasColumnName("minimum_stock");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ux_items_code");
+
+                    b.ToTable("items", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_items_expiring_soon_days", "\"expiring_soon_days\" >= 0");
+
+                            t.HasCheckConstraint("ck_items_minimum_stock", "\"minimum_stock\" >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.Job", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("JobNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("job_number");
+
+                    b.Property<DateTimeOffset?>("StartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ux_jobs_job_number");
+
+                    b.ToTable("jobs", (string)null);
+                });
+
+            modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.Lot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AdministrativeStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("status");
+
+                    b.Property<DateOnly>("ExpiryDate")
+                        .HasColumnType("date")
+                        .HasColumnName("expiry_date");
+
+                    b.Property<decimal>("InitialQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)")
+                        .HasColumnName("initial_quantity");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("item_id");
+
+                    b.Property<string>("LotNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("lot_number");
+
+                    b.Property<DateTimeOffset>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("received_at");
+
+                    b.Property<decimal>("RemainingQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)")
+                        .HasColumnName("remaining_quantity");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("row_version");
+
+                    b.Property<string>("StorageLocation")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("storage_location");
+
+                    b.Property<string>("SupplierLotNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("supplier_lot_number");
+
+                    b.Property<string>("SupplierName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("supplier_name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId", "LotNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ux_lots_item_id_lot_number");
+
+                    b.HasIndex("ItemId", "AdministrativeStatus", "ExpiryDate", "ReceivedAt")
+                        .HasDatabaseName("ix_lots_fefo");
+
+                    b.ToTable("lots", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_lots_initial_quantity", "\"initial_quantity\" >= 0");
+
+                            t.HasCheckConstraint("ck_lots_remaining_not_above_initial", "\"remaining_quantity\" <= \"initial_quantity\"");
+
+                            t.HasCheckConstraint("ck_lots_remaining_quantity", "\"remaining_quantity\" >= 0");
+                        });
+                });
+
             modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -259,6 +511,43 @@ namespace LabConsumableExpiryTracker.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.Consumption", b =>
+                {
+                    b.HasOne("LabConsumableExpiryTracker.Domain.Models.Job", null)
+                        .WithMany("Consumptions")
+                        .HasForeignKey("JobId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LabConsumableExpiryTracker.Domain.Models.Lot", null)
+                        .WithMany()
+                        .HasForeignKey("LotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.Disposal", b =>
+                {
+                    b.HasOne("LabConsumableExpiryTracker.Domain.Models.Lot", "Lot")
+                        .WithMany()
+                        .HasForeignKey("LotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Lot");
+                });
+
+            modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.Lot", b =>
+                {
+                    b.HasOne("LabConsumableExpiryTracker.Domain.Models.Item", "Item")
+                        .WithMany("Lots")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+                });
+
             modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.RefreshToken", b =>
                 {
                     b.HasOne("LabConsumableExpiryTracker.Domain.Models.ApplicationUser", "User")
@@ -324,6 +613,16 @@ namespace LabConsumableExpiryTracker.Infrastructure.Migrations
             modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.ApplicationUser", b =>
                 {
                     b.Navigation("RefreshTokens");
+                });
+
+            modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.Item", b =>
+                {
+                    b.Navigation("Lots");
+                });
+
+            modelBuilder.Entity("LabConsumableExpiryTracker.Domain.Models.Job", b =>
+                {
+                    b.Navigation("Consumptions");
                 });
 #pragma warning restore 612, 618
         }

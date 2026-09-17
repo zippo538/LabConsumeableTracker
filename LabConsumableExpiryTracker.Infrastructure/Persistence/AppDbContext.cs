@@ -9,13 +9,13 @@ namespace LabConsumableExpiryTracker.Infrastructure.Persistence;
 public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
 {
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
     public DbSet<Item> Items => Set<Item>();
     public DbSet<Lot> Lots => Set<Lot>();
     public DbSet<Job> Jobs => Set<Job>();
     public DbSet<Consumption> Consumptions => Set<Consumption>();
     public DbSet<Disposal> Disposals => Set<Disposal>();
 
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -132,16 +132,15 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
             .HasDatabaseName("ux_lots_item_id_lot_number");
         builder.HasIndex(lot => new { lot.ItemId, lot.AdministrativeStatus, lot.ExpiryDate, lot.ReceivedAt })
             .HasDatabaseName("ix_lots_fefo");
-
-        // SubLotId pada model lama diperlakukan sebagai FK menuju Lot.Id.
+        
         builder.HasMany<Consumption>()
             .WithOne()
-            .HasForeignKey(consumption => consumption.SubLotId)
+            .HasForeignKey(consumption => consumption.LotId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany<Disposal>()
             .WithOne()
-            .HasForeignKey(disposal => disposal.SubLotId)
+            .HasForeignKey(disposal => disposal.LotId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 
@@ -158,6 +157,11 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
             .HasConversion<string>()
             .HasMaxLength(50)
             .IsRequired();
+        builder.Property(j => j.Description)
+            .HasColumnName("description")
+            .IsRequired();
+
+        
         builder.Property(job => job.StartedAt).HasColumnName("started_at").HasColumnType("timestamp with time zone");
         builder.Property(job => job.CompletedAt).HasColumnName("completed_at").HasColumnType("timestamp with time zone");
 
@@ -182,13 +186,13 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
         builder.HasKey(consumption => consumption.Id);
         builder.Property(consumption => consumption.Id).HasColumnName("id").ValueGeneratedNever();
         builder.Property(consumption => consumption.JobId).HasColumnName("job_id").IsRequired();
-        builder.Property(consumption => consumption.SubLotId).HasColumnName("lot_id").IsRequired();
+        builder.Property(consumption => consumption.LotId).HasColumnName("lot_id").IsRequired();
         builder.Property(consumption => consumption.Quantity).HasColumnName("quantity").HasPrecision(18, 3).IsRequired();
         builder.Property(consumption => consumption.ConsumedAt).HasColumnName("consumed_at").HasColumnType("timestamp with time zone").IsRequired();
         builder.Property(consumption => consumption.ConsumedBy).HasColumnName("consumed_by").IsRequired();
 
         builder.HasIndex(consumption => consumption.JobId).HasDatabaseName("ix_consumptions_job_id");
-        builder.HasIndex(consumption => consumption.SubLotId).HasDatabaseName("ix_consumptions_lot_id");
+        builder.HasIndex(consumption => consumption.LotId).HasDatabaseName("ix_consumptions_lot_id");
     }
 
     private static void ConfigureDisposal(ModelBuilder modelBuilder)
@@ -200,13 +204,14 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
 
         builder.HasKey(disposal => disposal.Id);
         builder.Property(disposal => disposal.Id).HasColumnName("id").ValueGeneratedNever();
-        builder.Property(disposal => disposal.SubLotId).HasColumnName("lot_id").IsRequired();
+        builder.Property(x => x.LotId).HasColumnName("lot_id").IsRequired();
+        builder.HasOne(disposal => disposal.Lot).WithMany().HasForeignKey(disposal => disposal.LotId).OnDelete(DeleteBehavior.Restrict);
         builder.Property(disposal => disposal.Quantity).HasColumnName("quantity").HasPrecision(18, 3).IsRequired();
         builder.Property(disposal => disposal.Reason).HasColumnName("reason").HasMaxLength(500).IsRequired();
         builder.Property(disposal => disposal.DisposedAt).HasColumnName("disposed_at").HasColumnType("timestamp with time zone").IsRequired();
         builder.Property(disposal => disposal.DisposedBy).HasColumnName("disposed_by").IsRequired();
 
-        builder.HasIndex(disposal => disposal.SubLotId).HasDatabaseName("ix_disposals_lot_id");
+        builder.HasIndex(disposal => disposal.LotId).HasDatabaseName("ix_disposals_lot_id");
     }
     private static void ConfigureRefreshToken(ModelBuilder modelBuilder)
     {
