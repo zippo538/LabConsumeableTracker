@@ -164,4 +164,7 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
 
         return usableQuantities;
     }
+    public async Task<IReadOnlyList<Lot>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct) =>
+        await _context.Lots.AsNoTracking().Include(l => l.Item)
+            .Where(l => ids.Contains(l.Id)).ToListAsync(ct);
 }
