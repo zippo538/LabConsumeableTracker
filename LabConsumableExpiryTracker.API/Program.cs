@@ -96,6 +96,7 @@ builder.Services.AddScoped<IDisposalRepository, DisposalRepository>();
 builder.Services.AddScoped<IConsumptionRepository, ConsumptionRepository>();
 builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 builder.Services.AddScoped<IDashboardAlertRepository, DashboardAlertRepository>();
+builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
