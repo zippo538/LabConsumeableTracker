@@ -295,9 +295,48 @@ namespace LabConsumableExpiryTracker.Application.Services
                 true,
                 "Item deleted successfully.");
         }
-        public Task<ServiceResult<PagedResult<ItemDto>>> GetAllItemPage(int page, int pageSize, CancellationToken ct)
+        public async Task<ServiceResult<PagedResult<ItemDto>>> GetAllItemPage(int page, int pageSize, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            _logger.LogDebug("Retrieving paged items. Page: {Page}, PageSize: {PageSize}", page, pageSize);
+
+            // 1. Ambil data Item beserta Lots-nya dari repository (sudah di-paging di level DB)
+            var pagedItems = await _itemRepository.GetAllWithLotsAsyncPaged(page, pageSize, ct);
+
+            // 2. Hitung usable stock HANYA untuk item yang ada di halaman ini
+            var today = DateOnly.FromDateTime(_timeProvider.GetUtcNow().UtcDateTime);
+            var itemIds = pagedItems.Items.Select(item => item.Id).ToArray();
+
+            var usableQuantities = await _lotRepository.GetUsableQuantityByItemIdsAsync(itemIds, today, ct);
+
+            // 3. Mapping Entity ke DTO dan kalkulasi status stok
+            var itemDtos = pagedItems.Items.Select(item =>
+            {
+                var totalUsableQuantity = usableQuantities.GetValueOrDefault(item.Id, 0m);
+                var dto = _mapper.Map<ItemDto>(item);
+                dto.TotalRemainingQuantity = totalUsableQuantity;
+                dto.StockStatus = item.GetStockStatus(totalUsableQuantity);
+                return dto;
+            }).ToList();
+
+            // 4. Bungkus hasil mapping ke dalam PagedResult<ItemDto>
+            var pagedResult = new PagedResult<ItemDto>
+            {
+                Items = itemDtos,
+                Page = pagedItems.Page,
+                PageSize = pagedItems.PageSize,
+                TotalCount = pagedItems.TotalCount
+            };
+
+            _logger.LogInformation(
+                "Retrieved {ItemCount} items on page {Page} with stock evaluated on {EvaluationDate}",
+                itemDtos.Count,
+                page,
+                today);
+
+            // 5. Kembalikan sebagai ServiceResult yang sukses
+            return ServiceResult<PagedResult<ItemDto>>.SuccessResult(
+                pagedResult,
+                "Paged items retrieved successfully.");
         }
 
         private static string? ValidateImage(IFormFile image)

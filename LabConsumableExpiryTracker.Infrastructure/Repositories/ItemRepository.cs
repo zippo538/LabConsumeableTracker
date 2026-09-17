@@ -1,3 +1,4 @@
+using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Domain.Models;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
@@ -36,17 +37,17 @@ namespace LabConsumableExpiryTracker.Infrastructure.Repositories
             return items;
         }
 
-        public async Task<OffsetPagedResult<Item>> GetAllWithLotsAsyncOffsetPaged(
-            int offset, 
-            int limit, 
+        public async Task<PagedResult<Item>> GetAllWithLotsAsyncPaged(
+            int page,
+            int pageSize,
             CancellationToken ct = default)
         {
-            _logger.LogDebug($"Retrieving items of {limit}");
-            if (offset < 0)
-                throw new ArgumentOutOfRangeException(nameof(offset));
+            _logger.LogDebug($"Retrieving items of {pageSize}");
+            if (page < 0)
+                throw new ArgumentOutOfRangeException(nameof(page));
 
-            if (limit is < 1 or > 100)
-                throw new ArgumentOutOfRangeException(nameof(limit));
+            if (pageSize is < 1 or > 100)
+                throw new ArgumentOutOfRangeException(nameof(pageSize));
 
             var query = _context.Items
                 .AsNoTracking()
@@ -56,16 +57,16 @@ namespace LabConsumableExpiryTracker.Infrastructure.Repositories
             var totalCount = await query.CountAsync(ct);
 
             var items = await query
-                .Skip(offset)
-                .Take(limit)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync(ct);
             _logger.LogDebug($"Querry success retrive {items} with total count {totalCount}");
 
-            return new OffsetPagedResult<Item>
+            return new PagedResult<Item>
             {
                 Items = items,
-                Offset = offset,
-                Limit = limit,
+                Page = page,
+                PageSize = pageSize,
                 TotalCount = totalCount
             };
         }

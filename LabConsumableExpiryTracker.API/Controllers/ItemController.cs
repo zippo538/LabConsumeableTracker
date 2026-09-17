@@ -1,6 +1,7 @@
 using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.ItemDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
+using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
@@ -100,12 +101,12 @@ namespace LabConsumableExpiryTracker.API.Controllers
         }
         [HttpGet("paged")]
         [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
-        public async Task<ActionResult<ServiceResult<OffsetPagedResult<ItemDto>>>> GetAllOffsetPage(
-            [FromQuery] int offset = 0,
-            [FromQuery] int limit = 20,
+        public async Task<ActionResult<ServiceResult<PagedResult<ItemDto>>>> GetAllPage(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
             CancellationToken ct = default)
         {
-            var response = await _itemService.GetAllItemPage(offset, limit, ct);
+            var response = await _itemService.GetAllItemPage(page, pageSize,ct);
             return response.Success
                 ? Ok(response)
                 : BadRequest(response);

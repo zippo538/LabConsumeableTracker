@@ -237,9 +237,41 @@ namespace LabConsumableExpiryTracker.Application.Services
                 summaries,
                 "Lot summaries retrieved successfully.");
         }
-        public Task<ServiceResult<PagedResult<LotDto>>> GetAllLotPage(int page, int pageSize, CancellationToken ct)
+        public async Task<ServiceResult<PagedResult<LotDto>>> GetAllLotPage(int page, int pageSize, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            _logger.LogDebug("Retrieving paged lots. Page: {Page}, PageSize: {PageSize}", page, pageSize);
+
+            // 1. Ambil data Lot beserta Item-nya dari repository (sudah di-paging di level DB)
+            var pagedLots = await _lotRepository.GetAllWithItemAsyncPage(page, pageSize, ct);
+
+            // 2. Mapping Entity ke DTO dan evaluasi expiry/eligibility
+            var now = _timeProvider.GetUtcNow();
+            var lotDtos = pagedLots.Items.Select(lot =>
+            {
+                // lot.Item pasti ter-load karena menggunakan .Include(item => item.Item) di repository
+                var warningDays = lot.Item?.ExpiringSoonDays ?? 0;
+                return MapToDtoWithExpiryEngine(lot, warningDays, now);
+            }).ToList();
+
+            // 3. Bungkus hasil mapping ke dalam PagedResult<LotDto>
+            var pagedResult = new PagedResult<LotDto>
+            {
+                Items = lotDtos,
+                Page = pagedLots.Page,
+                PageSize = pagedLots.PageSize,
+                TotalCount = pagedLots.TotalCount
+            };
+
+            _logger.LogInformation(
+                "Retrieved {LotCount} lots on page {Page} with expiry evaluated at {EvaluationTime}",
+                lotDtos.Count,
+                page,
+                now);
+
+            // 4. Kembalikan sebagai ServiceResult yang sukses
+            return ServiceResult<PagedResult<LotDto>>.SuccessResult(
+                pagedResult,
+                "Paged lots retrieved successfully.");
         }
         public async Task<ServiceResult<FefoAllocationPreviewDto>> RequestFefoAllocation(
             Guid jobId,

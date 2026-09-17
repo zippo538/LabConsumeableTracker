@@ -2,6 +2,7 @@ using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.ConsumptionDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.FefoDtos;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
+using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Domain.Models;
 
 namespace LabConsumableExpiryTracker.Application.Services.Interfaces
@@ -9,7 +10,7 @@ namespace LabConsumableExpiryTracker.Application.Services.Interfaces
     public interface ILotService
     {
         Task<ServiceResult<IEnumerable<LotDto>>> GetAllLot(CancellationToken ct);
-        Task<ServiceResult<OffsetPagedResult<LotDto>>> GetAllLotOffsetPage(int offset, int limit,CancellationToken ct);
+        Task<ServiceResult<DTOs.PagedDTOs.PagedResult<LotDto>>> GetAllLotPage(int page, int pageSize, CancellationToken ct);
         Task<ServiceResult<IEnumerable<LotSummaryDto>>> GetSummaryByItemId(Guid itemId, CancellationToken ct);
         Task<ServiceResult<IEnumerable<LotSummaryDto>>> GetAllSummary(CancellationToken ct);
         Task<ServiceResult<LotDto>> GetByIdLot(Guid id, CancellationToken ct);

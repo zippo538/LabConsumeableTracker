@@ -1,3 +1,4 @@
+using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Domain.Models;
 
 namespace LabConsumableExpiryTracker.Application.Interfaces
@@ -6,9 +7,9 @@ namespace LabConsumableExpiryTracker.Application.Interfaces
     {
         Task<Item?> GetByCodeAsync(string code, CancellationToken ct = default);
         Task<IReadOnlyList<Item>> GetAllWithLotsAsync(CancellationToken ct = default);
-        Task<OffsetPagedResult<Item>> GetAllWithLotsAsyncOffsetPaged(
-            int offset,
-            int limit,
+        Task<PagedResult<Item>> GetAllWithLotsAsyncPaged(
+            int page,
+            int pageSize,
             CancellationToken ct = default);
         Task<Item?> GetByIdWithLotsAsync(Guid id, CancellationToken ct = default);
     }

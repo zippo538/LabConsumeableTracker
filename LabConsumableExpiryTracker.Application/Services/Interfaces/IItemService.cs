@@ -1,5 +1,6 @@
 using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.ItemDTOs;
+using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Domain.Models;
 
 namespace LabConsumableExpiryTracker.Application.Services.Interfaces
@@ -7,10 +8,11 @@ namespace LabConsumableExpiryTracker.Application.Services.Interfaces
     public interface IItemService
     {
         Task<ServiceResult<IEnumerable<ItemDto>>> GetAllItem(CancellationToken ct);
-        Task<ServiceResult<OffsetPagedResult<ItemDto>>> GetAllItemOffsetPage(
-            int offset,
-            int limit,
-            CancellationToken ct);
+        Task<ServiceResult<PagedResult<ItemDto>>> GetAllItemPage(
+            int page,
+            int pageSize,
+            CancellationToken ct
+            );
 
         Task<ServiceResult<ItemDto>> GetByIdItem(Guid id, CancellationToken ct);
 

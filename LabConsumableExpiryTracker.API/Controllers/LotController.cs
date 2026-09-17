@@ -1,8 +1,8 @@
 using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
+using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
-using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -85,12 +85,12 @@ public class LotController : ControllerBase
     }
     [HttpGet("paged")]
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
-    public async Task<ActionResult<ServiceResult<OffsetPagedResult<LotDto>>>> GetAllOffsetPage(
-    [FromQuery] int offset = 0,
-    [FromQuery] int limit = 20,
+    public async Task<ActionResult<ServiceResult<PagedResult<LotDto>>>> GetAllPage(
+    [FromQuery] int page = 1,
+    [FromQuery] int PageSize = 20,
     CancellationToken ct = default)
     {
-        var response = await _lotService.GetAllLotOffsetPage(offset, limit, ct);
+        var response = await _lotService.GetAllLotPage(page, PageSize, ct);
         return response.Success
             ? Ok(response)
             : BadRequest(response);

@@ -1,3 +1,4 @@
+using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
@@ -61,14 +62,14 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
         return lots;
     }
 
-    public async Task<OffsetPagedResult<Lot>> GetAllWithItemAsyncOffsetPage(int offset, int limit, CancellationToken ct = default)
+    public async Task<PagedResult<Lot>> GetAllWithItemAsyncPage(int page, int pageSize, CancellationToken ct = default)
     {
-        if (offset < 0)
-            throw new ArgumentOutOfRangeException(nameof(offset));
+        if (page < 0)
+            throw new ArgumentOutOfRangeException(nameof(page));
 
-        if (limit is < 1 or > 100)
-            throw new ArgumentOutOfRangeException(nameof(limit));
-        _logger.LogDebug($"Retrieving lot of {limit}");
+        if (pageSize is < 1 or > 100)
+            throw new ArgumentOutOfRangeException(nameof(pageSize));
+        _logger.LogDebug($"Retrieving lot of {pageSize}");
 
         var query = _context.Lots
             .AsNoTracking()
@@ -78,16 +79,16 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
         var totalCount = await query.CountAsync(ct);
 
         var lots = await query
-            .Skip(offset)
-            .Take(limit)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(ct);
         _logger.LogDebug($"Querry success retrive {lots} with total count {totalCount}");
 
-        return new OffsetPagedResult<Lot>
+        return new PagedResult<Lot>
         {
             Items = lots,
-            Offset = offset,
-            Limit = limit,
+            Page = page,
+            PageSize = pageSize,
             TotalCount = totalCount
         };
     }
