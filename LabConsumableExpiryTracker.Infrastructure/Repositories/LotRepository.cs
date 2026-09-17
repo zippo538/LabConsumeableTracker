@@ -79,7 +79,8 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
         var totalCount = await query.CountAsync(ct);
 
         var lots = await query
-            .Skip((page - 1) * pageSize)
+            .Skip((page - 1) * pageSize
+            )
             .Take(pageSize)
             .ToListAsync(ct);
         _logger.LogDebug($"Querry success retrive {lots} with total count {totalCount}");

@@ -89,7 +89,6 @@ namespace LabConsumableExpiryTracker.API.Controllers
             return response.Success ? Ok(response) : NotFound(response);
         }
 
-        //lot summary
         [HttpGet("item/{itemId:guid}/summary")]
         [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
         public async Task<ActionResult<ServiceResult<IEnumerable<LotSummaryDto>>>> GetSummaryByItemId(

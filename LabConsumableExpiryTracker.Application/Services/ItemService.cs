@@ -227,7 +227,6 @@ namespace LabConsumableExpiryTracker.Application.Services
                 request.MinimumStock,
                 request.ExpiringSoonDays);
 
-            // Replace image if a new image is uploaded
             if (request.Image is not null)
             {
                 var oldImagePath = item.ImagePath;
@@ -299,16 +298,13 @@ namespace LabConsumableExpiryTracker.Application.Services
         {
             _logger.LogDebug("Retrieving paged items. Page: {Page}, PageSize: {PageSize}", page, pageSize);
 
-            // 1. Ambil data Item beserta Lots-nya dari repository (sudah di-paging di level DB)
             var pagedItems = await _itemRepository.GetAllWithLotsAsyncPaged(page, pageSize, ct);
 
-            // 2. Hitung usable stock HANYA untuk item yang ada di halaman ini
             var today = DateOnly.FromDateTime(_timeProvider.GetUtcNow().UtcDateTime);
             var itemIds = pagedItems.Items.Select(item => item.Id).ToArray();
 
             var usableQuantities = await _lotRepository.GetUsableQuantityByItemIdsAsync(itemIds, today, ct);
 
-            // 3. Mapping Entity ke DTO dan kalkulasi status stok
             var itemDtos = pagedItems.Items.Select(item =>
             {
                 var totalUsableQuantity = usableQuantities.GetValueOrDefault(item.Id, 0m);
@@ -318,7 +314,6 @@ namespace LabConsumableExpiryTracker.Application.Services
                 return dto;
             }).ToList();
 
-            // 4. Bungkus hasil mapping ke dalam PagedResult<ItemDto>
             var pagedResult = new PagedResult<ItemDto>
             {
                 Items = itemDtos,
@@ -333,7 +328,6 @@ namespace LabConsumableExpiryTracker.Application.Services
                 page,
                 today);
 
-            // 5. Kembalikan sebagai ServiceResult yang sukses
             return ServiceResult<PagedResult<ItemDto>>.SuccessResult(
                 pagedResult,
                 "Paged items retrieved successfully.");

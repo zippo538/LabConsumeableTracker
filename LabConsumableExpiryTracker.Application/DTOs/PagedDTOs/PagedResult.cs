@@ -18,6 +18,5 @@ public  class PagedResult<T>
         TotalCount = totalCount;
     }
 
-    // Parameterless constructor untuk AutoMapper / inisialisasi objek
     public PagedResult() { }
 }
