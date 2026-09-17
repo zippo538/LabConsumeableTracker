@@ -37,11 +37,10 @@ Dokumen ini adalah panduan kerja proyek, bukan implementasi aplikasi. Nama file 
 | Sumber | Otoritas |
 | --- | --- |
 | Instruksi eksplisit terbaru pemilik proyek | Perubahan scope/keputusan yang perlu dicatat |
-| PRD v1.0 | Tujuan produk, scope, prioritas, dan acceptance criteria |
 | `diagram.mmd` | Kelas, nama member, tipe atribut, enum, relasi domain kanonis |
-| `skill(1).md` | Aturan implementasi, expiry, FEFO, transaction, dan kualitas |
-| `srs.md` | Requirement ID, traceability, use case, test, serta keputusan terbuka |
-| `agent.md` | Prosedur kerja dan rekonsiliasi sumber untuk agent |
+| `skill 2.md` | Aturan implementasi, expiry, FEFO, transaction, dan kualitas |
+| `srs 4.md` | Requirement ID, traceability, use case, test, serta keputusan terbuka |
+| `agent 2.md` | Prosedur kerja dan rekonsiliasi sumber untuk agent |
 
 Ikuti aturan `skill(1).md`: bila prosa ambigu, pertahankan kontrak domain pada diagram. Matriks ini tidak membolehkan agent menutupi kontradiksi nyata dengan memilih sumber sesuka hati. Laporkan konflik, identifikasi dampaknya, dan lanjutkan bagian yang independen.
 

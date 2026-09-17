@@ -92,7 +92,7 @@ namespace LabConsumableExpiryTracker.Infrastructure.Persistence.Seeders
                     failedUserNames.Add(account.UserName);
 
                     _logger.LogError(
-                        "Gagal membuat akun seed '{UserName}': {Errors}",
+                        "Failed Create User Seeder '{UserName}': {Errors}",
                         account.UserName,
                         Describe(creation));
 
@@ -123,14 +123,14 @@ namespace LabConsumableExpiryTracker.Infrastructure.Persistence.Seeders
             }
 
             _logger.LogInformation(
-                "User seed selesai; {Created} akun dibuat, {Skipped} akun sudah ada.",
+                "Complete User Seed; {Created} total user, {Skipped} already exist.",
                 createdCount,
                 accounts.Count - createdCount - failedUserNames.Count);
 
             if (failedUserNames.Count > 0)
             {
                 throw new InvalidOperationException(
-                    $"User seeding gagal untuk akun: {string.Join(", ", failedUserNames)}.");
+                    $"User seeding failed: {string.Join(", ", failedUserNames)}.");
             }
         }
 
