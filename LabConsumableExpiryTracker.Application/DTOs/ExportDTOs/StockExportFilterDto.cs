@@ -2,7 +2,7 @@ namespace LabConsumableExpiryTracker.Application.DTOs.ExportDTOs;
 
 public class StockExportFilterDto
 {
-    public required string Format { get; set; } // wajib "csv" untuk sekarang
+    public string Format { get; set; } = "csv";
     public Guid? ItemId { get; set; }
     public bool? IsLowStock { get; set; }
 }

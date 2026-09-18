@@ -36,7 +36,7 @@ public class ExportService : IExportService
         if (!IsValidCsvFormat(filter.Format))
         {
             return ServiceResult<IEnumerable<StockExportRowDto>>.ErrorResult(
-                "Format tidak valid. Hanya 'csv' yang didukung saat ini.");
+                "Invalid format. Only 'csv' is currently supported.");
         }
 
         var today = DateOnly.FromDateTime(_timeProvider.GetUtcNow().UtcDateTime);
@@ -80,11 +80,11 @@ public class ExportService : IExportService
     {
         if (!IsValidCsvFormat(filter.Format))
             return ServiceResult<IEnumerable<ConsumptionExportRowDto>>.ErrorResult(
-                "Format tidak valid. Hanya 'csv' yang didukung saat ini.");
+                "Invalid format. Only 'csv' is currently supported.");
 
         if (filter.From is not null && filter.To is not null && filter.From > filter.To)
             return ServiceResult<IEnumerable<ConsumptionExportRowDto>>.ErrorResult(
-                "Rentang tanggal tidak valid: From harus <= To.");
+                "Invalid date range: From must be <= To.");
 
         var consumptions = await _consumptionRepository.SearchAsync(
             filter.JobId, filter.ItemId, filter.LotId, filter.From, filter.To, ct);
@@ -125,11 +125,11 @@ public class ExportService : IExportService
     {
         if (!IsValidCsvFormat(filter.Format))
             return ServiceResult<IEnumerable<DisposalExportRowDto>>.ErrorResult(
-                "Format tidak valid. Hanya 'csv' yang didukung saat ini.");
+                "Invalid format. Only 'csv' is currently supported.");
 
         if (filter.From is not null && filter.To is not null && filter.From > filter.To)
             return ServiceResult<IEnumerable<DisposalExportRowDto>>.ErrorResult(
-                "Rentang tanggal tidak valid: From harus <= To.");
+                "Invalid date range: From must be <= To.");
 
         var disposals = await _disposalRepository.SearchAsync(
             filter.ItemId, filter.LotId, filter.From, filter.To, ct);
