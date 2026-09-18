@@ -99,4 +99,14 @@ public class Item
         return StockLevelStatus.Sufficient;
     }
 
+    public bool IsLowStock(decimal totalUsableQuantity)
+    {
+        if (totalUsableQuantity < MinimumStock)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
 }
