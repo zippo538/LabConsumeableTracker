@@ -6,6 +6,7 @@ using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
+using Microsoft.Extensions.Logging; 
 
 namespace LabConsumableExpiryTracker.Application.Services;
 
@@ -18,26 +19,36 @@ public class DashboardAlertService : IDashboardAlertService
     private readonly IValidator<DashboardAlertQuery> _validator;
     private readonly ICurrentUserContext _currentUser;
     private readonly TimeProvider _timeProvider;
+    private readonly ILogger<DashboardAlertService> _logger; 
 
     public DashboardAlertService(
         IDashboardAlertRepository repository,
         IValidator<DashboardAlertQuery> validator,
         ICurrentUserContext currentUser,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        ILogger<DashboardAlertService> logger) 
     {
         _repository = repository;
         _validator = validator;
         _currentUser = currentUser;
         _timeProvider = timeProvider;
+        _logger = logger;
     }
 
     public async Task<ServiceResult<PagedResult<DashboardAlertDto>>> GetAlertsAsync(
         DashboardAlertQuery query,
         CancellationToken ct = default)
     {
+        _logger.LogDebug("Processing dashboard alert request. Type: {AlertType}, Page: {Page}, PageSize: {PageSize}",
+            query.Type, query.Page, query.PageSize);
+
         var validation = await _validator.ValidateAsync(query, ct);
         if (!validation.IsValid)
         {
+            // Log kegagalan validasi dengan detail error yang aman
+            _logger.LogWarning("Dashboard alert query validation failed: {ValidationErrors}",
+                string.Join("; ", validation.Errors.Select(x => x.ErrorMessage)));
+
             return ServiceResult<PagedResult<DashboardAlertDto>>.ErrorResult(
                 "Validation failed.",
                 validation.Errors.Select(x => x.ErrorMessage).ToList());
@@ -48,11 +59,16 @@ public class DashboardAlertService : IDashboardAlertService
 
         if (!isWarehouseAdmin && !isScientist)
         {
+            _logger.LogWarning("Unauthorized access attempt to dashboard alerts. User lacks 'Scientist' or 'WarehouseAdmin' role.");
+
             return ServiceResult<PagedResult<DashboardAlertDto>>.ErrorResult(
                 "You are not authorized to view dashboard alerts.");
         }
 
-        var page = await _repository.GetAlertsAsync(query, _timeProvider.GetUtcNow(), ct);
+        var now = _timeProvider.GetUtcNow();
+        _logger.LogDebug("Fetching alerts from repository evaluated at {EvaluatedAtUtc}", now);
+
+        var page = await _repository.GetAlertsAsync(query, now, ct);
 
         var response = new PagedResult<DashboardAlertDto>
         {
@@ -64,6 +80,9 @@ public class DashboardAlertService : IDashboardAlertService
                 AllowedActions = GetAllowedActions(alert, isWarehouseAdmin)
             }).ToList()
         };
+
+        _logger.LogInformation("Successfully retrieved {ItemCount} dashboard alerts (Page {Page} of {TotalCount} total items)",
+            response.Items.Count, response.Page, response.TotalCount);
 
         return ServiceResult<PagedResult<DashboardAlertDto>>.SuccessResult(response);
     }
@@ -86,8 +105,6 @@ public class DashboardAlertService : IDashboardAlertService
             }
         };
 
-        // These are navigation intents only. The target screen must still show a
-        // confirmation and call its separately authorized mutation endpoint.
         if (!isWarehouseAdmin)
             return actions;
 
