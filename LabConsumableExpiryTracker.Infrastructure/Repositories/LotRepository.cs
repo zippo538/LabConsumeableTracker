@@ -1,3 +1,4 @@
+using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
@@ -45,8 +46,8 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
 
         return exists;
     }
-    
-    public new async Task<IReadOnlyList<Lot>> GetAllWithItemAsync(
+
+    public async Task<IReadOnlyList<Lot>> GetAllWithItemAsync(
         CancellationToken ct = default)
     {
         _logger.LogDebug("Retrieving all lots with item navigation included");
@@ -59,6 +60,38 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
         _logger.LogDebug("Retrieved {LotCount} lots", lots.Count);
 
         return lots;
+    }
+
+    public async Task<PagedResult<Lot>> GetAllWithItemAsyncPage(int page, int pageSize, CancellationToken ct = default)
+    {
+        if (page < 0)
+            throw new ArgumentOutOfRangeException(nameof(page));
+
+        if (pageSize is < 1 or > 100)
+            throw new ArgumentOutOfRangeException(nameof(pageSize));
+        _logger.LogDebug($"Retrieving lot of {pageSize}");
+
+        var query = _context.Lots
+            .AsNoTracking()
+            .OrderBy(lot => lot.ExpiryDate)
+            .ThenBy(lot => lot.LotNumber);
+
+        var totalCount = await query.CountAsync(ct);
+
+        var lots = await query
+            .Skip((page - 1) * pageSize
+            )
+            .Take(pageSize)
+            .ToListAsync(ct);
+        _logger.LogDebug($"Querry success retrive {lots} with total count {totalCount}");
+
+        return new PagedResult<Lot>
+        {
+            Items = lots,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount
+        };
     }
 
     public async Task<Lot?> GetByIdWithItemAsync(

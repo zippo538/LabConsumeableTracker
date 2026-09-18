@@ -1,3 +1,4 @@
+using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Domain.Models;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
@@ -34,6 +35,40 @@ namespace LabConsumableExpiryTracker.Infrastructure.Repositories
                 items.Count);
 
             return items;
+        }
+
+        public async Task<PagedResult<Item>> GetAllWithLotsAsyncPaged(
+            int page,
+            int pageSize,
+            CancellationToken ct = default)
+        {
+            _logger.LogDebug($"Retrieving items of {pageSize}");
+            if (page < 0)
+                throw new ArgumentOutOfRangeException(nameof(page));
+
+            if (pageSize is < 1 or > 100)
+                throw new ArgumentOutOfRangeException(nameof(pageSize));
+
+            var query = _context.Items
+                .AsNoTracking()
+                .Include(item => item.Lots)
+                .OrderBy(item => item.Code);
+
+            var totalCount = await query.CountAsync(ct);
+
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(ct);
+            _logger.LogDebug($"Querry success retrive {items} with total count {totalCount}");
+
+            return new PagedResult<Item>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
         }
 
         public async Task<Item?> GetByCodeAsync(

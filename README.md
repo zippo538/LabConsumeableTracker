@@ -1,93 +1,130 @@
-# ConsumableTracker
+# Lab Consumable Expiry Tracker
 
+## 📌 Project Overview
+**Lab Consumable Expiry Tracker** is a comprehensive inventory management system designed for laboratories to prevent the use of expired or ineligible consumable materials. The system manages inventory at the **Lot** level, prioritizes usage using a deterministic **FEFO** (*First-Expired-First-Out*) algorithm, provides real-time low-stock signals, and records every consumption and disposal transaction atomically with full audit traceability.
 
+## ✨ Key Features (MVP)
+- **Inventory Management:** Master Item and Lot registration with strict tracking of expiry dates, storage locations, and administrative statuses.
+- **FEFO Allocation Engine:** Real-time eligibility evaluation and deterministic lot allocation for laboratory Jobs.
+- **Atomic Consumption:** Multi-lot stock deduction in a single, fail-safe transaction to prevent partial commits, silent overwrites, or negative stock.
+- **Disposal & Status Control:** Administrative actions to block, quarantine, or release lots, alongside formal disposal logging with mandatory reasons.
+- **Dashboard & Alerts:** Real-time visibility into usable stock, low-stock warnings, and expiring/blocked lots.
+- **Immutable Audit Trail:** Complete traceability of all consumption and disposal events, preserving historical data even if lots expire or users are deactivated.
+- **Role-Based Access Control (RBAC):** Strict segregation of duties enforced on the server.
 
-## Getting started
+## 👥 Canonical Roles
+The system enforces a strict Segregation of Duties via two canonical roles:
+1. **`Scientist`**: Creates Jobs, requests FEFO allocation previews, and confirms material consumption in the laboratory.
+2. **`WarehouseAdmin`**: Manages master Items/Lots, records disposals, handles administrative status changes (Block/Quarantine/Release), and manages user accounts.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## 🛠️ Tech Stack
+- **Backend:** ASP.NET Core Web API (.NET 8), Entity Framework Core, ASP.NET Core Identity, JWT Bearer.
+- **Frontend:** React (Single Page Application).
+- **Database:** PostgreSQL.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## 🏗️ Architecture & Design Principles
+This project is built using **Clean Architecture** (Service Layer Pattern) and follows a **Specs-Driven Development** workflow:
+- **Domain Purity:** Core business rules (like the FEFO algorithm and inventory invariants) are completely isolated from the database, EF Core, and UI.
+- **Atomicity & Concurrency:** Stock mutations (Consumption/Disposal) are guaranteed *all-or-nothing* using a scoped Unit of Work and Optimistic Concurrency Control (`RowVersion`).
+- **Traceability:** Every state mutation requires explicit actor identification from the authenticated context and server-side timestamps.
+- **Specs-First:** Implementation is strictly driven by the `specs/` directory, mapping directly to the SRS requirements (FR/BR/NFR) and open decisions (D-xx).
 
-## Add your files
+## 🚀 Getting Started
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+### Prerequisites
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [Node.js](https://nodejs.org/) (v18 or higher) and npm/yarn
+- [PostgreSQL](https://www.postgresql.org/download/) (v14 or higher)
 
+### 1. Database Setup
+1. Start your PostgreSQL server.
+2. Create a new database (e.g., `lab_tracker`).
+3. Update the connection string in `LabConsumableExpiryTracker/appsettings.json` and `appsettings.Development.json`:
+   ```json
+   "ConnectionStrings": {
+     "DefaultConnection": "Host=localhost;Database=lab_tracker;Username=your_user;Password=your_password"
+   }
+### 2. Backend Setup
+```bash
+# Navigate to the backend root directory
+cd LabConsumableExpiryTracker
+
+# Restore NuGet dependencies
+dotnet restore
+
+# Apply database migrations
+dotnet ef database update
+
+# Run the backend API
+dotnet run
 ```
-cd existing_repo
-git remote add origin https://gitlab.formulatrix.com/Software/bootcamp/consumabletracker.git
-git branch -M main
-git push -uf origin main
+*Note: The application will automatically execute DbInitializer and UserSeeder on startup to provision canonical roles (Scientis, WarehouseAdmin) and default admin accounts.*
+### 3. FrontEnd Setup
+```bash
+# Navigate to the frontend root directory
+cd LabConsumableExpiryTracker.Frontend
+
+# Install Node dependencies
+npm install
+
+# (Optional) Configure environment variables for the API base URL
+cp .env.example .env 
+
+# Start the Vite/React development server
+npm run dev
 ```
 
-## Integrate with your tools
+## 📂 Project Structure
+```text
+├── LabConsumableExpiryTracker/                     # Backend Root (.NET 8)
+│   ├── LabConsumableExpiryTracker.API/             # Presentation Layer(Controllers, Middleware)
+│   ├── LabConsumableExpiryTracker.Application/     # Use Cases, DTOs, Validators, Services
+│   ├── LabConsumableExpiryTracker.Domain/          # Core Entities, Enums, Interfaces, Invariants
+│   └── LabConsumableExpiryTracker.Infrastructure/  # EF Core, Identity, JWT, Repositories
+│
+├── LabConsumableExpiryTracker.Frontend/            # React SPA (Vite)
+│   └── src/
+│       ├── app/                                    # Router, shell, layouts
+│       ├── features/                               # Feature-based modules (auth, jobs, lots, etc.)
+│       └── services/                               # Single HTTP adapter to the API
+│
+├── LabConsumableExpiryTracker.Tests/               # Unit & Integration Tests
+│
+└── specs/                                          # Single Source of Truth (Specs-Driven Dev)
+    ├── decisions/                                  # Open decisions (D-05, D-08, D-11, etc.)
+    ├── F-01-item-lot/                              # Feature specs, plans, tasks, acceptance
+    ├── ................
+    ├── F-014-react-frontend/
+    ├── architecture.md                             # Clean Architecture structure, dependency flow, and naming conventions
+    ├── Readme.md                                   # Information about the specs directory
+```
+## 📜 Specs-Driven Development
+The ``specs/`` directory is the single source of truth between the SRS and the code.
+1. Spec-first: spec.md is written and reviewed BEFORE code.
+2. Decision gating: Tasks depending on open decisions (e.g., ``D-05``, ``D-08``) are marked ``[BLOCKED]``.
+3. Layer-aware tasks: Every task in ``tasks.md`` explicitly targets a layer ``([Domain], [Application], [Infrastructure], [API], [Tests])``.
+4. Traceability: Every spec maps directly to SRS requirements (``FR-xx``, ``BR-xx``, ``NFR-xx``, ``AC-xx``).
 
-- [ ] [Set up project integrations](https://gitlab.formulatrix.com/Software/bootcamp/consumabletracker/-/settings/integrations)
 
-## Collaborate with your team
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+## 🤝 Contributing & CI/CD
+This repository uses GitLab CI/CD.
+- All merge requests must pass the pipeline (``dotnet build``, ``dotnet test``, ``npm run build``).
+- Do not bypass ``TreatWarningsAsErrors``.
+- Do not introduce scope creep or alter canonical domain contracts (Item-Lot, FEFO, Roles) without updating the ``specs/decisions/`` and getting explicit Product Owner approval.
+- Refer to ``agent.md`` and ``SKILL.md`` for strict AI Agent and developer implementation rules before modifying core domain logic.
 
-## Test and Deploy
+## 📄 Documentation References
+| Document | Purpose  
+|------------------|------------------|
+| srs.md | Software Requirements Specification (Baseline for MVP) |
+| architecture.md | Clean Architecture structure, dependency flow, and naming conventions |
+| agent.md | AI Agent instructions, domain contracts, and reconciliation rules |
+| SKILL.md | Implementation rules, FEFO logic, transaction boundaries, and verification |
+| specs/README.md | Specs-Driven Development workflow and task conventions |
 
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+### 💡 Adjustment Notes:
+1. **Folder Structure:** Aligned with `architecture.md` and `agent.md` (separating `API`, `Application`, `Domain`, and `Infrastructure`).
+2. **Canonical Roles:** Explicitly defined as `Scientist` and `WarehouseAdmin`, in strict accordance with `SKILL.md` and the `SRS`.
+3. **Testing & CI:** Added the `dotnet build -warnaserror` command and emphasized that integration tests must use a **real PostgreSQL instance** (not in-memory)—per `SKILL.md` guidelines—to verify atomicity.
+4. **Specs-Driven:** Added a dedicated section referencing the `specs/` folder and the `tasks.md` conventions outlined in `specs/README.md`.
