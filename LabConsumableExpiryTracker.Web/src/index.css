@@ -1,18 +1,21 @@
-/* src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-brand-bg: #0d3b4c;        /* latar halaman teal gelap */
-  --color-brand-surface: #f7f5f2;   /* latar kartu kiri */
-  --color-brand-teal: #157d88;      /* judul CONSUMABLE TRACKER */
-  --color-brand-link: #0f8fa5;      /* link "Lupa password?" / "Daftar" */
-  --color-brand-green: #2ecc71;     /* tombol MASUK KE SISTEM */
+  --font-sans: 'Poppins', sans-serif;
+
+  --color-brand-bg: #0d3b4c;
+  --color-brand-surface: #f7f5f2;
+  --color-brand-teal: #157d88;
+  --color-brand-link: #0f8fa5;
+  --color-brand-green: #2ecc71;
   --color-brand-green-dark: #27b662;
 }
 
-body {
+html,
+body,
+#root {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
-    'Ubuntu', 'Helvetica Neue', sans-serif;
+  font-family: 'Poppins', sans-serif;
   -webkit-font-smoothing: antialiased;
 }

@@ -1,10 +1,26 @@
-// Contoh di main.tsx
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Provider as JotaiProvider } from 'jotai';
+import { Provider as JotaiProvider, useAtomValue } from 'jotai';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { isAuthenticatedAtom } from './lib/auth/authAtom';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = useAtomValue(isAuthenticatedAtom);
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+}
 
 export default function App() {
   return (
@@ -13,11 +29,19 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            {/* Route lain... */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </BrowserRouter>
       </QueryClientProvider>
     </JotaiProvider>
   );
-}
+}

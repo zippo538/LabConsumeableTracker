@@ -1,22 +1,35 @@
-// src/types/auth.types.ts
+
+
+export type AppRole = 'Scientist' | 'WarehouseAdmin' | string;
 
 export interface UserProfile {
   id: string;
   fullName: string;
   userName: string;
-  email: string;
-  isActive: boolean;
-  roles: string[];
+  role: string;
 }
 
 export interface LoginRequest {
-  userName: string;
+  username: string;
   password: string;
+}
+
+export interface RefreshTokenRequest {
+  refreshToken: string;
 }
 
 export interface LoginResponse {
   token: string;
-  tokenType: string; // ✅ Tambahkan ini (biasanya "Bearer")
-  expiresAt: string; // ✅ Tambahkan ini (ISO 8601 date)
-  profile: UserProfile; // ✅ Gunakan 'profile' sesuai SRS §7.2, bukan 'user'
+  refreshToken: string;
+  id: string;
+  username: string;
+  fullName: string;
+  role: string;
+}
+
+export interface ServiceResult<T> {
+  success: boolean;
+  message: string;
+  data?: T;
+  errors: string[];
 }
