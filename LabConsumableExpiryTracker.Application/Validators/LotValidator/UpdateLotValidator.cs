@@ -1,6 +1,7 @@
 using FluentValidation;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
 using LabConsumableExpiryTracker.Application.Validators.Helpers;
+using LabConsumableExpiryTracker.Domain.Enums;
 
 namespace LabConsumableExpiryTracker.Application.Validators.LotValidator;
 
@@ -14,6 +15,13 @@ public class UpdateLotValidator : AbstractValidator<UpdateLotDto>
                   .WithMessage("LotNumber is required.")
                   .MaximumLength(100)
                   .WithMessage("LotNumber maximum 100 characters.");
+            RuleFor(x => x.AdministrativeStatus)
+                  .IsInEnum()
+                  .Must(status =>
+                        status == LotAdministrativeStatus.Active ||
+                        status == LotAdministrativeStatus.ManuallyBlocked|| status == LotAdministrativeStatus.Quarantined)
+                  .WithMessage(
+                        "Administrative status can only be Active or ManuallyBlocked.");
 
             RuleFor(x => x.SupplierLotNumber)
                   .MaximumLength(100)

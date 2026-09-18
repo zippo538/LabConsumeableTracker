@@ -127,6 +127,32 @@ public class Lot
 
         StorageLocation = storageLocation.Trim();
     }
+    public void UpdateAdministrativeStatus(LotAdministrativeStatus status)
+    {
+        if (AdministrativeStatus == status)
+            return;
+
+        var isValidTransition =
+            (AdministrativeStatus == LotAdministrativeStatus.Active &&
+             (status == LotAdministrativeStatus.ManuallyBlocked ||
+              status == LotAdministrativeStatus.Quarantined))
+            ||
+            (AdministrativeStatus == LotAdministrativeStatus.ManuallyBlocked &&
+             (status == LotAdministrativeStatus.Active ||
+              status == LotAdministrativeStatus.Quarantined))
+            ||
+            (AdministrativeStatus == LotAdministrativeStatus.Quarantined &&
+             (status == LotAdministrativeStatus.Active ||
+              status == LotAdministrativeStatus.ManuallyBlocked));
+
+        if (!isValidTransition)
+        {
+            throw new InvalidOperationException(
+                $"Cannot change lot status from {AdministrativeStatus} to {status}.");
+        }
+
+        AdministrativeStatus = status;
+    }
     public bool IsEligible(DateTimeOffset now)
     {
         var today = DateOnly.FromDateTime(now.UtcDateTime);

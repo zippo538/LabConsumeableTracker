@@ -173,6 +173,13 @@ namespace LabConsumableExpiryTracker.Application.Services
             }
 
             existing.UpdateStorageLocation(updateLotDto.StorageLocation);
+            _logger.LogInformation(
+                "Updating lot {LotId} status from {CurrentStatus} to {NewStatus}",
+                id,
+                existing.AdministrativeStatus,
+                updateLotDto.AdministrativeStatus);
+            
+            existing.UpdateAdministrativeStatus(updateLotDto.AdministrativeStatus);
 
             var updated = await _lotRepository.UpdateAsync(existing, ct);
             await _unitOfWork.SaveChangesAsync(ct);
