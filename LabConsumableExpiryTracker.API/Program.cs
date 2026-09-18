@@ -99,6 +99,8 @@ builder.Services.AddScoped<IDashboardAlertRepository, DashboardAlertRepository>(
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IDashboardSummaryService, DashboardSummaryService>();
 
+builder.Services.AddScoped<IExportService, ExportService>();
+builder.Services.AddScoped<IUserLookupService, UserLookupService>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IdentitySeeder>();
