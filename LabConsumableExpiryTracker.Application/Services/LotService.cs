@@ -3,6 +3,7 @@ using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.ConsumptionDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.FefoDtos;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
+using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
@@ -236,6 +237,37 @@ namespace LabConsumableExpiryTracker.Application.Services
                 summaries,
                 "Lot summaries retrieved successfully.");
         }
+        public async Task<ServiceResult<PagedResult<LotDto>>> GetAllLotPage(int page, int pageSize, CancellationToken ct)
+        {
+            _logger.LogDebug("Retrieving paged lots. Page: {Page}, PageSize: {PageSize}", page, pageSize);
+
+            var pagedLots = await _lotRepository.GetAllWithItemAsyncPage(page, pageSize, ct);
+
+            var now = _timeProvider.GetUtcNow();
+            var lotDtos = pagedLots.Items.Select(lot =>
+            {
+                var warningDays = lot.Item?.ExpiringSoonDays ?? 0;
+                return MapToDtoWithExpiryEngine(lot, warningDays, now);
+            }).ToList();
+
+            var pagedResult = new PagedResult<LotDto>
+            {
+                Items = lotDtos,
+                Page = pagedLots.Page,
+                PageSize = pagedLots.PageSize,
+                TotalCount = pagedLots.TotalCount
+            };
+
+            _logger.LogInformation(
+                "Retrieved {LotCount} lots on page {Page} with expiry evaluated at {EvaluationTime}",
+                lotDtos.Count,
+                page,
+                now);
+
+            return ServiceResult<PagedResult<LotDto>>.SuccessResult(
+                pagedResult,
+                "Paged lots retrieved successfully.");
+        }
         public async Task<ServiceResult<FefoAllocationPreviewDto>> RequestFefoAllocation(
             Guid jobId,
             Guid itemId,
@@ -331,7 +363,8 @@ namespace LabConsumableExpiryTracker.Application.Services
                 response,
                 "Lots allocated successfully.");
         }
-        
+
+
         public async Task<ServiceResult<ConsumptionResponseDto>> ConfirmConsumption(
             Guid jobId,
             ConfirmConsumptionRequestDto request,
@@ -342,73 +375,73 @@ namespace LabConsumableExpiryTracker.Application.Services
                 "Confirming consumption for job {JobId}, item {ItemId}",
                 jobId,
                 request.ItemId);
- 
+
             if (request.Allocations.Count == 0)
             {
                 return ServiceResult<ConsumptionResponseDto>.ErrorResult(
                     "At least one allocation is required.");
             }
- 
+
             if (request.Allocations.Any(a => a.Quantity <= 0))
             {
                 return ServiceResult<ConsumptionResponseDto>.ErrorResult(
                     "Every allocation quantity must be greater than zero.");
             }
- 
+
             var duplicateLotIds = request.Allocations
                 .GroupBy(a => a.LotId)
                 .Where(g => g.Count() > 1)
                 .Select(g => g.Key)
                 .ToList();
- 
+
             if (duplicateLotIds.Count > 0)
             {
                 return ServiceResult<ConsumptionResponseDto>.ErrorResult(
                     "Duplicate LotId is not allowed within a single consumption request.");
             }
- 
+
             var allocationTotal = request.Allocations.Sum(a => a.Quantity);
             if (allocationTotal != request.RequestedQuantity)
             {
                 return ServiceResult<ConsumptionResponseDto>.ErrorResult(
                     $"Sum of allocation quantities ({allocationTotal}) does not match RequestedQuantity ({request.RequestedQuantity}).");
             }
-            
- 
+
+
             var job = await _jobRepository.GetByIdAsync(jobId, ct);
             if (job is null)
             {
                 return ServiceResult<ConsumptionResponseDto>.ErrorResult("Job not found.");
             }
- 
+
             if (job.Status != JobStatus.InProgress)
             {
                 return ServiceResult<ConsumptionResponseDto>.ErrorResult(
                     $"Job must be InProgress to confirm consumption. Current status: {job.Status}.");
             }
- 
+
             var now = _timeProvider.GetUtcNow();
-            
- 
+
+
             var consumptions = new List<Consumption>();
             var updatedLots = new List<Lot>();
- 
+
             foreach (var allocation in request.Allocations)
             {
-                
+
                 var lot = await _lotRepository.GetByIdAsync(allocation.LotId, ct);
                 if (lot is null)
                 {
                     return ServiceResult<ConsumptionResponseDto>.ErrorResult(
                         $"Lot {allocation.LotId} not found.");
                 }
- 
+
                 if (lot.ItemId != request.ItemId)
                 {
                     return ServiceResult<ConsumptionResponseDto>.ErrorResult(
                         $"Lot {allocation.LotId} does not belong to item {request.ItemId}.");
                 }
- 
+
                 if (!lot.RowVersion.SequenceEqual(allocation.ExpectedRowVersion))
                 {
                     _logger.LogWarning(
@@ -419,7 +452,7 @@ namespace LabConsumableExpiryTracker.Application.Services
                     return ServiceResult<ConsumptionResponseDto>.ErrorResult(
                         $"Lot {allocation.LotId} has changed since it was previewed (stale RowVersion).");
                 }
- 
+
                 try
                 {
                     var consumption = lot.Consume(jobId, allocation.Quantity, now, consumedBy);
@@ -432,21 +465,21 @@ namespace LabConsumableExpiryTracker.Application.Services
                         $"Lot {allocation.LotId}: {ex.Message}");
                 }
             }
- 
+
             foreach (var consumption in consumptions)
             {
                 await _consumptionRepository.AddAsync(consumption, ct);
             }
- 
+
             foreach (var lot in updatedLots)
             {
                 await _lotRepository.UpdateAsync(lot, ct);
             }
- 
+
             await _unitOfWork.SaveChangesAsync(ct);
-            
+
             var item = await _itemRepository.GetByIdAsync(request.ItemId, ct);
- 
+
             var response = new ConsumptionResponseDto
             {
                 JobId = jobId,
@@ -473,14 +506,14 @@ namespace LabConsumableExpiryTracker.Application.Services
                     })
                     .ToList()
             };
- 
+
             _logger.LogInformation(
                 "Consumption confirmed for job {JobId}, item {ItemId}, {LotCount} lot(s), total {Total}",
                 jobId,
                 request.ItemId,
                 updatedLots.Count,
                 response.TotalConsumedQuantity);
- 
+
             return ServiceResult<ConsumptionResponseDto>.SuccessResult(
                 response,
                 "Consumption confirmed successfully.");
@@ -503,5 +536,7 @@ namespace LabConsumableExpiryTracker.Application.Services
 
             return response;
         }
+
+
     }
 }
