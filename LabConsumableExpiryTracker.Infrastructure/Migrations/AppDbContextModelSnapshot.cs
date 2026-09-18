@@ -236,7 +236,6 @@ namespace LabConsumableExpiryTracker.Infrastructure.Migrations
                         .HasColumnName("completed_at");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("description");
 

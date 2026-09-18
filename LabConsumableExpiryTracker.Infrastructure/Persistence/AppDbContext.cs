@@ -159,7 +159,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
             .IsRequired();
         builder.Property(j => j.Description)
             .HasColumnName("description")
-            .IsRequired();
+            .IsRequired(false);
 
         
         builder.Property(job => job.StartedAt).HasColumnName("started_at").HasColumnType("timestamp with time zone");

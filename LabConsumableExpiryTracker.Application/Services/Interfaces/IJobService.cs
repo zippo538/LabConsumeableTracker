@@ -13,6 +13,7 @@ namespace LabConsumableExpiryTracker.Application.Services.Interfaces
         Task<ServiceResult<JobDto>> GetByIdAsync(Guid id, CancellationToken ct = default);
         Task<ServiceResult<IReadOnlyList<JobDto>>> GetAllAsync(CancellationToken ct = default);
         Task<ServiceResult<JobDto>> StartAsync(Guid id, CancellationToken ct = default);
+        Task<ServiceResult<JobDto>> CancelAsync(Guid id, CancellationToken ct = default);
         Task<ServiceResult<JobDto>> CompleteAsync(Guid id, CancellationToken ct = default);
         Task<ServiceResult<JobDto>> UpdateStatusAsync(Guid id, UpdateJobDto dto, CancellationToken ct = default);
 
