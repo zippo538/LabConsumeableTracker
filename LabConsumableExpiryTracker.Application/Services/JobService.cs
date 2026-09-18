@@ -116,6 +116,13 @@ namespace LabConsumableExpiryTracker.Application.Services
                job => job.Start(_timeProvider.GetUtcNow()),
                ct);
         }
+        public async Task<ServiceResult<JobDto>> CancelAsync(Guid id, CancellationToken ct = default)
+        {
+            return await TransitionAsync(
+                id,
+                job => job.Cancel(_timeProvider.GetUtcNow()),
+                ct);
+        }
         public async Task<ServiceResult<JobDto>> CompleteAsync(Guid id, CancellationToken ct = default)
         {
             return await TransitionAsync(
