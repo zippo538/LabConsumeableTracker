@@ -4,5 +4,11 @@ namespace LabConsumableExpiryTracker.Application.Interfaces;
 
 public interface IConsumptionRepository : IRepository<Consumption, Guid>
 {
-    
+    Task<IReadOnlyList<Consumption>> SearchAsync(
+        Guid? jobId,
+        Guid? itemId,
+        Guid? lotId,
+        DateTimeOffset? from,
+        DateTimeOffset? to,
+        CancellationToken ct);
 }

@@ -83,7 +83,17 @@ namespace LabConsumableExpiryTracker.API.Controllers
                 ? Ok(response)
                 : BadRequest(response);
         }
-
+        
+        [HttpPost("{id:guid}/cancel")]
+        [Authorize(Roles = nameof(UserRole.Scientist))]
+        public async Task<ActionResult<ServiceResult<JobDto>>> Cancel(Guid id, CancellationToken ct)
+        {
+            var response = await _jobService.CancelAsync(id, ct);
+            return response.Success
+                ? Ok(response)
+                : BadRequest(response);
+        }
+        
         [HttpPost("{id:guid}/complete")]
         [Authorize(Roles = nameof(UserRole.Scientist))]
         public async Task<ActionResult<ServiceResult<JobDto>>> Complete(Guid id, CancellationToken ct)

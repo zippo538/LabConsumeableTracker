@@ -8,6 +8,7 @@ public class Item
     public Guid Id { get; private set; }
     public string Code { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
+    public string? ImagePath { get;  set; }
     public UnitOfMeasure BaseUnit { get; private set; }
     public decimal MinimumStock { get; private set; }
     public int ExpiringSoonDays { get; private set; }
@@ -32,6 +33,14 @@ public class Item
         MinimumStock = minimumStock;
         ExpiringSoonDays = expiringSoonDays;
     }
+    
+  
+    public void SetImagePath(string? imagePath)
+    {
+        ImagePath = imagePath;
+    }
+
+    public void RemoveImage() => ImagePath = null;
 
     public void UpdateDetails(
         string name,
@@ -88,6 +97,16 @@ public class Item
         }
 
         return StockLevelStatus.Sufficient;
+    }
+
+    public bool IsLowStock(decimal totalUsableQuantity)
+    {
+        if (totalUsableQuantity < MinimumStock)
+        {
+            return true;
+        }
+
+        return false;
     }
 
 }
