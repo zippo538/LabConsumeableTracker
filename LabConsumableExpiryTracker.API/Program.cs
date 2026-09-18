@@ -97,12 +97,13 @@ builder.Services.AddScoped<IConsumptionRepository, ConsumptionRepository>();
 builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 builder.Services.AddScoped<IDashboardAlertRepository, DashboardAlertRepository>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddScoped<IDashboardSummaryService, DashboardSummaryService>();
 
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IdentitySeeder>();
 builder.Services.AddScoped<UserSeeder>();
-builder.Services.AddScoped<ICurrentUserContext,HttpContextCurrentUserContext>(); 
+builder.Services.AddScoped<ICurrentUserContext, HttpContextCurrentUserContext>();
 
 
 builder.Services.AddSingleton(TimeProvider.System);

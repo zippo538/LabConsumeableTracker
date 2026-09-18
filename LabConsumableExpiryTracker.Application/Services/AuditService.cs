@@ -4,6 +4,7 @@ using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
+using Microsoft.Extensions.Logging;
 
 namespace LabConsumableExpiryTracker.Application.Services;
 
@@ -11,20 +12,35 @@ public sealed class AuditService : IAuditService
 {
     private readonly IAuditRepository _auditRepository;
     private readonly IValidator<AuditQuery> _validator;
+    private readonly ILogger<AuditService> _logger;
 
-    public AuditService(IAuditRepository auditRepository, IValidator<AuditQuery> validator)
+    public AuditService(
+        IAuditRepository auditRepository,
+        IValidator<AuditQuery> validator,
+        ILogger<AuditService> logger)
     {
         _auditRepository = auditRepository;
         _validator = validator;
+        _logger = logger;
     }
 
     public async Task<ServiceResult<PagedResult<AuditEventDto>>> GetAuditEventsAsync(AuditQuery query, CancellationToken ct = default)
     {
+        _logger.LogDebug(
+            "Processing unified audit events request. EventType: {EventType}, ItemId: {ItemId}, LotId: {LotId}, JobId: {JobId}, Page: {Page}, PageSize: {PageSize}",
+            query.EventType, query.ItemId, query.LotId, query.JobId, query.Page, query.PageSize);
+
         var validation = await _validator.ValidateAsync(query, ct);
         if (!validation.IsValid)
-            return ServiceResult<PagedResult<AuditEventDto>>.ErrorResult("Validation failed.", validation.Errors.Select(x => x.ErrorMessage).ToList());
+        {
+            _logger.LogWarning(
+                "Unified audit query validation failed: {ValidationErrors}",
+                string.Join("; ", validation.Errors.Select(x => x.ErrorMessage)));
 
-        // SRS FR-08-04: JobId without EventType means Consumption only.
+            return ServiceResult<PagedResult<AuditEventDto>>.ErrorResult(
+                "Validation failed.",
+                validation.Errors.Select(x => x.ErrorMessage).ToList());
+        }
         var normalized = query.JobId.HasValue && !query.EventType.HasValue
             ? new AuditQuery
             {
@@ -39,18 +55,44 @@ public sealed class AuditService : IAuditService
             }
             : query;
 
-        return ServiceResult<PagedResult<AuditEventDto>>.SuccessResult(
-            await _auditRepository.GetAuditEventsAsync(normalized, ct));
+        if (normalized != query)
+        {
+            _logger.LogDebug(
+                "FR-08-04: JobId provided without EventType. Auto-normalized EventType to Consumption for JobId {JobId}",
+                query.JobId);
+        }
+        var result = await _auditRepository.GetAuditEventsAsync(normalized, ct);
+        _logger.LogInformation(
+            "Successfully retrieved {ItemCount} unified audit events (Page {Page}, TotalCount {TotalCount})",
+            result.Items.Count, result.Page, result.TotalCount);
+
+        return ServiceResult<PagedResult<AuditEventDto>>.SuccessResult(result);
     }
 
     public async Task<ServiceResult<PagedResult<ConsumptionAuditDto>>> GetConsumptionsAsync(AuditQuery query, CancellationToken ct = default)
     {
-        var validation = await _validator.ValidateAsync(query with { EventType = AuditEventType.Consumption }, ct);
-        if (!validation.IsValid)
-            return ServiceResult<PagedResult<ConsumptionAuditDto>>.ErrorResult("Validation failed.", validation.Errors.Select(x => x.ErrorMessage).ToList());
+        _logger.LogDebug(
+           "Processing consumption audit request. ItemId: {ItemId}, LotId: {LotId}, JobId: {JobId}, Page: {Page}, PageSize: {PageSize}",
+           query.ItemId, query.LotId, query.JobId, query.Page, query.PageSize);
 
-        return ServiceResult<PagedResult<ConsumptionAuditDto>>.SuccessResult(
-            await _auditRepository.GetConsumptionsAsync(query, ct));
+        var validation = await _validator.ValidateAsync(
+            query with { EventType = AuditEventType.Consumption }, ct);
+        if (!validation.IsValid)
+        {
+            _logger.LogWarning(
+                "Consumption audit query validation failed: {ValidationErrors}",
+                string.Join("; ", validation.Errors.Select(x => x.ErrorMessage)));
+
+            return ServiceResult<PagedResult<ConsumptionAuditDto>>.ErrorResult(
+                "Validation failed.",
+                validation.Errors.Select(x => x.ErrorMessage).ToList());
+        }
+        var result = await _auditRepository.GetConsumptionsAsync(query, ct);
+
+        _logger.LogInformation(
+            "Successfully retrieved {ItemCount} consumption audit records (Page {Page}, TotalCount {TotalCount})",
+            result.Items.Count, result.Page, result.TotalCount);
+        return ServiceResult<PagedResult<ConsumptionAuditDto>>.SuccessResult(result);
     }
 
     public async Task<ServiceResult<ConsumptionAuditDto>> GetConsumptionByIdAsync(Guid id, CancellationToken ct = default)
@@ -63,12 +105,30 @@ public sealed class AuditService : IAuditService
 
     public async Task<ServiceResult<PagedResult<DisposalAuditDto>>> GetDisposalsAsync(AuditQuery query, CancellationToken ct = default)
     {
-        var validation = await _validator.ValidateAsync(query with { EventType = AuditEventType.Disposal }, ct);
-        if (!validation.IsValid)
-            return ServiceResult<PagedResult<DisposalAuditDto>>.ErrorResult("Validation failed.", validation.Errors.Select(x => x.ErrorMessage).ToList());
+        _logger.LogDebug(
+            "Processing disposal audit request. ItemId: {ItemId}, LotId: {LotId}, Page: {Page}, PageSize: {PageSize}",
+            query.ItemId, query.LotId, query.Page, query.PageSize);
 
-        return ServiceResult<PagedResult<DisposalAuditDto>>.SuccessResult(
-            await _auditRepository.GetDisposalsAsync(query, ct));
+        var validation = await _validator.ValidateAsync(
+            query with { EventType = AuditEventType.Disposal }, ct);
+
+        if (!validation.IsValid)
+        {
+            _logger.LogWarning(
+                "Disposal audit query validation failed: {ValidationErrors}",
+                string.Join("; ", validation.Errors.Select(x => x.ErrorMessage)));
+
+            return ServiceResult<PagedResult<DisposalAuditDto>>.ErrorResult(
+                "Validation failed.",
+                validation.Errors.Select(x => x.ErrorMessage).ToList());
+        }
+        var result = await _auditRepository.GetDisposalsAsync(query, ct);
+
+        _logger.LogInformation(
+            "Successfully retrieved {ItemCount} disposal audit records (Page {Page}, TotalCount {TotalCount})",
+            result.Items.Count, result.Page, result.TotalCount);
+
+        return ServiceResult<PagedResult<DisposalAuditDto>>.SuccessResult(result);
     }
 
     public async Task<ServiceResult<DisposalAuditDto>> GetDisposalByIdAsync(Guid id, CancellationToken ct = default)
