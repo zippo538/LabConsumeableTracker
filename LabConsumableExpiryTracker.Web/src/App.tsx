@@ -1,9 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Provider as JotaiProvider, useAtomValue } from 'jotai';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
-import { LoginPage } from './pages/LoginPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { isAuthenticatedAtom } from './lib/auth/authAtom';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Provider as JotaiProvider, useAtomValue } from "jotai";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import { LoginPage } from "./pages/LoginPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { isAuthenticatedAtom } from "./lib/auth/authAtom";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,4 +44,4 @@ export default function App() {
       </QueryClientProvider>
     </JotaiProvider>
   );
-}
+}
