@@ -1,8 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Provider as JotaiProvider, useAtomValue } from "jotai";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router";
+
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { ItemListPage } from "./pages/ItemPage";
+
 import { isAuthenticatedAtom } from "./lib/auth/authAtom";
 
 const queryClient = new QueryClient({
@@ -16,9 +24,11 @@ const queryClient = new QueryClient({
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAtomValue(isAuthenticatedAtom);
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+
   return <>{children}</>;
 }
 
@@ -28,10 +38,10 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
-            {/* Public Routes */}
+            {/* Public */}
             <Route path="/login" element={<LoginPage />} />
 
-            {/* Protected Routes - Sesuai SRS §8.1 */}
+            {/* Dashboard */}
             <Route
               path="/app/dashboard"
               element={
@@ -41,17 +51,26 @@ export default function App() {
               }
             />
 
-            {/* Redirects */}
-            {/* Root redirect ke dashboard jika terautentikasi */}
+            {/* Master Item */}
             <Route
-              path="/"
-              element={<Navigate to="/app/dashboard" replace />}
+              path="/app/items"
+              element={
+                <ProtectedRoute>
+                  <ItemListPage />
+                </ProtectedRoute>
+              }
             />
 
-            {/* Fallback untuk route tidak dikenal */}
+            {/* Root redirect */}
+            <Route
+              path="/"
+              element={<Navigate to="/app/items" replace />}
+            />
+
+            {/* Unknown route */}
             <Route
               path="*"
-              element={<Navigate to="/app/dashboard" replace />}
+              element={<Navigate to="/app/items" replace />}
             />
           </Routes>
         </BrowserRouter>

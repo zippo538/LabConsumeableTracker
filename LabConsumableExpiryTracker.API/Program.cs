@@ -208,6 +208,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseStaticFiles();
+app.MapControllers();
 app.UseExceptionHandler();
 app.UseCors("ReactDevelopment");
 app.UseHttpsRedirection();
