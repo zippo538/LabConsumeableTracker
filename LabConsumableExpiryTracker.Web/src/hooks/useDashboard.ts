@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { getDashboardAlerts, getDashboardSummary } from "../api/dashboardApi";
 import type { DashboardAlertQuery } from "../types/dashboard.types";
 
@@ -25,5 +25,6 @@ export const useDashboardAlerts = (query?: DashboardAlertQuery) =>
   useQuery({
     queryKey: dashboardAlertsKey(query),
     queryFn: () => getDashboardAlerts(query),
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
   });

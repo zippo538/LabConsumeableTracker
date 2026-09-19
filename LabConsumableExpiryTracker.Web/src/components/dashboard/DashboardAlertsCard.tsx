@@ -1,22 +1,27 @@
-import { useState, type FC } from "react";
+import { useEffect, useMemo, useState, type FC, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useDashboardAlerts } from "../../hooks/useDashboard";
 import type {
   DashboardAlert,
   DashboardAlertType,
 } from "../../types/dashboard.types";
+import {
+  getActionHref,
+  getActionLabel,
+  getDetailHref,
+} from "../../helpers/dashboardAlertActions";
 
 interface DashboardAlertsCardProps {
   onViewAll?: () => void;
 }
 
 const formatUnit = (unit?: string | number | null): string => {
-  if (unit === null || unit === undefined) return " ";
+  if (unit === null || unit === undefined) return "";
   const u = String(unit).toLowerCase();
-  if (u === "1 " || u === "milliliter ") return "mL ";
-  if (u === "2 " || u === "gram ") return "g ";
-  if (u === "3 " || u === "unit ") return "unit ";
-  if (u === "4 " || u === "vial ") return "vial ";
+  if (u === "1" || u === "milliliter") return "mL";
+  if (u === "2" || u === "gram") return "g";
+  if (u === "3" || u === "unit") return "unit";
+  if (u === "4" || u === "vial") return "vial";
   return String(unit);
 };
 
@@ -54,91 +59,117 @@ const formatRelativeExpiry = (dateStr: string): string => {
 
 const getBadgeInfo = (alertType: DashboardAlertType | string) => {
   const type = String(alertType).toLowerCase();
-  if (type.includes("expiring ")) {
+  if (type.includes("expiring")) {
     return {
-      label: "Expiring ",
-      className: "bg-[#fef9c3] text-[#b45309] ",
+      label: "Expiring",
+      className: "bg-[#fef9c3] text-[#b45309]",
     };
   }
-  if (type.includes("lowstock ") || type.includes("low stock ")) {
+  if (type.includes("lowstock") || type.includes("low stock")) {
     return {
-      label: "Low stock ",
-      className: "bg-[#fef2f2] text-[#e11d48] ",
+      label: "Low stock",
+      className: "bg-[#fef2f2] text-[#e11d48]",
     };
   }
-  if (type.includes("expired ")) {
+  if (type.includes("expired")) {
     return {
-      label: "Expired ",
-      className: "bg-[#fee2e2] text-[#b91c1c] ",
+      label: "Expired",
+      className: "bg-[#fee2e2] text-[#b91c1c]",
     };
   }
-  if (type.includes("blocked ")) {
+  if (type.includes("blocked")) {
     return {
-      label: "Blocked ",
-      className: "bg-[#f0fdfa] text-[#0f766e] ",
+      label: "Blocked",
+      className: "bg-[#f0fdfa] text-[#0f766e]",
     };
   }
   return {
     label: String(alertType),
-    className: "bg-slate-100 text-slate-600 ",
+    className: "bg-slate-100 text-slate-600",
   };
-};
-
-// Helper: cari href untuk detail page (ViewItem/ViewLot)
-const getDetailHref = (alert: DashboardAlert): string => {
-  const viewAction = alert.allowedActions?.find(
-    (a) => a.code === "ViewItem" || a.code === "ViewLot",
-  );
-  if (viewAction?.href) return viewAction.href;
-  // Fallback jika allowedActions tidak ada
-  return alert.resourceType === "Item"
-    ? `/app/items/${alert.resourceId}`
-    : `/app/lots/${alert.resourceId}`;
-};
-
-// Helper: cari href untuk action page (RegisterLot, OpenDisposal, dll)
-const getActionHref = (alert: DashboardAlert): string | null => {
-  const actionCodes = [
-    "RegisterLot",
-    "OpenDisposal",
-    "Block",
-    "Release",
-    "Quarantine",
-  ];
-  const action = alert.allowedActions?.find((a) =>
-    actionCodes.includes(a.code),
-  );
-  return action?.href ?? null;
-};
-
-// Helper: label tooltip untuk action
-const getActionLabel = (alertType: DashboardAlertType | string): string => {
-  const type = String(alertType).toLowerCase();
-  if (type.includes("lowstock ") || type.includes("low stock "))
-    return "Daftarkan lot baru";
-  if (type.includes("expiring ")) return "Review disposal";
-  if (type.includes("expired ")) return "Disposal lot";
-  if (type.includes("blocked ")) return "Kelola status block";
-  return "Lihat aksi";
 };
 
 export const DashboardAlertsCard: FC<DashboardAlertsCardProps> = ({
   onViewAll,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const { data, isLoading, isError, error, refetch } = useDashboardAlerts({
-    page: 1,
-    pageSize: isExpanded ? 20 : 5,
-  });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(2);
+
+  const { data, isLoading, isFetching, isError, error, refetch } =
+    useDashboardAlerts({ page, pageSize });
 
   const alerts: DashboardAlert[] = data?.items ?? [];
+  const totalCount = data?.totalCount ?? 0;
+  const responsePage = data?.page ?? page;
+  const responsePageSize = data?.pageSize ?? pageSize;
+  const totalPages = Math.max(1, Math.ceil(totalCount / responsePageSize));
+  const firstItem =
+    totalCount === 0 ? 0 : (responsePage - 1) * responsePageSize + 1;
+  const lastItem = Math.min(responsePage * responsePageSize, totalCount);
 
-  const handleViewAllClick = () => {
-    if (onViewAll) {
-      onViewAll();
-    } else {
-      setIsExpanded((prev) => !prev);
+  const visiblePages = useMemo(() => {
+    const candidates = new Set([
+      1,
+      totalPages,
+      responsePage - 1,
+      responsePage,
+      responsePage + 1,
+    ]);
+
+    return [...candidates]
+      .filter((candidate) => candidate >= 1 && candidate <= totalPages)
+      .sort((a, b) => a - b);
+  }, [responsePage, totalPages]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const changePage = (nextPage: number) => {
+    if (nextPage < 1 || nextPage > totalPages || nextPage === responsePage) {
+      return;
     }
+    setPage(nextPage);
+  };
+
+  const changePageSize = (nextPageSize: number) => {
+    setPage(1);
+    setPageSize(nextPageSize);
+  };
+
+  const renderPageButtons = () => {
+    const buttons: ReactNode[] = [];
+
+    visiblePages.forEach((pageNumber, index) => {
+      const previousPage = visiblePages[index - 1];
+      if (previousPage && pageNumber - previousPage > 1) {
+        buttons.push(
+          <span key={`ellipsis-${pageNumber}`} className="px-1 text-slate-400">
+            …
+          </span>,
+        );
+      }
+
+      buttons.push(
+        <button
+          key={pageNumber}
+          type="button"
+          onClick={() => changePage(pageNumber)}
+          disabled={isFetching}
+          aria-label={`Buka halaman ${pageNumber}`}
+          aria-current={pageNumber === responsePage ? "page" : undefined}
+          className={`grid h-8 min-w-8 place-items-center rounded-lg px-2 text-[11px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+            pageNumber === responsePage
+              ? "bg-[#13a9a7] text-white"
+              : "border border-slate-200 bg-white text-slate-600 hover:border-teal-300 hover:text-teal-700"
+          }`}
+        >
+          {pageNumber}
+        </button>,
+      );
+    });
+
+    return buttons;
   };
 
   return (
@@ -152,13 +183,15 @@ export const DashboardAlertsCard: FC<DashboardAlertsCardProps> = ({
             Prioritas berdasarkan expiry dan stok usable
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleViewAllClick}
-          className="rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-[11px] font-semibold text-[#13a9a7] hover:bg-slate-50 transition shadow-[0_1px_2px_rgb(15_23_42/0.02)]"
-        >
-          {isExpanded ? "Tampilkan lebih sedikit " : "Lihat semua "}
-        </button>
+        {onViewAll ? (
+          <button
+            type="button"
+            onClick={onViewAll}
+            className="rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-[11px] font-semibold text-[#13a9a7] transition shadow-[0_1px_2px_rgb(15_23_42/0.02)] hover:bg-slate-50"
+          >
+            Lihat semua
+          </button>
+        ) : null}
       </div>
 
       <div className="mt-6 overflow-x-auto">
@@ -192,23 +225,25 @@ export const DashboardAlertsCard: FC<DashboardAlertsCardProps> = ({
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {alerts.map((alert, idx) => {
+              {alerts.map((alert) => {
                 const badge = getBadgeInfo(alert.alertType);
                 const detailHref = getDetailHref(alert);
                 const actionHref = getActionHref(alert);
-
+                const isExpired = String(alert.alertType)
+                  .toLowerCase()
+                  .includes("expired");
                 return (
                   <div
-                    key={`${alert.resourceId}-${idx}`}
+                    key={`${alert.alertType}-${alert.resourceId}`}
                     className="grid grid-cols-[minmax(180px,2fr)_1fr_1.2fr_1fr] items-center px-5 py-4 transition hover:bg-slate-50/60"
                   >
-                    {/* Item / Lot - Icon clickable ke detail */}
+                    {/* Item / Lot */}
                     <div className="flex items-center gap-3.5 pr-2">
                       <Link
                         to={detailHref}
-                        className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#e6f8f8] text-[#13a9a7] hover:bg-[#d4f1f1] transition"
                         title={`Lihat detail ${alert.resourceType === "Item" ? "item" : "lot"}`}
                         aria-label={`Lihat detail ${alert.itemName || alert.itemCode || "item"}`}
+                        className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#e6f8f8] text-[#13a9a7] transition hover:bg-[#d4f1f1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
                       >
                         <svg
                           className="h-4 w-4"
@@ -269,23 +304,24 @@ export const DashboardAlertsCard: FC<DashboardAlertsCardProps> = ({
                       )}
                     </div>
 
-                    {/* Status - Clickable ke action page */}
+                    {/* Status */}
                     <div>
-                      {actionHref ? (
-                        <Link
-                          to={actionHref}
-                          className={`inline-flex items-center justify-center rounded-full px-3.5 py-1 text-[11px] font-medium hover:opacity-80 transition cursor-pointer ${badge.className}`}
-                          title={getActionLabel(alert.alertType)}
-                        >
-                          {badge.label}
-                        </Link>
-                      ) : (
+                      <div className="flex flex-col items-start gap-1.5">
                         <span
                           className={`inline-flex items-center justify-center rounded-full px-3.5 py-1 text-[11px] font-medium ${badge.className}`}
                         >
                           {badge.label}
                         </span>
-                      )}
+                        {isExpired && actionHref ? (
+                          <Link
+                            to={actionHref}
+                            title={getActionLabel(alert.alertType)}
+                            className="text-[11px] font-semibold text-teal-700 transition hover:text-teal-900 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+                          >
+                            {getActionLabel(alert.alertType)}
+                          </Link>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 );
@@ -294,6 +330,55 @@ export const DashboardAlertsCard: FC<DashboardAlertsCardProps> = ({
           )}
         </div>
       </div>
+
+      {!isLoading && !isError && totalCount > 0 ? (
+        <div className="mt-5 flex flex-col gap-4 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
+            <span aria-live="polite">
+              Menampilkan {firstItem}–{lastItem} dari {totalCount} alert
+            </span>
+            <label className="flex items-center gap-2">
+              <span>Baris per halaman</span>
+              <select
+                value={pageSize}
+                onChange={(event) => changePageSize(Number(event.target.value))}
+                disabled={isFetching}
+                aria-label="Jumlah alert per halaman"
+                className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-[11px] font-semibold text-slate-700 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {[2, 5, 10, 20].map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <nav
+            aria-label="Pagination alert dashboard"
+            className="flex items-center gap-1.5"
+          >
+            <button
+              type="button"
+              onClick={() => changePage(responsePage - 1)}
+              disabled={responsePage <= 1 || isFetching}
+              className="h-8 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 transition hover:border-teal-300 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Sebelumnya
+            </button>
+            {renderPageButtons()}
+            <button
+              type="button"
+              onClick={() => changePage(responsePage + 1)}
+              disabled={responsePage >= totalPages || isFetching}
+              className="h-8 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 transition hover:border-teal-300 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Berikutnya
+            </button>
+          </nav>
+        </div>
+      ) : null}
     </section>
   );
 };

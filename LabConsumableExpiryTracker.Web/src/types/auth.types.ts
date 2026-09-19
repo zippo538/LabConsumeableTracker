@@ -1,4 +1,4 @@
-import type { AppRole, UserProfile } from "./api"; // ← import dari api.ts
+import type {AppRole} from "./api"; // ← import dari api.ts
 
 export interface LoginRequest {
   username: string;
@@ -17,7 +17,7 @@ export interface LoginResponse {
   id: string;
   username: string;
   fullName: string;
-  role: AppRole; // ✅ singular, karena backend LoginResponseDto hanya kirim 1 role
+  role: string; // ✅ singular, karena backend LoginResponseDto hanya kirim 1 role
 }
 
 export interface ServiceResult<T> {
@@ -26,4 +26,4 @@ export interface ServiceResult<T> {
   data?: T;
   errors: string[];
 }
-export type { AppRole, UserProfile };
+export type { AppRole};

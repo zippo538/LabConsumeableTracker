@@ -17,7 +17,6 @@ const queryClient = new QueryClient({
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAtomValue(isAuthenticatedAtom);
   if (!isAuthenticated) {
-    // Redirect ke login dengan return path yang aman
     return <Navigate to="/login" replace />;
   }
   return <>{children}</>;

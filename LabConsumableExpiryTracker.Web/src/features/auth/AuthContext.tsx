@@ -14,8 +14,8 @@ import type {
   LoginRequest,
   LoginResponse,
   ServiceResult,
-  UserProfile,
 } from "../../types/auth.types";
+import type {UserProfile} from "../../types/api"
 import type { Session } from "../../types/api";
 
 const sessionKey = "lab-consumable-expiry-tracker.session";
@@ -41,7 +41,6 @@ function readSession(): Session | null {
   }
 }
 
-// Helper: decode JWT untuk mendapatkan expiresAt
 function decodeJwtExpiry(token: string): string | undefined {
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
@@ -51,13 +50,10 @@ function decodeJwtExpiry(token: string): string | undefined {
   }
 }
 
-// Helper: fetch profil user dari /api/users/me
 async function fetchUserProfile(token: string): Promise<UserProfile> {
   const response = await apiClient.get<ServiceResult<UserProfile>>(
     "/users/me",
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
+    { headers: { Authorization: `Bearer ${token}` } },
   );
   if (!response.data.success || !response.data.data) {
     throw new Error(response.data.message || "Gagal memuat profil.");
@@ -85,8 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const user = await fetchUserProfile(session.token);
       updateSession({ ...session, user });
-    } catch (error) {
-      // Jika gagal fetch profil (misal 401), logout
+    } catch {
       logout();
     }
   }, [session, updateSession, logout]);
@@ -107,14 +102,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         user = await fetchUserProfile(response.token);
       } catch {
-        // Fallback: buat profil minimal dari response login
         user = {
           id: response.id,
           fullName: response.fullName,
           userName: response.username,
-          email: "", // ✅ PERBAIKAN: LoginResponse tidak punya email, kosongkan dulu
+          email: "",
           isActive: true,
-          roles: [response.role as AppRole], // ✅ Masukkan ke array
+          roles: [response.role] as AppRole[], // ✅ Array dari singular response
         };
       }
 
