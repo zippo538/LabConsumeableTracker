@@ -28,6 +28,7 @@ namespace LabConsumableExpiryTracker.Application.Services
 
             var now = _timeProvider.GetUtcNow();
             int lowStockItemCount = 0;
+            int validLotCount = 0;
             int expiringSoonLotCount = 0;
             int expiredLotCount = 0;
             int blockedLotCount = 0;
@@ -41,7 +42,7 @@ namespace LabConsumableExpiryTracker.Application.Services
                     return ServiceResult<DashboardSummaryDto>.ErrorResult("Item tidak ditemukan.");
                 }
 
-                EvaluateItemMetrics(item, now, ref lowStockItemCount, ref expiringSoonLotCount, ref expiredLotCount, ref blockedLotCount);
+                EvaluateItemMetrics(item, now, ref lowStockItemCount, ref validLotCount, ref expiringSoonLotCount, ref expiredLotCount, ref blockedLotCount);
             }
             else
             {
@@ -50,13 +51,14 @@ namespace LabConsumableExpiryTracker.Application.Services
 
                 foreach (var item in items)
                 {
-                    EvaluateItemMetrics(item, now, ref lowStockItemCount, ref expiringSoonLotCount, ref expiredLotCount, ref blockedLotCount);
+                    EvaluateItemMetrics(item, now, ref lowStockItemCount, ref validLotCount, ref expiringSoonLotCount, ref expiredLotCount, ref blockedLotCount);
                 }
             }
 
             var response = new DashboardSummaryDto
             {
                 LowStockItemCount = lowStockItemCount,
+                ValidLotCount = validLotCount,
                 ExpiringSoonLotCount = expiringSoonLotCount,
                 ExpiredLotCount = expiredLotCount,
                 BlockedLotCount = blockedLotCount,
@@ -70,6 +72,7 @@ namespace LabConsumableExpiryTracker.Application.Services
        Item item,
        DateTimeOffset now,
        ref int lowStock,
+       ref int validLot,
        ref int expiringSoon,
        ref int expired,
        ref int blocked)
@@ -78,37 +81,32 @@ namespace LabConsumableExpiryTracker.Application.Services
 
             foreach (var lot in item.Lots)
             {
-                // FR-03-05: Blocked mencakup Quarantined atau ManuallyBlocked
                 if (lot.AdministrativeStatus == LotAdministrativeStatus.Quarantined ||
                     lot.AdministrativeStatus == LotAdministrativeStatus.ManuallyBlocked)
                 {
                     blocked++;
-                    continue; // Kategori tumpang tindih tidak dijumlahkan ke expired/expiring
+                    continue; 
                 }
-
-                // Hanya Lot Active dengan sisa stok yang dievaluasi expiry-nya
                 if (lot.AdministrativeStatus == LotAdministrativeStatus.Active && lot.RemainingQuantity > 0)
                 {
-                    // Menggunakan domain method persis seperti di LotService
                     var condition = lot.GetExpiryCondition(now, item.ExpiringSoonDays);
 
                     if (condition == ExpiryCondition.ExpiringSoon)
                     {
                         expiringSoon++;
-                        usableStock += lot.RemainingQuantity; // ExpiringSoon masih dianggap eligible
+                        usableStock += lot.RemainingQuantity; 
                     }
                     else if (condition == ExpiryCondition.Expired)
                     {
                         expired++;
                     }
-                    else // Valid
+                    else 
                     {
+                        validLot++;
                         usableStock += lot.RemainingQuantity;
                     }
                 }
             }
-
-            // D-06: Low stock threshold (mengusulkan operator <)
             if (usableStock < item.MinimumStock)
             {
                 lowStock++;

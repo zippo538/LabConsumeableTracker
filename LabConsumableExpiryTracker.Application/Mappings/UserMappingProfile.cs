@@ -14,8 +14,8 @@ public class UserMappingProfile : Profile
                 opt => opt.MapFrom(src => src.UserName)
             )
             .ForMember(
-                dest => dest.Role,
-                opt => opt.Ignore() 
+                dest => dest.Roles, // ✅ PERBAIKAN: Ubah dari 'Role' menjadi 'Roles'
+                opt => opt.Ignore() // Tetap di-ignore karena diisi manual di Service via UserManager
             );
 
         CreateMap<CreateUserRequestDto, ApplicationUser>()
@@ -27,7 +27,7 @@ public class UserMappingProfile : Profile
             .ForMember(dest => dest.SecurityStamp, opt => opt.Ignore())
             .ForMember(dest => dest.ConcurrencyStamp, opt => opt.Ignore())
             .ForMember(dest => dest.RefreshTokens, opt => opt.Ignore());
-        
+
         CreateMap<UpdateUserRequestDto, ApplicationUser>()
             .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Username))
             .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.FullName))

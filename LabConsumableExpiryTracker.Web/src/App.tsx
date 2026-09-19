@@ -17,6 +17,7 @@ const queryClient = new QueryClient({
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAtomValue(isAuthenticatedAtom);
   if (!isAuthenticated) {
+    // Redirect ke login dengan return path yang aman
     return <Navigate to="/login" replace />;
   }
   return <>{children}</>;
@@ -28,17 +29,31 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
+            {/* Public Routes */}
             <Route path="/login" element={<LoginPage />} />
+
+            {/* Protected Routes - Sesuai SRS §8.1 */}
             <Route
-              path="/dashboard"
+              path="/app/dashboard"
               element={
                 <ProtectedRoute>
                   <DashboardPage />
                 </ProtectedRoute>
               }
             />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+            {/* Redirects */}
+            {/* Root redirect ke dashboard jika terautentikasi */}
+            <Route
+              path="/"
+              element={<Navigate to="/app/dashboard" replace />}
+            />
+
+            {/* Fallback untuk route tidak dikenal */}
+            <Route
+              path="*"
+              element={<Navigate to="/app/dashboard" replace />}
+            />
           </Routes>
         </BrowserRouter>
       </QueryClientProvider>

@@ -1,4 +1,5 @@
 import { useState, type FC } from "react";
+import { Link } from "react-router";
 import { useDashboardAlerts } from "../../hooks/useDashboard";
 import type {
   DashboardAlert,
@@ -10,12 +11,12 @@ interface DashboardAlertsCardProps {
 }
 
 const formatUnit = (unit?: string | number | null): string => {
-  if (unit === null || unit === undefined) return "";
+  if (unit === null || unit === undefined) return " ";
   const u = String(unit).toLowerCase();
-  if (u === "1" || u === "milliliter") return "mL";
-  if (u === "2" || u === "gram") return "g";
-  if (u === "3" || u === "unit") return "unit";
-  if (u === "4" || u === "vial") return "vial";
+  if (u === "1 " || u === "milliliter ") return "mL ";
+  if (u === "2 " || u === "gram ") return "g ";
+  if (u === "3 " || u === "unit ") return "unit ";
+  if (u === "4 " || u === "vial ") return "vial ";
   return String(unit);
 };
 
@@ -53,41 +54,78 @@ const formatRelativeExpiry = (dateStr: string): string => {
 
 const getBadgeInfo = (alertType: DashboardAlertType | string) => {
   const type = String(alertType).toLowerCase();
-  if (type.includes("expiring")) {
+  if (type.includes("expiring ")) {
     return {
-      label: "Expiring",
-      className: "bg-[#fef9c3] text-[#b45309]",
+      label: "Expiring ",
+      className: "bg-[#fef9c3] text-[#b45309] ",
     };
   }
-  if (type.includes("lowstock") || type.includes("low stock")) {
+  if (type.includes("lowstock ") || type.includes("low stock ")) {
     return {
-      label: "Low stock",
-      className: "bg-[#fef2f2] text-[#e11d48]",
+      label: "Low stock ",
+      className: "bg-[#fef2f2] text-[#e11d48] ",
     };
   }
-  if (type.includes("expired")) {
+  if (type.includes("expired ")) {
     return {
-      label: "Expired",
-      className: "bg-[#fee2e2] text-[#b91c1c]",
+      label: "Expired ",
+      className: "bg-[#fee2e2] text-[#b91c1c] ",
     };
   }
-  if (type.includes("blocked")) {
+  if (type.includes("blocked ")) {
     return {
-      label: "Blocked",
-      className: "bg-[#f0fdfa] text-[#0f766e]",
+      label: "Blocked ",
+      className: "bg-[#f0fdfa] text-[#0f766e] ",
     };
   }
   return {
     label: String(alertType),
-    className: "bg-slate-100 text-slate-600",
+    className: "bg-slate-100 text-slate-600 ",
   };
+};
+
+// Helper: cari href untuk detail page (ViewItem/ViewLot)
+const getDetailHref = (alert: DashboardAlert): string => {
+  const viewAction = alert.allowedActions?.find(
+    (a) => a.code === "ViewItem" || a.code === "ViewLot",
+  );
+  if (viewAction?.href) return viewAction.href;
+  // Fallback jika allowedActions tidak ada
+  return alert.resourceType === "Item"
+    ? `/app/items/${alert.resourceId}`
+    : `/app/lots/${alert.resourceId}`;
+};
+
+// Helper: cari href untuk action page (RegisterLot, OpenDisposal, dll)
+const getActionHref = (alert: DashboardAlert): string | null => {
+  const actionCodes = [
+    "RegisterLot",
+    "OpenDisposal",
+    "Block",
+    "Release",
+    "Quarantine",
+  ];
+  const action = alert.allowedActions?.find((a) =>
+    actionCodes.includes(a.code),
+  );
+  return action?.href ?? null;
+};
+
+// Helper: label tooltip untuk action
+const getActionLabel = (alertType: DashboardAlertType | string): string => {
+  const type = String(alertType).toLowerCase();
+  if (type.includes("lowstock ") || type.includes("low stock "))
+    return "Daftarkan lot baru";
+  if (type.includes("expiring ")) return "Review disposal";
+  if (type.includes("expired ")) return "Disposal lot";
+  if (type.includes("blocked ")) return "Kelola status block";
+  return "Lihat aksi";
 };
 
 export const DashboardAlertsCard: FC<DashboardAlertsCardProps> = ({
   onViewAll,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-
   const { data, isLoading, isError, error, refetch } = useDashboardAlerts({
     page: 1,
     pageSize: isExpanded ? 20 : 5,
@@ -119,7 +157,7 @@ export const DashboardAlertsCard: FC<DashboardAlertsCardProps> = ({
           onClick={handleViewAllClick}
           className="rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-[11px] font-semibold text-[#13a9a7] hover:bg-slate-50 transition shadow-[0_1px_2px_rgb(15_23_42/0.02)]"
         >
-          {isExpanded ? "Tampilkan lebih sedikit" : "Lihat semua"}
+          {isExpanded ? "Tampilkan lebih sedikit " : "Lihat semua "}
         </button>
       </div>
 
@@ -156,14 +194,22 @@ export const DashboardAlertsCard: FC<DashboardAlertsCardProps> = ({
             <div className="divide-y divide-slate-100">
               {alerts.map((alert, idx) => {
                 const badge = getBadgeInfo(alert.alertType);
+                const detailHref = getDetailHref(alert);
+                const actionHref = getActionHref(alert);
+
                 return (
                   <div
                     key={`${alert.resourceId}-${idx}`}
                     className="grid grid-cols-[minmax(180px,2fr)_1fr_1.2fr_1fr] items-center px-5 py-4 transition hover:bg-slate-50/60"
                   >
-                    {/* Item / Lot */}
+                    {/* Item / Lot - Icon clickable ke detail */}
                     <div className="flex items-center gap-3.5 pr-2">
-                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#e6f8f8] text-[#13a9a7]">
+                      <Link
+                        to={detailHref}
+                        className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#e6f8f8] text-[#13a9a7] hover:bg-[#d4f1f1] transition"
+                        title={`Lihat detail ${alert.resourceType === "Item" ? "item" : "lot"}`}
+                        aria-label={`Lihat detail ${alert.itemName || alert.itemCode || "item"}`}
+                      >
                         <svg
                           className="h-4 w-4"
                           viewBox="0 0 16 16"
@@ -186,7 +232,7 @@ export const DashboardAlertsCard: FC<DashboardAlertsCardProps> = ({
                           <rect x="6.5" y="11" width="3" height="3" rx="0.75" />
                           <rect x="11" y="11" width="3" height="3" rx="0.75" />
                         </svg>
-                      </div>
+                      </Link>
                       <div className="min-w-0">
                         <p className="truncate text-[13px] font-bold text-slate-800">
                           {alert.itemName || alert.itemCode || "Item"}
@@ -223,13 +269,23 @@ export const DashboardAlertsCard: FC<DashboardAlertsCardProps> = ({
                       )}
                     </div>
 
-                    {/* Status */}
+                    {/* Status - Clickable ke action page */}
                     <div>
-                      <span
-                        className={`inline-flex items-center justify-center rounded-full px-3.5 py-1 text-[11px] font-medium ${badge.className}`}
-                      >
-                        {badge.label}
-                      </span>
+                      {actionHref ? (
+                        <Link
+                          to={actionHref}
+                          className={`inline-flex items-center justify-center rounded-full px-3.5 py-1 text-[11px] font-medium hover:opacity-80 transition cursor-pointer ${badge.className}`}
+                          title={getActionLabel(alert.alertType)}
+                        >
+                          {badge.label}
+                        </Link>
+                      ) : (
+                        <span
+                          className={`inline-flex items-center justify-center rounded-full px-3.5 py-1 text-[11px] font-medium ${badge.className}`}
+                        >
+                          {badge.label}
+                        </span>
+                      )}
                     </div>
                   </div>
                 );

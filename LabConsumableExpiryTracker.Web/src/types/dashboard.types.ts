@@ -1,9 +1,10 @@
 export interface DashboardSummary {
   lowStockItemCount: number;
-  expiringSoonLotCount: number;
+  expiringSoonLotCount: number; 
   expiredLotCount: number;
   blockedLotCount: number;
   evaluatedAt: string;
+  validLotCount : number;
   countCriteria?: string | Record<string, unknown>;
 }
 

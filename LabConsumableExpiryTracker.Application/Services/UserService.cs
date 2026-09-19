@@ -36,12 +36,12 @@ public class UserService : IUserService
     public async Task<ServiceResult<UserResponseDto>> CreateUserAsync(CreateUserRequestDto request)
     {
         var roleName = request.Role.ToString();
-        
+
         if (!await _roleManager.RoleExistsAsync(roleName))
         {
             return ServiceResult<UserResponseDto>.ErrorResult($"Role '{roleName}' does not exist.");
         }
-        
+
         var user = _mapper.Map<ApplicationUser>(request);
 
         var result = await _userManager.CreateAsync(user, request.Password);
@@ -51,11 +51,11 @@ public class UserService : IUserService
             _logger.LogWarning("Failed to create user {Username}.", request.Username);
             return ServiceResult<UserResponseDto>.ErrorResult("Failed to create user.", errors);
         }
-        
+
         var roleResult = await _userManager.AddToRoleAsync(user, roleName);
         if (!roleResult.Succeeded)
         {
-            await _userManager.DeleteAsync(user); 
+            await _userManager.DeleteAsync(user);
             var errors = roleResult.Errors.Select(e => e.Description).ToList();
             _logger.LogWarning("Failed to assign role {Role} to {Username}.", roleName, user.UserName);
             return ServiceResult<UserResponseDto>.ErrorResult("Failed to assign user role.", errors);
@@ -64,7 +64,7 @@ public class UserService : IUserService
         _logger.LogInformation("User {Username} created successfully with role {Role}.", user.UserName, roleName);
 
         var response = _mapper.Map<UserResponseDto>(user);
-        response.Role = roleName;
+        response.Roles = new List<string> { roleName };
 
         return ServiceResult<UserResponseDto>.SuccessResult(response, "User created successfully.");
     }
@@ -79,13 +79,11 @@ public class UserService : IUserService
         }
 
         var roles = await _userManager.GetRolesAsync(user);
-        var role = roles.FirstOrDefault() ?? string.Empty;
-
         var response = _mapper.Map<UserResponseDto>(user);
-        response.Role = role;
-
+        response.Roles = roles.ToList(); // ✅ FIX: Map semua role ke List
         return ServiceResult<UserResponseDto>.SuccessResult(response, "User profile retrieved successfully.");
     }
+
 
     public async Task<ServiceResult<List<UserResponseDto>>> GetAllUsersAsync()
     {
@@ -96,7 +94,7 @@ public class UserService : IUserService
         {
             var roles = await _userManager.GetRolesAsync(user);
             var dto = _mapper.Map<UserResponseDto>(user);
-            dto.Role = roles.FirstOrDefault() ?? string.Empty;
+            dto.Roles = roles.ToList();
             resultList.Add(dto);
         }
 
@@ -111,7 +109,10 @@ public class UserService : IUserService
             return ServiceResult<UserResponseDto>.ErrorResult("User not found.");
         }
 
-        _mapper.Map(request, user);
+        // ⚠️ PENTING: Jangan pakai _mapper.Map(request, user) jika request berasal dari admin 
+        // yang punya field Role/IsActive, karena bisa menimpa data sensitif.
+        // Untuk update FullName saja, lakukan manual assignment yang aman:
+        user.FullName = request.FullName;
 
         var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)
@@ -122,7 +123,7 @@ public class UserService : IUserService
 
         var roles = await _userManager.GetRolesAsync(user);
         var response = _mapper.Map<UserResponseDto>(user);
-        response.Role = roles.FirstOrDefault() ?? string.Empty;
+        response.Roles = roles.ToList();
 
         return ServiceResult<UserResponseDto>.SuccessResult(response, "User updated successfully.");
     }
@@ -147,7 +148,7 @@ public class UserService : IUserService
             var errors = result.Errors.Select(e => e.Description).ToList();
             return ServiceResult<bool>.ErrorResult("Failed to update user status.", errors);
         }
-        
+
         if (!isActive)
         {
             await _refreshTokenRepository.RevokeAllByUserIdAsync(targetUserId);

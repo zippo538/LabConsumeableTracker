@@ -5,7 +5,8 @@
 
 # dotenv files
 .env
-
+.omc/
+.claude/
 # User-specific files
 *.rsuser
 *.suo
