@@ -229,9 +229,6 @@ export const DashboardAlertsCard: FC<DashboardAlertsCardProps> = ({
                 const badge = getBadgeInfo(alert.alertType);
                 const detailHref = getDetailHref(alert);
                 const actionHref = getActionHref(alert);
-                const isExpired = String(alert.alertType)
-                  .toLowerCase()
-                  .includes("expired");
                 return (
                   <div
                     key={`${alert.alertType}-${alert.resourceId}`}
@@ -306,22 +303,22 @@ export const DashboardAlertsCard: FC<DashboardAlertsCardProps> = ({
 
                     {/* Status */}
                     <div>
-                      <div className="flex flex-col items-start gap-1.5">
+                      {actionHref ? (
+                        <Link
+                          to={actionHref}
+                          title={getActionLabel(alert.alertType)}
+                          aria-label={`${badge.label}: ${getActionLabel(alert.alertType)}`}
+                          className={`inline-flex items-center justify-center rounded-full px-3.5 py-1 text-[11px] font-medium transition hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 ${badge.className}`}
+                        >
+                          {badge.label}
+                        </Link>
+                      ) : (
                         <span
                           className={`inline-flex items-center justify-center rounded-full px-3.5 py-1 text-[11px] font-medium ${badge.className}`}
                         >
                           {badge.label}
                         </span>
-                        {isExpired && actionHref ? (
-                          <Link
-                            to={actionHref}
-                            title={getActionLabel(alert.alertType)}
-                            className="text-[11px] font-semibold text-teal-700 transition hover:text-teal-900 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
-                          >
-                            {getActionLabel(alert.alertType)}
-                          </Link>
-                        ) : null}
-                      </div>
+                      )}
                     </div>
                   </div>
                 );
