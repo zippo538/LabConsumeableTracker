@@ -1,21 +1,24 @@
 import type { ReactNode } from "react";
 import { useAuth } from "../../features/auth/AuthContext";
-import type { AppRole } from "../../types/api"; // Atau dari auth.types.ts
+import type { AppRole } from "../../types/api";
 
 type NavItem = { href: string; label: string; roles?: AppRole[] };
 
 const navigation: NavItem[] = [
   { href: "/app/dashboard", label: "Dashboard" },
-  { href: "/app/items", label: "Item & Lot" },
-  // ✅ PERBAIKAN: Gunakan "Scientist" sesuai tipe AppRole, bukan "Scientis"
-  { href: "/app/jobs", label: "Job", roles: ["Scientist"] },
-  { href: "/app/audit", label: "Audit" },
-  { href: "/app/users", label: "Kelola User", roles: ["WarehouseAdmin"] },
+  { href: "/app/items", label: "Master Item" },
+  { href: "/app/lots", label: "Lot" }, // ✅ TAMBAHAN: Navigasi ke halaman Lot
+  { href: "/app/disposal", label: "Disposal", roles: ["WarehouseAdmin"] },
+  { href: "/app/audit", label: "Audit & Riwayat" },
+  { href: "/app/users", label: "Kelola Pengguna", roles: ["WarehouseAdmin"] },
+  { href: "/app/profile", label: "Profil" },
 ];
+
 function navigate(href: string): void {
   window.history.pushState({}, "", href);
   window.dispatchEvent(new Event("app:navigate"));
 }
+
 export function AppLink({
   href,
   children,
@@ -40,6 +43,7 @@ export function AppLink({
     </a>
   );
 }
+
 export function AppShell({
   children,
   path,
@@ -49,13 +53,15 @@ export function AppShell({
 }) {
   const { session, logout } = useAuth();
   if (!session) return null;
+
   const isAllowed = (roles?: AppRole[]) =>
     !roles || roles.some((role) => session.user.roles.includes(role));
+
   return (
     <div className="app-shell">
       <header className="topbar">
         <AppLink href="/app/dashboard" className="brand">
-          LabTrack<span>Expiry</span>
+          LabTrack <span>Expiry</span>
         </AppLink>
         <div className="account-menu">
           <div>
@@ -74,30 +80,27 @@ export function AppShell({
           </button>
         </div>
       </header>
-      <div className="workspace">
-        <nav className="sidebar" aria-label="Navigasi utama">
-          {navigation
-            .filter((item) => isAllowed(item.roles))
-            .map((item) => (
-              <AppLink
-                key={item.href}
-                href={item.href}
-                className={
-                  path.startsWith(item.href) ? "nav-link active" : "nav-link"
-                }
-              >
-                {item.label}
-              </AppLink>
-            ))}
-          <AppLink
-            href="/app/profile"
-            className={path === "/app/profile" ? "nav-link active" : "nav-link"}
-          >
-            Profil Saya
-          </AppLink>
-        </nav>
-        <main className="content">{children}</main>
-      </div>
+
+      <nav className="sidebar">
+        <ul>
+          {navigation.map((item) => {
+            if (!isAllowed(item.roles)) return null;
+
+            const isActive =
+              path === item.href || path.startsWith(`${item.href}/`);
+
+            return (
+              <li key={item.href}>
+                <AppLink href={item.href} className={isActive ? "active" : ""}>
+                  {item.label}
+                </AppLink>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      <main className="main-content">{children}</main>
     </div>
   );
 }

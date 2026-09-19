@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import type { UserProfile } from "../types/auth.types";
+import type { UserProfile } from "../types/api";
 import { useDashboardSummary } from "../hooks/useDashboard";
 import { DashboardError, DashboardLoading } from "./WarehouseAdminDashboard";
 import { Icon } from "./DashboardPage";

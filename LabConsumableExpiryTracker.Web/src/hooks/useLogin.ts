@@ -1,9 +1,13 @@
+import { useMutation } from "@tanstack/react-query";
 
-import { useMutation } from '@tanstack/react-query';
-
-import { useSetAtom} from 'jotai';
-import { loginApi, refreshTokenApi, revokeTokenApi } from '../api/authApi';
-import type { LoginRequest, LoginResponse, RefreshTokenRequest, UserProfile } from '../types/auth.types';
+import { useSetAtom } from "jotai";
+import { loginApi, refreshTokenApi, revokeTokenApi } from "../api/authApi";
+import type {
+  LoginRequest,
+  LoginResponse,
+  RefreshTokenRequest,
+} from "../types/auth.types";
+import type { AppRole, UserProfile } from "../types/api";
 import {
   clearSession,
   getStoredRefreshToken,
@@ -11,7 +15,7 @@ import {
   saveSession,
   tokenAtom,
   userAtom,
-} from '../lib/auth/authAtom';
+} from "../lib/auth/authAtom";
 
 export type LoginPayload = LoginRequest & {
   rememberMe?: boolean;
@@ -29,14 +33,21 @@ export const useLogin = () => {
         id: data.id,
         fullName: data.fullName,
         userName: data.username,
-        role: data.role,
+        email: "",
+        isActive: true,
+        roles: [data.role] as AppRole[], // ✅ PERBAIKAN: role (singular) → roles (array)
       };
 
       setToken(data.token);
       setRefreshToken(data.refreshToken);
       setUser(userProfile);
 
-      saveSession(data.token, data.refreshToken, userProfile, variables.rememberMe ?? false);
+      saveSession(
+        data.token,
+        data.refreshToken,
+        userProfile,
+        variables.rememberMe ?? false,
+      );
     },
   });
 };
@@ -50,7 +61,7 @@ export const useRefreshToken = () => {
     mutationFn: (variables) => {
       const token = variables?.refreshToken ?? getStoredRefreshToken();
       if (!token) {
-        throw new Error('No refresh token available');
+        throw new Error("No refresh token available");
       }
       return refreshTokenApi({ refreshToken: token });
     },
@@ -59,14 +70,16 @@ export const useRefreshToken = () => {
         id: data.id,
         fullName: data.fullName,
         userName: data.username,
-        role: data.role,
+        email: "",
+        isActive: true,
+        roles: [data.role] as AppRole[], // ✅ PERBAIKAN: role (singular) → roles (array)
       };
 
       setToken(data.token);
       setRefreshToken(data.refreshToken);
       setUser(userProfile);
 
-      const isRemember = !!localStorage.getItem('consumabletracker.token');
+      const isRemember = !!localStorage.getItem("consumabletracker.token");
       saveSession(data.token, data.refreshToken, userProfile, isRemember);
     },
   });
@@ -84,7 +97,7 @@ export const useLogout = () => {
         try {
           await revokeTokenApi({ refreshToken: token });
         } catch (e) {
-          console.warn('Failed to revoke token on backend:', e);
+          console.warn("Failed to revoke token on backend:", e);
         }
       }
       return true;

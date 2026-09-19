@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { isAuthenticatedAtom } from "./lib/auth/authAtom";
+import { LotsPage } from "./pages/LotPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +38,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/lot"
+              element={
+                <ProtectedRoute>
+                  <LotsPage />
                 </ProtectedRoute>
               }
             />
