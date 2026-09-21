@@ -13,6 +13,7 @@ import { ItemListPage } from "./pages/ItemPage";
 
 import { isAuthenticatedAtom } from "./lib/auth/authAtom";
 import { LotsPage } from './pages/LotPage';
+import { LotDetailPage } from './pages/LotDetailPage';
 import { ItemDetailPage } from "./pages/ItemDetailPage";
 
 const queryClient = new QueryClient({
@@ -70,6 +71,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <LotsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/lots/:id"
+              element={
+                <ProtectedRoute>
+                  <LotDetailPage />
                 </ProtectedRoute>
               }
             />

@@ -1,6 +1,7 @@
 // src/pages/LotPage.tsx
 import { useState } from "react";
 import { useAtomValue } from "jotai";
+import { useNavigate } from "react-router";
 import { userAtom } from "../lib/auth/authAtom";
 import { Grid2x2 } from "lucide-react";
 import {
@@ -10,7 +11,7 @@ import {
   useCreateLot,
   useUpdateLot,
   useDeleteLot,
-} from "../hooks/useLots";
+} from "../hooks/useLot";
 import type {
   Lot,
   CreateLotRequest,
@@ -25,19 +26,25 @@ import { CreateLotModal } from "../components/lots/CreateLotModal";
 import { UpdateLotModal } from "../components/lots/UpdateLotModal";
 import { DeleteLotModal } from "../components/lots/DeleteLotModal";
 import { AppLayout } from "../components/layout/AppLayout";
+import { EmptyState, ErrorState } from "../components/FeedBackStates";
 
 export const LotsPage = () => {
   const user = useAtomValue(userAtom);
   const isWarehouseAdmin = user?.roles?.includes("WarehouseAdmin") ?? false;
-
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filterItem, setFilterItem] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
-
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  const { data: lotsData, isLoading: isLotsLoading } = useLots({
+  // Tambahkan isError dan refetch untuk menangani state error
+  const {
+    data: lotsData,
+    isLoading: isLotsLoading,
+    isError: isLotsError,
+    refetch: refetchLots,
+  } = useLots({
     page,
     pageSize,
     search: search || undefined,
@@ -45,7 +52,8 @@ export const LotsPage = () => {
     status: filterStatus || undefined,
   });
 
-  const { data: summary } = useLotSummary();
+  const { data: summary} = useLotSummary();
+
   const { data: items } = useItems();
 
   const createMutation = useCreateLot();
@@ -115,13 +123,15 @@ export const LotsPage = () => {
       await deleteMutation.mutateAsync(selectedLot.id);
       setIsDeleteModalOpen(false);
       setSelectedLot(null);
-    } catch (err) {}
+    } catch (err) {
+      // Handle delete error if needed
+    }
   };
 
   const columns = [
     {
       id: "item",
-      header: "KODE / NAMA",
+      header: "Code / Name",
       cell: (lot: Lot) => (
         <div className="flex items-center gap-3">
           <ItemBadge
@@ -130,7 +140,7 @@ export const LotsPage = () => {
             tone="cyan"
             label={`View details for ${lot.itemName} - ${lot.lotNumber}`}
             onClick={() => {
-              console.log("Badge clicked:", lot.id);
+              navigate(`/app/lots/${lot.id}`);;
             }}
           />
           <div className="grid min-w-0 gap-0.5">
@@ -219,7 +229,6 @@ export const LotsPage = () => {
         </div>
 
         {summary && <LotSummaryCards summary={summary} />}
-
         <FefoInfoBox />
 
         <LotFilterBar
@@ -234,28 +243,33 @@ export const LotsPage = () => {
           canRegister={isWarehouseAdmin}
         />
 
-        <DataTable
-          columns={columns}
-          rows={lots}
-          getRowId={(lot) => lot.id}
-          loading={isLotsLoading}
-          emptyState={
-            <div className="flex flex-col items-center justify-center py-8">
-              <p className="text-sm font-medium text-slate-600">
-                Belum ada lot yang sesuai
-              </p>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Coba gunakan kata kunci pencarian atau filter yang lain.
-              </p>
-            </div>
-          }
-          density="comfortable"
-          page={page}
-          pageSize={pageSize}
-          totalItems={totalItems}
-          onPageChange={setPage}
-          onPageSizeChange={setPageSize}
-        />
+        {isLotsError ? (
+          <ErrorState
+            title="Gagal memuat data Lot"
+            description="Terjadi kesalahan saat mengambil data lot. Silakan coba lagi."
+            onRetry={() => refetchLots()}
+          />
+        ) : (
+          <DataTable
+            columns={columns}
+            rows={lots}
+            getRowId={(lot) => lot.id}
+            loading={isLotsLoading}
+            emptyState={
+              <EmptyState
+                title="Belum ada lot yang sesuai"
+                description="Coba gunakan kata kunci pencarian atau filter yang lain."
+                icon={<Grid2x2 />}
+              />
+            }
+            density="comfortable"
+            page={page}
+            pageSize={pageSize}
+            totalItems={totalItems}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        )}
 
         <p className="text-xs text-slate-400">
           Eligible: Active × balance &gt; 0 × not expired. Expiring Soon remains
@@ -273,7 +287,6 @@ export const LotsPage = () => {
           isLoading={createMutation.isPending}
           error={createError}
         />
-
         <UpdateLotModal
           isOpen={isUpdateModalOpen}
           onClose={() => {
@@ -286,7 +299,6 @@ export const LotsPage = () => {
           isLoading={updateMutation.isPending}
           error={updateError}
         />
-
         <DeleteLotModal
           isOpen={isDeleteModalOpen}
           onClose={() => {
