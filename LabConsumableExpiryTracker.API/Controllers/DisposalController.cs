@@ -1,4 +1,6 @@
+using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.DisposalDTOs;
+using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -11,25 +13,31 @@ namespace LabConsumableExpiryTracker.API.Controllers;
 [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
 public class DisposalController : ControllerBase
 {
-    private readonly IDisposalService _disposalService;
+    public const string AllowedRoles = nameof(UserRole.Scientist) + "," + nameof(UserRole.WarehouseAdmin);
+    private readonly IAuditService _auditService;
 
-    public DisposalController(IDisposalService disposalService)
+    public DisposalController(IAuditService auditService)
     {
-        _disposalService = disposalService;
+        _auditService = auditService;
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Create(
-        [FromBody] CreateDisposalDto request,
-        CancellationToken ct = default)
+    [HttpGet]
+    public async Task<ActionResult<ServiceResult<PagedResult<DisposalAuditDto>>>> GetDisposals(
+        [FromQuery] AuditQuery query,
+        CancellationToken ct)
     {
-        var response = await _disposalService.CreateDisposalAsync(request, ct);
+        var response = await _auditService.GetDisposalsAsync(query, ct);
 
-        if (response.Success)
-            return StatusCode(StatusCodes.Status201Created, response);
+        return response.Success ? Ok(response) : BadRequest(response);
+    }
 
-        return response.Message == "Lot not found."
-            ? NotFound(response)
-            : BadRequest(response);
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<ServiceResult<DisposalAuditDto>>> GetDisposalbyId(
+        Guid id,
+        CancellationToken ct)
+    {
+        var response = await _auditService.GetDisposalByIdAsync(id, ct);
+
+        return response.Success ? Ok(response) : NotFound(response);
     }
 }

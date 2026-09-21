@@ -3,6 +3,7 @@ import { AppLayout } from "../components/layout/AppLayout";
 import { DetailLot } from "../components/lots/DetailLot";
 import { useLotDetail } from "../hooks/useLotDetail";
 
+
 export function LotDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: lot, isLoading, isError, error } = useLotDetail(id);

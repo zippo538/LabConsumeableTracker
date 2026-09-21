@@ -1,15 +1,15 @@
-import { type FormEvent, useState } from "react";
+import { useState } from "react";
 import {
   type Lot,
   type UpdateLotAdministrativeStatusRequest,
   type UpdatableLotAdministrativeStatus,
 } from "../../types/lot.types";
 import { Alert } from "../MessageAlert";
-import { ConfirmDialog, FormModal, ModalField } from "../Modal";
+import { FormModal, ModalField } from "../Modal";
+import { useCreateDisposal } from "../../hooks/useDisposals";
 
 type DetailLotProps = {
   lot: Lot;
-  onDispose?: (lot: Lot) => Promise<void> | void;
   onUpdateAdministrativeStatus?: (
     request: UpdateLotAdministrativeStatusRequest,
   ) => Promise<void> | void;
@@ -37,20 +37,28 @@ const statusLabel: Record<Lot["administrativeStatus"], string> = {
 
 export function DetailLot({
   lot,
-  onDispose,
   onUpdateAdministrativeStatus,
 }: DetailLotProps) {
   const [administrativeStatus, setAdministrativeStatus] = useState(
     lot.administrativeStatus,
   );
+  
   const [isDisposalOpen, setIsDisposalOpen] = useState(false);
+  const [disposalFormError, setDisposalFormError] = useState<string>();
+  
   const [isStatusFormOpen, setIsStatusFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string>();
   const [notice, setNotice] = useState<Notice>(() => getInitialNotice(lot));
 
+  // Inisialisasi hook disposal
+  const createDisposal = useCreateDisposal();
+
   const closeDisposal = () => {
-    if (!isSubmitting) setIsDisposalOpen(false);
+    if (!isSubmitting && !createDisposal.isPending) {
+      setIsDisposalOpen(false);
+      setDisposalFormError(undefined);
+    }
   };
 
   const closeStatusForm = () => {
@@ -60,29 +68,50 @@ export function DetailLot({
     }
   };
 
-  const disposeLot = async () => {
+  const saveDisposal = async (event: React.SyntheticEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const reason = String(formData.get("reason") ?? "").trim();
+    const quantity = Number(formData.get("quantity"));
+
+    if (!reason) {
+      setDisposalFormError("Reason is required for disposal.");
+      return;
+    }
+    if (isNaN(quantity) || quantity <= 0 || quantity > lot.remainingQuantity) {
+      setDisposalFormError(`Quantity must be between 0 and ${lot.remainingQuantity}.`);
+      return;
+    }
+
     setIsSubmitting(true);
+    setDisposalFormError(undefined);
+    
     try {
-      await onDispose?.(lot);
+      // Panggil mutation dengan lotId di path, dan payload di body
+      await createDisposal.mutateAsync({
+        lotId: lot.id,
+        payload: {
+          quantity,
+          reason,
+          lotId: lot.id,
+        },
+      });
+      
       setIsDisposalOpen(false);
       setNotice({
         variant: "success",
         title: "Disposal recorded",
-        description: `${formatQuantity(lot.remainingQuantity, lot.baseUnit)} has been recorded in lot history.`,
+        description: `${formatQuantity(quantity, lot.baseUnit)} has been recorded in lot history.`,
       });
-    } catch {
-      setNotice({
-        variant: "error",
-        title: "Disposal could not be completed",
-        description: "Please try again or contact the warehouse administrator.",
-      });
+    } catch (err: any) {
+      setDisposalFormError(err?.message || "The disposal could not be saved. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const saveAdministrativeStatus = async (
-    event: FormEvent<HTMLFormElement>,
+    event: React.SyntheticEvent<HTMLFormElement>,
   ) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -90,11 +119,9 @@ export function DetailLot({
       "administrativeStatus",
     ) as UpdatableLotAdministrativeStatus;
     const reason = String(formData.get("reason") ?? "").trim();
-
+    
     if (!reason) {
-      setFormError(
-        "Reason is required when changing the administrative status.",
-      );
+      setFormError("Reason is required when changing the administrative status.");
       return;
     }
 
@@ -120,6 +147,7 @@ export function DetailLot({
   };
 
   const isDisposed = administrativeStatus === "Disposed";
+  const isBusy = isSubmitting || createDisposal.isPending;
 
   return (
     <div className="space-y-5 text-slate-800">
@@ -128,18 +156,13 @@ export function DetailLot({
           <div>
             <div className="flex flex-wrap items-center gap-3">
               <p className="text-sm font-semibold text-slate-500">Lot detail</p>
-              <span
-                className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusClass[administrativeStatus]}`}
-              >
+              <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusClass[administrativeStatus]}`}>
                 {statusLabel[administrativeStatus]}
               </span>
             </div>
-            <h2 className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">
-              {lot.itemName}
-            </h2>
+            <h2 className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">{lot.itemName}</h2>
             <p className="mt-1 text-sm text-slate-500">Lot ID: {lot.id}</p>
           </div>
-
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
@@ -159,35 +182,16 @@ export function DetailLot({
             </button>
           </div>
         </div>
-
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <MetricCard label="Value at registration" value={formatQuantity(lot.initialQuantity, lot.baseUnit)} dotClass="bg-teal-500" />
+          <MetricCard label="Current quantity" value={formatQuantity(lot.remainingQuantity, lot.baseUnit)} dotClass="bg-emerald-600" />
           <MetricCard
-            label="Value at registration"
-            value={formatQuantity(lot.initialQuantity, lot.baseUnit)}
-            dotClass="bg-teal-500"
-          />
-          <MetricCard
-            label="Current quantity"
-            value={formatQuantity(lot.remainingQuantity, lot.baseUnit)}
-            dotClass="bg-emerald-600"
-          />
-          <MetricCard
-            label={
-              lot.expiryCondition === "ExpiringSoon"
-                ? "Expiry approaching"
-                : "Expiry date"
-            }
+            label={lot.expiryCondition === "ExpiringSoon" ? "Expiry approaching" : "Expiry date"}
             value={formatDate(lot.expiryDate)}
-            dotClass={
-              lot.expiryCondition === "Expired" ? "bg-red-600" : "bg-amber-600"
-            }
+            dotClass={lot.expiryCondition === "Expired" ? "bg-red-600" : "bg-amber-600"}
             warning={lot.expiryCondition !== "Valid"}
           />
-          <MetricCard
-            label="Storage location"
-            value={lot.storageLocation}
-            dotClass="bg-teal-500"
-          />
+          <MetricCard label="Storage location" value={lot.storageLocation} dotClass="bg-teal-500" />
         </div>
       </section>
 
@@ -198,72 +202,76 @@ export function DetailLot({
             <dl className="mt-5 grid gap-y-5 sm:grid-cols-2">
               <DetailRow label="Lot number" value={lot.lotNumber} />
               <DetailRow label="Item code" value={lot.itemCode} />
-              <DetailRow
-                label="Received at"
-                value={formatDate(lot.receivedAt)}
-              />
-              <DetailRow
-                label="Expiry date"
-                value={formatDate(lot.expiryDate)}
-              />
-              <DetailRow
-                label="Supplier"
-                value={lot.suppliername ?? "Not recorded"}
-              />
-              <DetailRow
-                label="Supplier lot number"
-                value={lot.supplierLotNumber ?? "Not recorded"}
-              />
+              <DetailRow label="Received at" value={formatDate(lot.receivedAt)} />
+              <DetailRow label="Expiry date" value={formatDate(lot.expiryDate)} />
+              <DetailRow label="Supplier" value={lot.suppliername ?? "Not recorded"} />
+              <DetailRow label="Supplier lot number" value={lot.supplierLotNumber ?? "Not recorded"} />
             </dl>
           </section>
-
-          <Alert
-            variant={notice.variant}
-            title={notice.title}
-            description={notice.description}
-            dismissible={false}
-          />
+          <Alert variant={notice.variant} title={notice.title} description={notice.description} dismissible={false} />
         </div>
-
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <h3 className="text-base font-bold">Allocation eligibility</h3>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            {lot.isEligible
-              ? "This lot is eligible for FEFO allocation."
-              : "This lot is excluded from FEFO allocation."}
+            {lot.isEligible ? "This lot is eligible for FEFO allocation." : "This lot is excluded from FEFO allocation."}
           </p>
-          <div
-            className={`mt-5 rounded-xl border p-4 ${statusClass[administrativeStatus]}`}
-          >
-            <p className="text-sm font-semibold">
-              Administrative status: {statusLabel[administrativeStatus]}
-            </p>
+          <div className={`mt-5 rounded-xl border p-4 ${statusClass[administrativeStatus]}`}>
+            <p className="text-sm font-semibold">Administrative status: {statusLabel[administrativeStatus]}</p>
           </div>
         </section>
       </section>
 
-      <ConfirmDialog
+      {/* Form Disposal */}
+      <FormModal
         isOpen={isDisposalOpen}
         onClose={closeDisposal}
         title="Dispose this lot?"
-        description={`This will commit disposal for ${lot.id}.`}
-        confirmLabel="Confirm disposal"
-        onConfirm={disposeLot}
-        busy={isSubmitting}
-        closeOnOverlayClick={!isSubmitting}
-        impact={
-          <div className="space-y-3">
-            <Alert
-              variant="error"
-              title="Disposal is irreversible"
-              description={`${formatQuantity(lot.remainingQuantity, lot.baseUnit)} will be removed from allocation and inventory.`}
-              dismissible={false}
-            />
-            <p>The disposal reason will be recorded in lot history.</p>
+        description="Record the quantity and reason for disposal."
+        mode="create"
+        submitLabel="Confirm disposal"
+        onSubmit={saveDisposal}
+        busy={isBusy}
+        error={disposalFormError || createDisposal.error?.message}
+        closeOnOverlayClick={!isBusy}
+        identity={
+          <div className="text-sm">
+            <p className="font-semibold text-slate-800">{lot.id}</p>
+            <p className="mt-1 text-slate-500">
+              Current quantity: {formatQuantity(lot.remainingQuantity, lot.baseUnit)}
+            </p>
           </div>
         }
-      />
+      >
+        <ModalField label="Quantity" htmlFor="quantity" required>
+          <input
+            id="quantity"
+            name="quantity"
+            type="number"
+            step="0.01"
+            min="0"
+            max={lot.remainingQuantity}
+            defaultValue={lot.remainingQuantity}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none ring-teal-500 focus:ring-2"
+          />
+        </ModalField>
+        <ModalField label="Reason" htmlFor="disposalReason" required>
+          <textarea
+            id="disposalReason"
+            name="reason"
+            rows={3}
+            placeholder="Explain why this lot is being disposed"
+            className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none ring-teal-500 placeholder:text-slate-400 focus:ring-2"
+          />
+        </ModalField>
+        <Alert
+          variant="error"
+          title="Disposal is irreversible"
+          description="The disposed quantity will be permanently removed from allocation and inventory."
+          dismissible={false}
+        />
+      </FormModal>
 
+      {/* Form Manage Status */}
       <FormModal
         isOpen={isStatusFormOpen}
         onClose={closeStatusForm}
@@ -278,25 +286,15 @@ export function DetailLot({
         identity={
           <div className="text-sm">
             <p className="font-semibold text-slate-800">{lot.id}</p>
-            <p className="mt-1 text-slate-500">
-              Current status: {statusLabel[administrativeStatus]}
-            </p>
+            <p className="mt-1 text-slate-500">Current status: {statusLabel[administrativeStatus]}</p>
           </div>
         }
       >
-        <ModalField
-          label="New administrative status"
-          htmlFor="administrativeStatus"
-          required
-        >
+        <ModalField label="New administrative status" htmlFor="administrativeStatus" required>
           <select
             id="administrativeStatus"
             name="administrativeStatus"
-            defaultValue={
-              administrativeStatus === "Disposed"
-                ? "Active"
-                : administrativeStatus
-            }
+            defaultValue={administrativeStatus === "Disposed" ? "Active" : administrativeStatus}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none ring-teal-500 focus:ring-2"
           >
             <option value="Active">Active</option>
@@ -304,7 +302,6 @@ export function DetailLot({
             <option value="ManuallyBlocked">Manually blocked</option>
           </select>
         </ModalField>
-
         <ModalField label="Reason" htmlFor="reason" required>
           <textarea
             id="reason"
@@ -314,7 +311,6 @@ export function DetailLot({
             className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none ring-teal-500 placeholder:text-slate-400 focus:ring-2"
           />
         </ModalField>
-
         <Alert
           variant="warning"
           title="Allocation will be blocked"
@@ -326,28 +322,15 @@ export function DetailLot({
   );
 }
 
+// --- Helper Functions ---
 function getInitialNotice(lot: Lot): Notice {
   if (lot.expiryCondition === "Expired") {
-    return {
-      variant: "error",
-      title: "Lot has expired",
-      description: "This lot is not eligible for FEFO allocation.",
-    };
+    return { variant: "error", title: "Lot has expired", description: "This lot is not eligible for FEFO allocation." };
   }
-
   if (lot.expiryCondition === "ExpiringSoon") {
-    return {
-      variant: "warning",
-      title: "Expiry approaching",
-      description: "Prioritize this lot in FEFO allocation.",
-    };
+    return { variant: "warning", title: "Expiry approaching", description: "Prioritize this lot in FEFO allocation." };
   }
-
-  return {
-    variant: "info",
-    title: "Lot is within its expiry period",
-    description: "Continue monitoring quantity and administrative status.",
-  };
+  return { variant: "info", title: "Lot is within its expiry period", description: "Continue monitoring quantity and administrative status." };
 }
 
 function formatQuantity(quantity: number, unit: string) {
@@ -355,32 +338,14 @@ function formatQuantity(quantity: number, unit: string) {
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
+  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value));
 }
 
-function MetricCard({
-  label,
-  value,
-  dotClass,
-  warning = false,
-}: {
-  label: string;
-  value: string;
-  dotClass: string;
-  warning?: boolean;
-}) {
+function MetricCard({ label, value, dotClass, warning = false }: { label: string; value: string; dotClass: string; warning?: boolean }) {
   return (
-    <article
-      className={`rounded-xl border p-4 ${warning ? "border-amber-500 bg-amber-50" : "border-teal-500 bg-teal-50"}`}
-    >
+    <article className={`rounded-xl border p-4 ${warning ? "border-amber-500 bg-amber-50" : "border-teal-500 bg-teal-50"}`}>
       <div className="flex items-center gap-3">
-        <span className="grid size-9 place-items-center rounded-lg bg-white">
-          <span className={`size-3 rounded-full ${dotClass}`} />
-        </span>
+        <span className="grid size-9 place-items-center rounded-lg bg-white"><span className={`size-3 rounded-full ${dotClass}`} /></span>
         <p className="text-xl font-bold leading-none">{value}</p>
       </div>
       <p className="mt-5 text-xs text-slate-500">{label}</p>

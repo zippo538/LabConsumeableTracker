@@ -1,4 +1,5 @@
 using LabConsumableExpiryTracker.Application.Common.Result;
+using LabConsumableExpiryTracker.Application.DTOs.DisposalDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
@@ -10,14 +11,16 @@ namespace LabConsumableExpiryTracker.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
 public class LotController : ControllerBase
 {
     private readonly ILotService _lotService;
+    private readonly IDisposalService _disposalService;
 
-    public LotController(ILotService lotService)
+    public LotController(ILotService lotService, IDisposalService disposalService)
     {
         _lotService = lotService;
+        _disposalService = disposalService;
     }
 
     [HttpGet]
@@ -74,6 +77,20 @@ public class LotController : ControllerBase
         }
 
         return response.Success ? Ok(response) : NotFound(response);
+    }
+    [HttpPost("{id:guid}/disposals")]
+    [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
+    public async Task<ActionResult<ServiceResult<bool>>> Disposals([FromBody] CreateDisposalDto request,
+    CancellationToken ct = default)
+    {
+        var response = await _disposalService.CreateDisposalAsync(request, ct);
+
+        if (response.Success)
+            return StatusCode(StatusCodes.Status201Created, response);
+
+        return response.Message == "Lot not found."
+            ? NotFound(response)
+            : BadRequest(response);
     }
     [HttpGet("summary")]
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
