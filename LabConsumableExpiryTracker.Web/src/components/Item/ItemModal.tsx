@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, AlertCircle } from 'lucide-react';
-import type { ItemDto, CreateItemPayload, UpdateItemPayload } from '../../types/item.types';
+import type {
+  ItemDto,
+  CreateItemPayload,
+  UpdateItemPayload,
+} from '../../types/item.types';
 
 interface ItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (payload: CreateItemPayload | UpdateItemPayload) => Promise<void>;
+  onSubmit: (
+    payload: CreateItemPayload | UpdateItemPayload
+  ) => Promise<void>;
   item?: ItemDto | null;
   isLoading?: boolean;
 }
@@ -17,6 +23,9 @@ const UNIT_OPTIONS = [
   { value: 'Vial', label: 'Vial' },
   { value: 'Box', label: 'Box' },
 ];
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const IMAGE_BASE_URL = API_BASE_URL.replace(/\/api$/, '');
 
 export const ItemModal: React.FC<ItemModalProps> = ({
   isOpen,
@@ -36,32 +45,40 @@ export const ItemModal: React.FC<ItemModalProps> = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (item) {
-      setCode(item.code || '');
-      setName(item.name || '');
-      setBaseUnit(typeof item.baseUnit === 'string' ? item.baseUnit : 'Milliliter');
-      setMinimumStock(item.minimumStock || 0);
-      setExpiringSoonDays(item.expiringSoonDays || 14);
-      setImagePreview(item.imagePath || null);
-      setImageFile(null);
-    } else {
-      setCode('');
-      setName('');
-      setBaseUnit('Milliliter');
-      setMinimumStock(10);
-      setExpiringSoonDays(14);
-      setImageFile(null);
-      setImagePreview(null);
-    }
-    setError(null);
-  }, [item, isOpen]);
+useEffect(() => {
+  if (item) {
+    setCode(item.code);
+    setName(item.name);
+    setBaseUnit(item.baseUnit);
+    setMinimumStock(item.minimumStock);
+    setExpiringSoonDays(item.expiringSoonDays ?? 30);
+
+    setImagePreview(
+      item.imagePath
+        ? `${IMAGE_BASE_URL}/${item.imagePath}`
+        : null
+    );
+
+    setImageFile(null);
+  } else {
+    setCode('');
+    setName('');
+    setBaseUnit('Unit');
+    setMinimumStock(0);
+    setExpiringSoonDays(30);
+    setImagePreview(null);
+    setImageFile(null);
+  }
+}, [item, isOpen]);
 
   if (!isOpen) return null;
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
     }
@@ -72,22 +89,22 @@ export const ItemModal: React.FC<ItemModalProps> = ({
     setError(null);
 
     if (!isEdit && !code.trim()) {
-      setError('Kode item wajib diisi.');
+      setError('Item code is required.');
       return;
     }
 
     if (!name.trim()) {
-      setError('Nama item wajib diisi.');
+      setError('Item name is required.');
       return;
     }
 
     if (minimumStock < 0) {
-      setError('Batas stok minimum tidak boleh negatif.');
+      setError('Minimum stock cannot be negative.');
       return;
     }
 
     if (expiringSoonDays < 0) {
-      setError('Ambang peringatan kedaluwarsa tidak boleh negatif.');
+      setError('Expiry warning threshold cannot be negative.');
       return;
     }
 
@@ -111,9 +128,14 @@ export const ItemModal: React.FC<ItemModalProps> = ({
           image: imageFile,
         });
       }
+
       onClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat menyimpan item.';
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while saving the item.';
+
       setError(msg);
     }
   };
@@ -124,8 +146,9 @@ export const ItemModal: React.FC<ItemModalProps> = ({
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-900">
-            {isEdit ? 'Ubah Master Item' : 'Tambah Master Item Baru'}
+            {isEdit ? 'Edit Item' : 'Add New Item'}
           </h2>
+
           <button
             onClick={onClose}
             disabled={isLoading}
@@ -144,51 +167,57 @@ export const ItemModal: React.FC<ItemModalProps> = ({
             </div>
           )}
 
-          {/* Kode Item */}
+          {/* Item Code */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Kode Item {!isEdit && <span className="text-rose-500">*</span>}
+              Item Code {!isEdit && <span className="text-rose-500">*</span>}
             </label>
+
             <input
               type="text"
               required={!isEdit}
               disabled={isEdit || isLoading}
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="Contoh: REAG-001"
+              placeholder="Example: REAG-001"
               className={`w-full px-3.5 py-2.5 rounded-lg border text-sm transition-colors outline-hidden ${
                 isEdit
                   ? 'bg-slate-100 text-slate-500 border-slate-200 cursor-not-allowed'
                   : 'bg-white border-slate-300 text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'
               }`}
             />
+
             {isEdit && (
-              <p className="text-[11px] text-slate-400 mt-1">Kode item tidak dapat diubah setelah dibuat.</p>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Item code cannot be changed after creation.
+              </p>
             )}
           </div>
 
-          {/* Nama Item */}
+          {/* Item Name */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Nama Item <span className="text-rose-500">*</span>
+              Item Name <span className="text-rose-500">*</span>
             </label>
+
             <input
               type="text"
               required
               disabled={isLoading}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Contoh: Reagen Buffer A"
+              placeholder="Example: Buffer Reagent A"
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-hidden transition-colors"
             />
           </div>
 
-          {/* Row: Unit Dasar & Min Stock */}
+          {/* Unit & Minimum Stock */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Unit Dasar <span className="text-rose-500">*</span>
+                Base Unit <span className="text-rose-500">*</span>
               </label>
+
               <select
                 value={baseUnit}
                 disabled={isLoading}
@@ -205,8 +234,9 @@ export const ItemModal: React.FC<ItemModalProps> = ({
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Batas Min. Stok <span className="text-rose-500">*</span>
+                Minimum Stock <span className="text-rose-500">*</span>
               </label>
+
               <input
                 type="number"
                 min="0"
@@ -214,46 +244,70 @@ export const ItemModal: React.FC<ItemModalProps> = ({
                 required
                 disabled={isLoading}
                 value={minimumStock}
-                onChange={(e) => setMinimumStock(parseFloat(e.target.value) || 0)}
+                onChange={(e) =>
+                  setMinimumStock(
+                    parseFloat(e.target.value) || 0
+                  )
+                }
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-hidden transition-colors"
               />
             </div>
           </div>
 
-          {/* Ambang Peringatan Kedaluwarsa */}
+          {/* Expiry Warning Threshold */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Ambang Peringatan Expiry (Hari) <span className="text-rose-500">*</span>
+              Expiry Warning Threshold (Days){' '}
+              <span className="text-rose-500">*</span>
             </label>
+
             <input
               type="number"
               min="0"
               required
               disabled={isLoading}
               value={expiringSoonDays}
-              onChange={(e) => setExpiringSoonDays(parseInt(e.target.value, 10) || 0)}
+              onChange={(e) =>
+                setExpiringSoonDays(
+                  parseInt(e.target.value, 10) || 0
+                )
+              }
               placeholder="14"
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-hidden transition-colors"
             />
+
             <p className="text-[11px] text-slate-400 mt-1">
-              Lot berstatus "Expiring Soon" jika kadaluwarsa dalam rentang hari ini.
+              A lot is marked as "Expiring Soon" when it expires
+              within this number of days.
             </p>
           </div>
 
-          {/* Upload Foto / Gambar Item */}
+          {/* Item Image */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Foto Item (Opsional)
+              Item Image (Optional)
             </label>
+
             <div className="flex items-center gap-3">
               {imagePreview && (
                 <div className="w-12 h-12 rounded-lg border border-slate-200 overflow-hidden bg-slate-50 shrink-0">
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               )}
+
               <label className="flex-1 flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg border border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50/20 text-xs font-medium text-slate-600 cursor-pointer transition-colors">
                 <Upload className="w-4 h-4 text-slate-400" />
-                <span>{imageFile ? imageFile.name : 'Pilih file gambar (.jpg, .png)'}</span>
+
+                <span>
+                  {imageFile
+                    ? imageFile.name
+                    : 'Choose image file (.jpg, .png)'}
+                </span>
+
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
@@ -264,7 +318,7 @@ export const ItemModal: React.FC<ItemModalProps> = ({
             </div>
           </div>
 
-          {/* Modal Footer */}
+          {/* Footer */}
           <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
             <button
               type="button"
@@ -272,14 +326,19 @@ export const ItemModal: React.FC<ItemModalProps> = ({
               disabled={isLoading}
               className="px-4 py-2.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
             >
-              Batal
+              Cancel
             </button>
+
             <button
               type="submit"
               disabled={isLoading}
               className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors disabled:opacity-60"
             >
-              {isLoading ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Tambah Item'}
+              {isLoading
+                ? 'Saving...'
+                : isEdit
+                  ? 'Save Changes'
+                  : 'Add Item'}
             </button>
           </div>
         </form>

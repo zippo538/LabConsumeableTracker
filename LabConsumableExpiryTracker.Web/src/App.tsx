@@ -12,6 +12,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { ItemListPage } from "./pages/ItemPage";
 
 import { isAuthenticatedAtom } from "./lib/auth/authAtom";
+import { ItemDetailPage } from "./pages/ItemDetailPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,17 +61,23 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/items/:id"
+              element={<ProtectedRoute>
+                <ItemDetailPage />
+              </ProtectedRoute>}
+            />
 
             {/* Root redirect */}
             <Route
               path="/"
-              element={<Navigate to="/app/items" replace />}
+              element={<Navigate to="/app/dashboard" replace />}
             />
 
             {/* Unknown route */}
             <Route
               path="*"
-              element={<Navigate to="/app/items" replace />}
+              element={<Navigate to="/app/dashboard" replace />}
             />
           </Routes>
         </BrowserRouter>

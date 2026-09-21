@@ -7,6 +7,7 @@ using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace LabConsumableExpiryTracker.Application.Services
@@ -189,9 +190,9 @@ namespace LabConsumableExpiryTracker.Application.Services
         }
 
         public async Task<ServiceResult<ItemDto>> UpdateItem(
-        Guid id,
-        UpdateItemDto request,
-        CancellationToken ct)
+            Guid id,
+            UpdateItemDto request,
+            CancellationToken ct)
         {
             _logger.LogDebug("Updating item {ItemId}", id);
 
@@ -280,21 +281,41 @@ namespace LabConsumableExpiryTracker.Application.Services
             _logger.LogDebug("Deleting item {ItemId}", id);
 
             var deleted = await _itemRepository.DeleteAsync(id, ct);
-            await _unitOfWork.SaveChangesAsync(ct);
 
             if (!deleted)
             {
-                _logger.LogWarning("Item deletion rejected because item {ItemId} was not found", id);
+                _logger.LogWarning(
+                    "Item deletion rejected because item {ItemId} was not found",
+                    id);
+
                 return ServiceResult<bool>.ErrorResult("Item not found.");
             }
 
-            _logger.LogInformation("Item {ItemId} deleted successfully", id);
+            try
+            {
+                await _unitOfWork.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateException)
+            {
+                _logger.LogWarning(
+                    "Item {ItemId} cannot be deleted because it is referenced by another entity",
+                    id);
+
+                return ServiceResult<bool>.ErrorResult(
+                    "This item cannot be deleted because it is already used by one or more lots.");
+            }
+
+            _logger.LogInformation(
+                "Item {ItemId} deleted successfully",
+                id);
 
             return ServiceResult<bool>.SuccessResult(
                 true,
                 "Item deleted successfully.");
         }
-        public async Task<ServiceResult<PagedResult<ItemDto>>> GetAllItemPage(int page, int pageSize, CancellationToken ct)
+
+        public async Task<ServiceResult<PagedResult<ItemDto>>> GetAllItemPage(int page, int pageSize,
+            CancellationToken ct)
         {
             _logger.LogDebug("Retrieving paged items. Page: {Page}, PageSize: {PageSize}", page, pageSize);
 
@@ -355,7 +376,5 @@ namespace LabConsumableExpiryTracker.Application.Services
 
             return null;
         }
-
-
     }
 }

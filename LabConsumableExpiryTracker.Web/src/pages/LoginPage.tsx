@@ -21,7 +21,7 @@ export const LoginPage = () => {
 
   const from =
     (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ??
-    '/app/items';
+    '/app/dashboard';
 
   const submit = () => {
     setShowError(false);
