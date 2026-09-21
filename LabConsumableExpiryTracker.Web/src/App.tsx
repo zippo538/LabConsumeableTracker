@@ -28,10 +28,8 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
-            {/* Public Routes */}
             <Route path="/login" element={<LoginPage />} />
 
-            {/* Protected Routes - Sesuai SRS §8.1 */}
             <Route
               path="/app/dashboard"
               element={
@@ -41,14 +39,11 @@ export default function App() {
               }
             />
 
-            {/* Redirects */}
-            {/* Root redirect ke dashboard jika terautentikasi */}
             <Route
               path="/"
               element={<Navigate to="/app/dashboard" replace />}
             />
 
-            {/* Fallback untuk route tidak dikenal */}
             <Route
               path="*"
               element={<Navigate to="/app/dashboard" replace />}

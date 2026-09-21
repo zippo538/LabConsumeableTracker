@@ -12,12 +12,12 @@ export interface RefreshTokenRequest {
 export interface LoginResponse {
   token: string;
   refreshToken: string;
-  tokenType: string; // ✅ sesuai FR-13-02
-  expiresAt: string; // ✅ sesuai FR-13-02
+  tokenType: string; 
+  expiresAt: string; 
   id: string;
   username: string;
   fullName: string;
-  role: string; // ✅ singular, karena backend LoginResponseDto hanya kirim 1 role
+  role: string; 
 }
 
 export interface ServiceResult<T> {

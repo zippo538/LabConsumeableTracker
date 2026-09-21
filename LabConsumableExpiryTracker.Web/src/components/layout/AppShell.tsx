@@ -1,13 +1,12 @@
 import type { ReactNode } from "react";
 import { useAuth } from "../../features/auth/AuthContext";
-import type { AppRole } from "../../types/api"; // Atau dari auth.types.ts
+import type { AppRole } from "../../types/api"; 
 
 type NavItem = { href: string; label: string; roles?: AppRole[] };
 
 const navigation: NavItem[] = [
   { href: "/app/dashboard", label: "Dashboard" },
   { href: "/app/items", label: "Item & Lot" },
-  // ✅ PERBAIKAN: Gunakan "Scientist" sesuai tipe AppRole, bukan "Scientis"
   { href: "/app/jobs", label: "Job", roles: ["Scientist"] },
   { href: "/app/audit", label: "Audit" },
   { href: "/app/users", label: "Kelola User", roles: ["WarehouseAdmin"] },
