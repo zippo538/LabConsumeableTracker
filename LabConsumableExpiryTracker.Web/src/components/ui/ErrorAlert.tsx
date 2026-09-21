@@ -1,4 +1,3 @@
-// src/components/ui/ErrorAlert.tsx
 interface ErrorAlertProps {
   title: string;
   message: string;

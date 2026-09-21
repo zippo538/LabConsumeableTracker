@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userName: response.username,
           email: "",
           isActive: true,
-          roles: [response.role] as AppRole[], // ✅ Array dari singular response
+          roles: [response.role] as AppRole[], 
         };
       }
 

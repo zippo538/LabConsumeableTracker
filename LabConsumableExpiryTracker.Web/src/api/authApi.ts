@@ -21,7 +21,6 @@ export const apiClient = axios.create({
   },
 });
 
-// Request interceptor: attach bearer token
 apiClient.interceptors.request.use(
   (config) => {
     const token = getStoredAccessToken();
@@ -33,7 +32,6 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: auto-refresh on 401
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: unknown) => void;
@@ -55,8 +53,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
-
-    // Don't intercept auth endpoints to avoid infinite loop
+    
     const url = originalRequest.url || '';
     if (
       url.includes('/auth/login') ||
@@ -98,7 +95,6 @@ apiClient.interceptors.response.use(
 
         if (refreshResponse.data?.success && refreshResponse.data.data) {
           const { token, refreshToken } = refreshResponse.data.data;
-          // Preserve rememberMe status: check if stored in localStorage
           const isRemember = !!localStorage.getItem(ACCESS_TOKEN_KEY);
           const storage = isRemember ? localStorage : sessionStorage;
           storage.setItem(ACCESS_TOKEN_KEY, token);
@@ -127,7 +123,7 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Auth API Endpoints
+
 export const loginApi = async (data: LoginRequest): Promise<LoginResponse> => {
   console.log('[AuthApi] Sending login request:', { username: data.username });
   const response = await apiClient.post<ServiceResult<LoginResponse>>('/auth/login', data);
@@ -156,4 +152,4 @@ export const revokeTokenApi = async (data: RefreshTokenRequest): Promise<boolean
     throw new Error(response.data.message || 'Revoke token failed');
   }
   return response.data.data ?? true;
-};
+};
