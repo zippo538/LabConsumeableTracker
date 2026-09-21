@@ -1,177 +1,239 @@
 // src/components/lots/UpdateLotModal.tsx
 import { useState, useEffect } from "react";
-import type { Lot, UpdateLotRequest, ItemOption } from "../../types/lot.types";
+import { FormModal, ModalField } from "../Modal";
+import type {
+  Lot,
+  LotAdministrativeStatus,
+  UpdateLotRequest,
+} from "../../types/lot.types";
 
 interface UpdateLotModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSubmit: (payload: UpdateLotRequest) => void;
   lot: Lot | null;
-  items: ItemOption[];
+  isLoading?: boolean;
+  error?: string;
 }
+
+const ADMINISTRATIVE_STATUS_OPTIONS: LotAdministrativeStatus[] = [
+  "Active",
+  "Quarantined",
+  "ManuallyBlocked",
+];
 
 export const UpdateLotModal = ({
   isOpen,
   onClose,
+  onSubmit,
   lot,
-  items,
+  isLoading,
+  error,
 }: UpdateLotModalProps) => {
   const [formData, setFormData] = useState<UpdateLotRequest>({
     lotNumber: "",
     expiryDate: "",
     storageLocation: "",
-    expectedRowVersion: "",
+    supplierName: "",
+    rowVersion: "",
+    administrativeStatus: "Active",
   });
-
   useEffect(() => {
     if (lot) {
+      // Format tanggal ke YYYY-MM-DD agar kompatibel dengan <input type="date">
+      const formattedDate = lot.expiryDate ? lot.expiryDate.split("T")[0] : "";
+
       setFormData({
         lotNumber: lot.lotNumber,
-        expiryDate: lot.expiryDate,
+        administrativeStatus: lot.administrativeStatus,
+        expiryDate: formattedDate,
         storageLocation: lot.storageLocation,
-        expectedRowVersion: lot.rowVersion,
+        supplierName: lot.supplierName ?? "",
+        rowVersion: lot.rowVersion,
       });
     }
   }, [lot]);
 
-  if (!isOpen || !lot) return null;
-
-  const selectedItem = items.find((item) => item.id === lot.itemId);
+  if (!lot) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Call API to update lot
-    console.log("Update lot:", { id: lot.id, ...formData });
-    onClose();
+    onSubmit(formData);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        {/* Header */}
-        <div className="mb-4 flex items-center justify-between">
+    <FormModal
+      isOpen={isOpen}
+      onClose={onClose}
+      mode="update"
+      title="Update Lot"
+      description="Update administrative information for this lot."
+      submitLabel="Save Changes"
+      onSubmit={handleSubmit}
+      busy={isLoading}
+      error={error ? <p>{error}</p> : undefined}
+      identity={
+        <div className="flex items-center gap-3">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-teal-50 text-sm font-bold text-teal-700">
+            {lot.itemName?.slice(0, 1).toUpperCase() ?? "?"}
+          </div>
           <div>
-            <span className="text-xs font-semibold uppercase text-teal-600">
-              Update
-            </span>
-            <h2 className="text-lg font-bold text-slate-800">Update Lot</h2>
+            <p className="text-sm font-semibold text-slate-900">
+              {lot.itemName ?? "Unknown Item"}
+            </p>
             <p className="text-xs text-slate-500">
-              Fill in the required information.
+              {lot.lotNumber} · {lot.baseUnit}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-          >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
         </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Master Item (Read-only) */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Master Item
-            </label>
-            <input
-              type="text"
-              value={selectedItem?.name || ""}
-              disabled
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500"
-            />
-          </div>
-
-          {/* Lot Number */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Lot Number
-            </label>
-            <input
-              type="text"
-              value={formData.lotNumber}
-              onChange={(e) =>
-                setFormData({ ...formData, lotNumber: e.target.value })
-              }
-              required
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
-            />
-          </div>
-
-          {/* Initial Quantity (Read-only) */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Initial Quantity
-            </label>
-            <input
-              type="text"
-              value={`${lot.initialQuantity} ${lot.baseUnit}`}
-              disabled
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500"
-            />
-          </div>
-
-          {/* Expiry Date */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Expiry Date
-            </label>
-            <input
-              type="date"
-              value={formData.expiryDate}
-              onChange={(e) =>
-                setFormData({ ...formData, expiryDate: e.target.value })
-              }
-              required
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
-            />
-          </div>
-
-          {/* Storage Location */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Storage Location
-            </label>
-            <input
-              type="text"
-              value={formData.storageLocation}
-              onChange={(e) =>
-                setFormData({ ...formData, storageLocation: e.target.value })
-              }
-              required
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-2 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600"
-            >
-              Save Changes
-            </button>
-          </div>
-        </form>
+      }
+    >
+      {/* Read-only summary */}
+      <div className="grid grid-cols-2 gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Initial Qty
+          </p>
+          <p className="mt-0.5 font-semibold text-slate-800">
+            {lot.initialQuantity} {lot.baseUnit}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Remaining
+          </p>
+          <p className="mt-0.5 font-semibold text-slate-800">
+            {lot.remainingQuantity} {lot.baseUnit}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Expiry
+          </p>
+          <p className="mt-0.5 font-semibold text-slate-800">
+            {new Date(lot.expiryDate).toLocaleDateString("en-US", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Received At
+          </p>
+          <p className="mt-0.5 font-semibold text-slate-800">
+            {new Date(lot.receivedAt).toLocaleDateString("en-US", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
+          </p>
+        </div>
       </div>
-    </div>
+
+      <ModalField label="Lot Number" htmlFor="update-lotNumber" required>
+        <input
+          id="update-lotNumber"
+          type="text"
+          value={formData.lotNumber}
+          onChange={(e) =>
+            setFormData({ ...formData, lotNumber: e.target.value })
+          }
+          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+        />
+      </ModalField>
+
+      {/* 2. Expiry Date (Required, Editable) */}
+      <ModalField label="Expiry Date" htmlFor="update-expiryDate" required>
+        <input
+          id="update-expiryDate"
+          type="date"
+          value={formData.expiryDate}
+          onChange={(e) =>
+            setFormData({ ...formData, expiryDate: e.target.value })
+          }
+          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+        />
+      </ModalField>
+
+      {/* ✅ Supplier Name - Wajib sesuai validasi backend */}
+      <ModalField label="Supplier Name" htmlFor="update-supplierName" required>
+        <input
+          id="update-supplierName"
+          type="text"
+          value={formData.supplierName}
+          onChange={(e) =>
+            setFormData({ ...formData, supplierName: e.target.value })
+          }
+          placeholder="Nama supplier"
+          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+        />
+      </ModalField>
+
+      {/* ✅ Supplier Lot Number - Opsional */}
+      <ModalField
+        label="Supplier Lot Number"
+        htmlFor="update-supplierLotNumber"
+        hint="Nomor lot dari supplier (opsional)"
+      >
+        <input
+          id="update-supplierLotNumber"
+          type="text"
+          value={formData.lotNumber ?? ""}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              lotNumber: e.target.value,
+            })
+          }
+          placeholder="SUP-LOT-001"
+          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+        />
+      </ModalField>
+
+      <ModalField
+        label="Storage Location"
+        htmlFor="update-storageLocation"
+        required
+      >
+        <input
+          id="update-storageLocation"
+          type="text"
+          value={formData.storageLocation}
+          onChange={(e) =>
+            setFormData({ ...formData, storageLocation: e.target.value })
+          }
+          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+        />
+      </ModalField>
+
+      <ModalField
+        label="Administrative Status"
+        htmlFor="update-administrativeStatus"
+        required
+      >
+        <select
+          id="update-administrativeStatus"
+          value={formData.administrativeStatus}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              administrativeStatus: e.target.value as LotAdministrativeStatus,
+            })
+          }
+          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+        >
+          {ADMINISTRATIVE_STATUS_OPTIONS.map((status) => (
+            <option key={status} value={status}>
+              {status}
+            </option>
+          ))}
+        </select>
+      </ModalField>
+
+      {/* ✅ RowVersion tersembunyi - dikirim otomatis, tidak perlu ditampilkan */}
+      <input type="hidden" value={formData.rowVersion} />
+    </FormModal>
   );
 };

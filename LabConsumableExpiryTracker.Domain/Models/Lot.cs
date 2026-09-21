@@ -45,7 +45,7 @@ public class Lot
         ItemId = itemId;
         LotNumber = lotNumber.Trim();
         SupplierLotNumber = supplierLotNumber?.Trim();
-        ReceivedAt = receivedAt;
+        ReceivedAt = receivedAt.ToUniversalTime();
         SupplierName = supplierName?.Trim();
         InitialQuantity = initialQuantity;
         RemainingQuantity = remainingQuantity;

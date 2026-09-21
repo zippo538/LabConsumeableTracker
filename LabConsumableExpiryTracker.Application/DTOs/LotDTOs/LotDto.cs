@@ -6,6 +6,9 @@ namespace LabConsumableExpiryTracker.Application.DTOs.LotDTOs
     {
         public Guid Id { get; init; }
         public Guid ItemId { get; init; }
+        public string ItemName { get; init; } = null!;
+        public string ItemCode { get; init; } = null!;
+        public string BaseUnit { get; init; } = null!;
         public string LotNumber { get; init; } = null!;
         public DateTimeOffset ReceivedAt { get; init; }
         public decimal InitialQuantity { get; init; }

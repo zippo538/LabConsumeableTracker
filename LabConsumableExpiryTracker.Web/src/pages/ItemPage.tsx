@@ -143,8 +143,8 @@ export const ItemListPage: React.FC = () => {
 
   return (
       <AppLayout
-          title="Item & Lot"
-          description="Kelola master item dan lot laboratorium"
+          title="Item Master"
+          description="Manage Laboratory Master Items"
       >
         <div
             className="space-y-6 pb-12"

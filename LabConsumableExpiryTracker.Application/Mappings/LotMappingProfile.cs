@@ -8,7 +8,11 @@ namespace LabConsumableExpiryTracker.Application.Mappings
     {
         public LotMappingProfile()
         {
-            CreateMap<Lot, LotDto>();
+            CreateMap<Lot, LotDto>()
+            .ForMember(dest => dest.ItemName, opt => opt.MapFrom(src => src.Item.Name))
+            .ForMember(dest => dest.ItemCode, opt => opt.MapFrom(src => src.Item.Code))
+            .ForMember(dest => dest.BaseUnit, opt => opt.MapFrom(src => src.Item.BaseUnit.ToString()));
+            ;
 
 
             CreateMap<CreateLotDto, Lot>()
@@ -16,7 +20,7 @@ namespace LabConsumableExpiryTracker.Application.Mappings
                 Guid.Parse(source.ItemId),
                 source.LotNumber,
                 source.SupplierLotNumber,
-                source.ReceivedAt,
+                source.ReceivedAt.ToUniversalTime(),
                 source.SupplierName,
                 source.InitialQuantity,
                 source.ExpiryDate,

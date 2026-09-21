@@ -144,7 +144,21 @@ namespace LabConsumableExpiryTracker.Application.Services
                     "A lot with the same item, lot number, and expiry date already exists.");
             }
 
-            var lot = _mapper.Map<Lot>(createLotDto);
+            var lot = Lot.Create(
+                itemId,
+                createLotDto.LotNumber,
+                createLotDto.SupplierLotNumber,
+                createLotDto.ReceivedAt.ToUniversalTime(),
+                createLotDto.SupplierName,
+                createLotDto.InitialQuantity,
+                createLotDto.ExpiryDate,
+                createLotDto.StorageLocation);
+            _logger.LogInformation(
+                "ReceivedAt DTO: {DtoReceivedAt} (Offset: {DtoOffset}); Lot: {LotReceivedAt} (Offset: {LotOffset})",
+                createLotDto.ReceivedAt,
+                createLotDto.ReceivedAt.Offset,
+                lot.ReceivedAt,
+                lot.ReceivedAt.Offset);
             var created = await _lotRepository.AddAsync(lot, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             var item = await _itemRepository.GetByIdAsync(itemId, ct);
@@ -178,7 +192,7 @@ namespace LabConsumableExpiryTracker.Application.Services
                 id,
                 existing.AdministrativeStatus,
                 updateLotDto.AdministrativeStatus);
-            
+
             existing.UpdateAdministrativeStatus(updateLotDto.AdministrativeStatus);
 
             var updated = await _lotRepository.UpdateAsync(existing, ct);
