@@ -1,10 +1,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Provider as JotaiProvider, useAtomValue } from "jotai";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router";
+
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { ItemListPage } from "./pages/ItemPage";
+
 import { isAuthenticatedAtom } from "./lib/auth/authAtom";
-import { LotsPage } from "./pages/LotPage";
+import { LotsPage } from './pages/LotPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,9 +25,11 @@ const queryClient = new QueryClient({
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAtomValue(isAuthenticatedAtom);
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+
   return <>{children}</>;
 }
 
@@ -29,10 +39,10 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
-            {/* Public Routes */}
+            {/* Public */}
             <Route path="/login" element={<LoginPage />} />
 
-            {/* Protected Routes - Sesuai SRS §8.1 */}
+            {/* Dashboard */}
             <Route
               path="/app/dashboard"
               element={
@@ -41,8 +51,19 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* Master Item */}
             <Route
-              path="/app/lot"
+              path="/app/items"
+              element={
+                <ProtectedRoute>
+                  <ItemListPage />
+                </ProtectedRoute>
+              }
+            />
+            {/* Lot */}
+            <Route
+              path="/app/lots"
               element={
                 <ProtectedRoute>
                   <LotsPage />
@@ -50,17 +71,16 @@ export default function App() {
               }
             />
 
-            {/* Redirects */}
-            {/* Root redirect ke dashboard jika terautentikasi */}
+            {/* Root redirect */}
             <Route
               path="/"
-              element={<Navigate to="/app/dashboard" replace />}
+              element={<Navigate to="/app/lots" replace />}
             />
 
-            {/* Fallback untuk route tidak dikenal */}
+            {/* Unknown route */}
             <Route
               path="*"
-              element={<Navigate to="/app/dashboard" replace />}
+              element={<Navigate to="/app/lots" replace />}
             />
           </Routes>
         </BrowserRouter>

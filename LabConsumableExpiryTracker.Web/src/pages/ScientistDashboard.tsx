@@ -1,8 +1,8 @@
 import type { FC } from "react";
 import type { UserProfile } from "../types/api";
+import { Icon } from "../components/ui/Icon";
 import { useDashboardSummary } from "../hooks/useDashboard";
 import { DashboardError, DashboardLoading } from "./WarehouseAdminDashboard";
-import { Icon } from "./DashboardPage";
 import { DashboardAlertsCard } from "../components/dashboard/DashboardAlertsCard";
 interface DashboardProps {
   user: UserProfile | null;
