@@ -1,4 +1,3 @@
-// src/lib/auth/authAtom.ts
 import { atom } from 'jotai';
 import type { UserProfile } from '../../types/auth.types';
 
@@ -54,4 +53,4 @@ export const clearSession = () => {
   sessionStorage.removeItem(ACCESS_TOKEN_KEY);
   sessionStorage.removeItem(REFRESH_TOKEN_KEY);
   sessionStorage.removeItem(USER_STORAGE_KEY);
-};
+};

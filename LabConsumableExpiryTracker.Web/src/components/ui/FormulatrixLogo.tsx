@@ -1,4 +1,3 @@
-// src/components/ui/FormulatrixLogo.tsx
 export const FormulatrixLogo = () => (
   <div className="flex items-center gap-2">
     <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">

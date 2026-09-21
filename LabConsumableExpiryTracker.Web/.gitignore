@@ -13,7 +13,6 @@ dist-ssr
 *.local
 
 # Package files
-package.json
 package-lock.json
 
 # Editor directories and files
