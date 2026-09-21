@@ -152,7 +152,7 @@ export const ItemListPage: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Total Items */}
+                
                     <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs">
                         <div className="flex items-center gap-2 mb-2">
                             <span className="w-2.5 h-2.5 rounded-xs bg-blue-600"/>
@@ -214,7 +214,7 @@ export const ItemListPage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                    {/* Search */}
+              
                     <div className="relative flex-1">
                         <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"/>
 
