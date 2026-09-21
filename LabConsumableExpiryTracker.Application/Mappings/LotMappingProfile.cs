@@ -9,9 +9,9 @@ namespace LabConsumableExpiryTracker.Application.Mappings
         public LotMappingProfile()
         {
             CreateMap<Lot, LotDto>()
-            .ForMember(dest => dest.ItemName, opt => opt.MapFrom(src => src.Item.Name))
-            .ForMember(dest => dest.ItemCode, opt => opt.MapFrom(src => src.Item.Code))
-            .ForMember(dest => dest.BaseUnit, opt => opt.MapFrom(src => src.Item.BaseUnit.ToString()));
+            .ForMember(dest => dest.ItemName, opt => opt.MapFrom(src => src.Item != null ? src.Item.Name : null))
+            .ForMember(dest => dest.ItemCode, opt => opt.MapFrom(src => src.Item != null ? src.Item.Code : null))
+            .ForMember(dest => dest.BaseUnit, opt => opt.MapFrom(src => src.Item != null ? src.Item.BaseUnit.ToString() : null));
             ;
 
 

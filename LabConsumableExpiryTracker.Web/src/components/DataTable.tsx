@@ -1,4 +1,5 @@
 import { type ReactNode, type CSSProperties, useMemo, useState } from "react";
+import type { LucideIcon } from "lucide-react";
 
 export type TableAlign = "left" | "center" | "right";
 export type TableDensity = "compact" | "default" | "comfortable";
@@ -15,7 +16,6 @@ export type DataTableColumn<T> = {
   className?: string;
 };
 
-// ✅ Tambahkan props pagination
 export type DataTableProps<T> = {
   columns: DataTableColumn<T>[];
   rows: T[];
@@ -40,6 +40,119 @@ type SortState<T> = {
   direction: SortDirection;
 };
 
+// ✅ Badge Tone
+export type BadgeTone =
+  | "neutral"
+  | "success"
+  | "warning"
+  | "danger"
+  | "info"
+  | "cyan";
+
+// ✅ ItemBadge Props
+export interface ItemBadgeProps {
+  imageUrl?: string | null;
+  imageAlt?: string;
+  icon?: LucideIcon;
+  fallbackText?: string;
+  tone?: BadgeTone;
+  onClick?: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
+  label?: string;
+  statusLabel?: string;
+  statusTone?: StatusTone;
+  className?: string;
+  badgeSize?: "sm" | "md" | "lg";
+  showStatusDot?: boolean; // ✅ Dot indicator untuk status
+}
+
+// ✅ ItemBadge Component
+export function ItemBadge({
+  imageUrl,
+  imageAlt = "",
+  icon: Icon,
+  fallbackText,
+  tone = "neutral",
+  onClick,
+  onContextMenu,
+  label,
+  statusLabel,
+  statusTone = "success",
+  className = "",
+  badgeSize = "md",
+  showStatusDot = true,
+}: ItemBadgeProps) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  const hasImage = imageUrl && !imageFailed;
+  const hasIcon = Icon !== undefined;
+
+  const sizeClasses = {
+    sm: "w-8 h-8 text-[11px]",
+    md: "w-10 h-10 text-[13px]",
+    lg: "w-12 h-12 text-[15px]",
+  };
+
+  const toneClasses = {
+    neutral: "bg-slate-100 text-slate-600",
+    success: "bg-green-100 text-green-700",
+    warning: "bg-amber-100 text-amber-700",
+    danger: "bg-red-100 text-red-600",
+    info: "bg-sky-100 text-sky-700",
+    cyan: "bg-cyan-50 text-teal-700",
+  };
+
+  const isInteractive = onClick !== undefined || onContextMenu !== undefined;
+
+  const badgeContent = (
+    <div
+      className={`grid place-items-center overflow-hidden rounded-lg ${sizeClasses[badgeSize]} ${toneClasses[tone]} ${className}`}
+    >
+      {hasImage ? (
+        <img
+          className="h-full w-full object-cover"
+          src={imageUrl}
+          alt={imageAlt}
+          onError={() => setImageFailed(true)}
+        />
+      ) : hasIcon ? (
+        <Icon className="h-5 w-5" aria-hidden="true" />
+      ) : (
+        <span className="font-bold" aria-hidden="true">
+          {fallbackText?.slice(0, 1).toUpperCase() ?? "?"}
+        </span>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="flex items-center gap-3">
+      {isInteractive ? (
+        <button
+          type="button"
+          onClick={onClick}
+          onContextMenu={onContextMenu}
+          aria-label={label}
+          className="border-0 bg-transparent p-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 rounded-lg"
+        >
+          {badgeContent}
+        </button>
+      ) : (
+        badgeContent
+      )}
+
+      {statusLabel && (
+        <StatusBadge
+          label={statusLabel}
+          tone={statusTone}
+          showDot={showStatusDot}
+        />
+      )}
+    </div>
+  );
+}
+
+// ✅ DataTable Component
 export function DataTable<T>({
   columns,
   rows,
@@ -50,7 +163,6 @@ export function DataTable<T>({
   caption,
   className = "",
   getRowClassName,
-  // ✅ Destructure pagination props
   page = 1,
   pageSize = 20,
   totalItems = 0,
@@ -59,7 +171,6 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const [sort, setSort] = useState<SortState<T> | null>(null);
 
-  // Sorting logic (client-side for current page)
   const sortedRows = useMemo(() => {
     if (!sort?.column.sortValue) return rows;
     return [...rows].sort((a, b) => {
@@ -86,11 +197,9 @@ export function DataTable<T>({
     }));
   }
 
-  // ✅ Pagination calculations
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const firstItem = totalItems === 0 ? 0 : (page - 1) * pageSize + 1;
   const lastItem = Math.min(page * pageSize, totalItems);
-
   const visiblePages = useMemo(() => {
     const candidates = new Set([1, totalPages, page - 1, page, page + 1]);
     return [...candidates]
@@ -104,7 +213,7 @@ export function DataTable<T>({
   };
 
   const changePageSize = (nextPageSize: number) => {
-    onPageChange?.(1); // Reset ke halaman 1 saat ganti page size
+    onPageChange?.(1);
     onPageSizeChange?.(nextPageSize);
   };
 
@@ -198,8 +307,6 @@ export function DataTable<T>({
           </tbody>
         </table>
       </div>
-
-      {/* ✅ Pagination UI Footer */}
       {totalItems > 0 && onPageChange && (
         <div className="flex flex-col gap-4 border-t border-slate-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
@@ -225,7 +332,6 @@ export function DataTable<T>({
               </label>
             )}
           </div>
-
           {totalPages > 1 && (
             <nav aria-label="Pagination" className="flex items-center gap-1.5">
               <button
@@ -282,7 +388,6 @@ function LoadingRows({
   density: TableDensity;
 }) {
   const rowCount = density === "compact" ? 5 : 4;
-
   return Array.from({ length: rowCount }, (_, rowIndex) => (
     <tr key={rowIndex} aria-label="Loading row">
       {Array.from({ length: columnCount }, (_, columnIndex) => (
@@ -306,38 +411,75 @@ export function TableToolbar({ children }: { children: ReactNode }) {
   );
 }
 
+// ✅ EntityCell Component
 export function EntityCell({
   title,
   subtitle,
   imageUrl,
   fallback,
   imageAlt = "",
+  badgeIcon,
+  onBadgeClick,
+  badgeTone = "cyan",
 }: {
   title: string;
   subtitle?: string;
   imageUrl?: string | null;
   fallback?: ReactNode;
   imageAlt?: string;
+  badgeIcon?: LucideIcon;
+  onBadgeClick?: () => void;
+  badgeTone?: BadgeTone;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
 
+  const hasImage = imageUrl && !imageFailed;
+  const hasIcon = badgeIcon !== undefined;
+  const IconComponent = badgeIcon;
+
+  const toneClasses = {
+    neutral: "bg-slate-100 text-slate-600",
+    success: "bg-green-100 text-green-700",
+    warning: "bg-amber-100 text-amber-700",
+    danger: "bg-red-100 text-red-600",
+    info: "bg-sky-100 text-sky-700",
+    cyan: "bg-cyan-50 text-teal-700",
+  };
+
+  const badgeContent = (
+    <div
+      className={`grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg ${toneClasses[badgeTone]}`}
+      aria-hidden={!imageAlt}
+    >
+      {hasImage ? (
+        <img
+          className="h-full w-full object-cover"
+          src={imageUrl}
+          alt={imageAlt}
+          onError={() => setImageFailed(true)}
+        />
+      ) : hasIcon && IconComponent ? (
+        <IconComponent className="h-5 w-5" aria-hidden="true" />
+      ) : (
+        (fallback ?? <span>{title.slice(0, 1).toUpperCase()}</span>)
+      )}
+    </div>
+  );
+
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <div
-        className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-cyan-50 text-[13px] font-bold text-teal-700"
-        aria-hidden={!imageAlt}
-      >
-        {imageUrl && !imageFailed ? (
-          <img
-            className="h-full w-full object-cover"
-            src={imageUrl}
-            alt={imageAlt}
-            onError={() => setImageFailed(true)}
-          />
-        ) : (
-          (fallback ?? <span>{title.slice(0, 1).toUpperCase()}</span>)
-        )}
-      </div>
+      {onBadgeClick ? (
+        <button
+          type="button"
+          onClick={onBadgeClick}
+          className="border-0 bg-transparent p-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 rounded-lg"
+          aria-label={`View details for ${title}`}
+        >
+          {badgeContent}
+        </button>
+      ) : (
+        badgeContent
+      )}
       <div className="grid min-w-0 gap-0.5">
         <span className="truncate font-semibold text-slate-900">{title}</span>
         {subtitle && (
@@ -348,32 +490,44 @@ export function EntityCell({
   );
 }
 
+// ✅ StatusTone & StatusBadge dengan dot indicator
 export type StatusTone = "neutral" | "success" | "warning" | "danger" | "info";
 
 export function StatusBadge({
   label,
   tone = "neutral",
+  showDot = true,
 }: {
   label: string;
   tone?: StatusTone;
+  showDot?: boolean;
 }) {
   return (
     <span
-      className={`inline-flex min-h-7 items-center whitespace-nowrap rounded-full px-3 text-xs font-semibold ${statusToneClass[tone]}`}
+      className={`inline-flex min-h-7 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-xs font-semibold ${statusToneClass[tone]}`}
     >
+      {showDot && (
+        <span
+          className={`h-1.5 w-1.5 rounded-full ${statusDotClass[tone]}`}
+          aria-hidden="true"
+        />
+      )}
       {label}
     </span>
   );
 }
 
+// ✅ RowAction dengan icon support
 export function RowAction({
-  children = "•••",
+  children,
   label = "Open row actions",
   onClick,
+  icon: Icon,
 }: {
   children?: ReactNode;
   label?: string;
   onClick?: () => void;
+  icon?: LucideIcon;
 }) {
   return (
     <button
@@ -382,7 +536,7 @@ export function RowAction({
       aria-label={label}
       onClick={onClick}
     >
-      {children}
+      {Icon ? <Icon className="h-4 w-4" aria-hidden="true" /> : children}
     </button>
   );
 }
@@ -397,7 +551,6 @@ export function TablePagination({
   onPageChange: (page: number) => void;
 }) {
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
-
   return (
     <nav className="mt-4 flex justify-end gap-1" aria-label="Pagination">
       <button
@@ -412,7 +565,11 @@ export function TablePagination({
         <button
           key={item}
           type="button"
-          className={`h-9 w-9 rounded-lg border text-slate-600 ${item === page ? "border-teal-500 bg-teal-500 text-white" : "border-slate-200 bg-white"}`}
+          className={`h-9 w-9 rounded-lg border text-slate-600 ${
+            item === page
+              ? "border-teal-500 bg-teal-500 text-white"
+              : "border-slate-200 bg-white"
+          }`}
           aria-current={item === page ? "page" : undefined}
           onClick={() => onPageChange(item)}
         >
@@ -445,8 +602,17 @@ const densityClass: Record<TableDensity, string> = {
 
 const statusToneClass: Record<StatusTone, string> = {
   neutral: "bg-slate-100 text-slate-600",
-  success: "bg-green-100 text-green-700",
+  success: "bg-green-50 text-green-700 border border-green-200",
   warning: "bg-amber-100 text-amber-700",
   danger: "bg-red-100 text-red-600",
   info: "bg-sky-100 text-sky-700",
+};
+
+// ✅ Dot color classes untuk StatusBadge
+const statusDotClass: Record<StatusTone, string> = {
+  neutral: "bg-slate-500",
+  success: "bg-green-500",
+  warning: "bg-amber-500",
+  danger: "bg-red-500",
+  info: "bg-sky-500",
 };

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useAtomValue } from "jotai";
 import { userAtom } from "../lib/auth/authAtom";
+import { Grid2x2 } from "lucide-react";
 import {
   useLots,
   useLotSummary,
@@ -15,7 +16,7 @@ import type {
   CreateLotRequest,
   UpdateLotRequest,
 } from "../types/lot.types";
-import { DataTable } from "../components/DataTable";
+import { DataTable, ItemBadge } from "../components/DataTable";
 import { LotStatusBadge } from "../components/lots/LotStatusBadge";
 import { LotSummaryCards } from "../components/lots/LotSummaryCard";
 import { LotFilterBar } from "../components/lots/LotFilterbar";
@@ -29,16 +30,13 @@ export const LotsPage = () => {
   const user = useAtomValue(userAtom);
   const isWarehouseAdmin = user?.roles?.includes("WarehouseAdmin") ?? false;
 
-  // Filters
   const [search, setSearch] = useState("");
   const [filterItem, setFilterItem] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
 
-  // Pagination
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  // API hooks
   const { data: lotsData, isLoading: isLotsLoading } = useLots({
     page,
     pageSize,
@@ -57,13 +55,11 @@ export const LotsPage = () => {
   const lots = lotsData?.items ?? [];
   const totalItems = lotsData?.totalCount ?? 0;
 
-  // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedLot, setSelectedLot] = useState<Lot | null>(null);
 
-  // Error states
   const [createError, setCreateError] = useState<string | undefined>();
   const [updateError, setUpdateError] = useState<string | undefined>();
 
@@ -86,7 +82,6 @@ export const LotsPage = () => {
     setIsDeleteModalOpen(true);
   };
 
-  // Submit handlers
   const handleCreateSubmit = async (payload: CreateLotRequest) => {
     try {
       await createMutation.mutateAsync(payload);
@@ -103,7 +98,7 @@ export const LotsPage = () => {
     try {
       await updateMutation.mutateAsync({
         id: selectedLot.id,
-        payload, // ✅ RowVersion sudah termasuk di sini
+        payload,
       });
       setIsUpdateModalOpen(false);
       setSelectedLot(null);
@@ -120,24 +115,35 @@ export const LotsPage = () => {
       await deleteMutation.mutateAsync(selectedLot.id);
       setIsDeleteModalOpen(false);
       setSelectedLot(null);
-    } catch (err) {
-      // Error handled by mutation
-    }
+    } catch (err) {}
   };
 
-  // Column definitions for DataTable
   const columns = [
     {
       id: "item",
-      header: "Item / Lot",
+      header: "KODE / NAMA",
       cell: (lot: Lot) => (
-        <div>
-          <p className="text-sm font-semibold text-slate-800">
-            {lot.itemName ?? "Unknown"}
-          </p>
-          <p className="text-xs text-slate-500">{lot.lotNumber}</p>
+        <div className="flex items-center gap-3">
+          <ItemBadge
+            icon={Grid2x2}
+            fallbackText={lot.lotNumber.slice(0, 2)}
+            tone="cyan"
+            label={`View details for ${lot.itemName} - ${lot.lotNumber}`}
+            onClick={() => {
+              console.log("Badge clicked:", lot.id);
+            }}
+          />
+          <div className="grid min-w-0 gap-0.5">
+            <span className="truncate font-semibold text-slate-900">
+              {lot.lotNumber}
+            </span>
+            <span className="truncate text-xs text-slate-500">
+              {lot.itemName ?? "Unknown"}
+            </span>
+          </div>
         </div>
       ),
+      width: "30%",
     },
     {
       id: "quantity",
