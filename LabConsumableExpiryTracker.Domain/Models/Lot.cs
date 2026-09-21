@@ -115,17 +115,48 @@ public class Lot
 
         return new Consumption(Guid.NewGuid(), jobId, Id, quantity, now, consumedBy);
     }
+    public void UpdateLotNumber(string lotNumber)
+    {
+        if (string.IsNullOrWhiteSpace(lotNumber))
+            throw new ArgumentException("Lot number is required.", nameof(lotNumber));
+
+        var trimmed = lotNumber.Trim();
+        if (LotNumber == trimmed) return; // Tidak ada perubahan
+
+        LotNumber = trimmed;
+    }
+
+    public void UpdateSupplierLotNumber(string? supplierLotNumber)
+    {
+        var trimmed = supplierLotNumber?.Trim();
+        if (SupplierLotNumber == trimmed) return; // Tidak ada perubahan
+
+        SupplierLotNumber = trimmed;
+    }
+
+    public void UpdateSupplierName(string? supplierName)
+    {
+        var trimmed = supplierName?.Trim();
+        if (SupplierName == trimmed) return; // Tidak ada perubahan
+
+        SupplierName = trimmed;
+    }
 
     public void UpdateStorageLocation(string storageLocation)
     {
         if (string.IsNullOrWhiteSpace(storageLocation))
         {
-            throw new ArgumentException(
-                "Storage location is required.",
-                nameof(storageLocation));
+            throw new ArgumentException("Storage location is required.", nameof(storageLocation));
         }
+        var trimmed = storageLocation.Trim();
+        if (StorageLocation == trimmed) return; // Tidak ada perubahan
 
-        StorageLocation = storageLocation.Trim();
+        StorageLocation = trimmed;
+    }
+    public void UpdateExpiryDate(DateOnly expiryDate)
+    {
+        if (ExpiryDate == expiryDate) return; // Tidak ada perubahan
+        ExpiryDate = expiryDate;
     }
     public void UpdateAdministrativeStatus(LotAdministrativeStatus status)
     {

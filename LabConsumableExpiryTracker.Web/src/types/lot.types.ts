@@ -50,6 +50,7 @@ export interface UpdateLotRequest {
   administrativeStatus: LotAdministrativeStatus;
   rowVersion: string;
   suppliername: string;
+  supplierLotNumber:  string;
   lotNumber: string;
   expiryDate: string;
 }

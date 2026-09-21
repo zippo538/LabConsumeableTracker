@@ -1,11 +1,17 @@
 // src/components/lots/LotSummaryCards.tsx
 import type { LotSummary } from "../../types/lot.types";
+import { Alert } from "../MessageAlert";
 
 interface LotSummaryCardsProps {
   summary: LotSummary;
+  message?: {
+    variant: "success" | "warning" | "error" | "info";
+    title: string;
+    description?: string;
+  };
 }
 
-export const LotSummaryCards = ({ summary }: LotSummaryCardsProps) => {
+export const LotSummaryCards = ({ summary, message }: LotSummaryCardsProps) => {
   const cards = [
     {
       label: "Active Lots",
@@ -82,25 +88,38 @@ export const LotSummaryCards = ({ summary }: LotSummaryCardsProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      {cards.map((card) => (
-        <div
-          key={card.label}
-          className={`rounded-lg border p-4 ${colorClasses[card.color as keyof typeof colorClasses]}`}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className={`rounded-lg p-2 ${iconColorClasses[card.color as keyof typeof iconColorClasses]}`}
-            >
-              {card.icon}
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{card.value}</p>
-              <p className="text-xs font-medium">{card.label}</p>
+    <div className="space-y-4">
+      {/* Message Alert - ditampilkan jika ada pesan dari parent */}
+      {message && (
+        <Alert
+          variant={message.variant}
+          title={message.title}
+          description={message.description}
+          dismissible={false}
+        />
+      )}
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {cards.map((card) => (
+          <div
+            key={card.label}
+            className={`rounded-lg border p-4 ${colorClasses[card.color as keyof typeof colorClasses]}`}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={`rounded-lg p-2 ${iconColorClasses[card.color as keyof typeof iconColorClasses]}`}
+              >
+                {card.icon}
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{card.value}</p>
+                <p className="text-xs font-medium">{card.label}</p>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 };

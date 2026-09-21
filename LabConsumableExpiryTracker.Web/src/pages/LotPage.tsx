@@ -38,6 +38,8 @@ export const LotsPage = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
+  
+
   // Tambahkan isError dan refetch untuk menangani state error
   const {
     data: lotsData,
@@ -52,7 +54,7 @@ export const LotsPage = () => {
     status: filterStatus || undefined,
   });
 
-  const { data: summary} = useLotSummary();
+  const { data: summary } = useLotSummary();
 
   const { data: items } = useItems();
 
@@ -140,7 +142,7 @@ export const LotsPage = () => {
             tone="cyan"
             label={`View details for ${lot.itemName} - ${lot.lotNumber}`}
             onClick={() => {
-              navigate(`/app/lots/${lot.id}`);;
+              navigate(`/app/lots/${lot.id}`);
             }}
           />
           <div className="grid min-w-0 gap-0.5">
@@ -228,8 +230,14 @@ export const LotsPage = () => {
           </p>
         </div>
 
-        {summary && <LotSummaryCards summary={summary} />}
-        <FefoInfoBox />
+        <div className="flex items-center gap-4">
+          <div className="w-1/2">
+          {summary && <LotSummaryCards summary={summary} />}
+          </div>
+          <div className="w-1/2">
+          <FefoInfoBox />
+          </div>
+        </div>
 
         <LotFilterBar
           search={search}
