@@ -1,4 +1,3 @@
-// src/components/ui/PasswordInput.tsx
 import { useId, useState } from 'react';
 import type { InputHTMLAttributes, ReactNode } from 'react';
 

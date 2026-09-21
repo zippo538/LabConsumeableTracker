@@ -41,3 +41,9 @@ export interface UpdateItemPayload {
   expiringSoonDays: number;
   image?: File | null;
 }
+export type PagedResult<T> = {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+};

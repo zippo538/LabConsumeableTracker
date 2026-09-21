@@ -21,7 +21,7 @@ export const LoginPage = () => {
 
   const from =
     (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ??
-    '/app/items';
+    '/app/dashboard';
 
   const submit = () => {
     setShowError(false);
@@ -52,11 +52,9 @@ export const LoginPage = () => {
   return (
     <main className="flex min-h-screen items-center justify-center bg-brand-bg px-4 py-8 sm:px-6 lg:px-10">
       <div className="grid w-full max-w-6xl overflow-hidden rounded-2xl bg-brand-surface shadow-2xl lg:grid-cols-2">
-
-        {/* Login form */}
+        
         <section className="flex flex-col px-6 py-8 sm:px-10 lg:px-14 lg:py-10">
-
-          {/* Logo */}
+          
           <img
             src={FormulatrixLogo}
             alt="Formulatrix"
@@ -64,8 +62,7 @@ export const LoginPage = () => {
           />
 
           <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
-
-            {/* Header */}
+            
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-teal">
                 Lab Consumable Tracker
@@ -79,8 +76,7 @@ export const LoginPage = () => {
                 Sign in to manage laboratory consumables and inventory.
               </p>
             </div>
-
-            {/* Error */}
+            
             {showError && (
               <div className="mt-6">
                 <ErrorAlert
@@ -89,8 +85,7 @@ export const LoginPage = () => {
                 />
               </div>
             )}
-
-            {/* Form */}
+            
             <form
               className="mt-8 space-y-5"
               onSubmit={(event) => {
@@ -98,7 +93,6 @@ export const LoginPage = () => {
                 submit();
               }}
             >
-              {/* Username */}
               <div>
                 <label
                   htmlFor="username"
@@ -119,8 +113,7 @@ export const LoginPage = () => {
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20"
                 />
               </div>
-
-              {/* Password */}
+              
               <PasswordInput
                 label="Password"
                 name="password"
@@ -129,8 +122,7 @@ export const LoginPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-
-              {/* Remember me */}
+              
               <div className="flex items-center gap-2.5">
                 <input
                   id="remember"
@@ -147,8 +139,7 @@ export const LoginPage = () => {
                   Remember me
                 </label>
               </div>
-
-              {/* Submit */}
+              
               <button
                 type="submit"
                 disabled={isPending}
@@ -157,8 +148,7 @@ export const LoginPage = () => {
                 {isPending ? 'Signing in...' : 'Sign in'}
               </button>
             </form>
-
-            {/* Register */}
+            
             <p className="mt-7 text-center text-sm text-slate-500">
               Don't have an account?{' '}
               <Link
@@ -169,14 +159,12 @@ export const LoginPage = () => {
               </Link>
             </p>
           </div>
-
-          {/* Footer */}
+          
           <p className="text-center text-[11px] text-slate-400">
             © 2026 Consumable Tracker
           </p>
         </section>
-
-        {/* Hero */}
+        
         <section className="relative hidden bg-slate-300 lg:block">
           <img
             src={loginHero}

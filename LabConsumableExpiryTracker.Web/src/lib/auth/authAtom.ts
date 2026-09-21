@@ -1,4 +1,3 @@
-// src/lib/auth/authAtom.ts
 import { atom } from "jotai";
 import type { UserProfile } from "../../types/api";
 
@@ -22,13 +21,11 @@ export const getStoredUser = (): UserProfile | null => {
   try {
     const parsed = JSON.parse(raw) as any;
 
-    // ✅ Migrasi: jika data lama punya 'role' (string), konversi ke 'roles' (array)
     if (parsed.role && !parsed.roles) {
       parsed.roles = [parsed.role];
       delete parsed.role;
     }
 
-    // ✅ Pastikan roles selalu array
     if (!parsed.roles || !Array.isArray(parsed.roles)) {
       parsed.roles = [];
     }
@@ -53,7 +50,6 @@ export const saveSession = (
   const primary = rememberMe ? localStorage : sessionStorage;
   const secondary = rememberMe ? sessionStorage : localStorage;
 
-  // Clear secondary to prevent stale conflicting data
   secondary.removeItem(ACCESS_TOKEN_KEY);
   secondary.removeItem(REFRESH_TOKEN_KEY);
   secondary.removeItem(USER_STORAGE_KEY);
