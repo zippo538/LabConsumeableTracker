@@ -12,7 +12,7 @@ import {
   saveSession,
   tokenAtom,
   userAtom,
-} from '../lib/auth/authAtom';
+} from "../lib/auth/authAtom";
 
 export type LoginPayload = LoginRequest & {
   rememberMe?: boolean;
@@ -39,7 +39,12 @@ export const useLogin = () => {
       setRefreshToken(data.refreshToken);
       setUser(userProfile);
 
-      saveSession(data.token, data.refreshToken, userProfile, variables.rememberMe ?? false);
+      saveSession(
+        data.token,
+        data.refreshToken,
+        userProfile,
+        variables.rememberMe ?? false,
+      );
     },
   });
 };
@@ -53,7 +58,7 @@ export const useRefreshToken = () => {
     mutationFn: (variables) => {
       const token = variables?.refreshToken ?? getStoredRefreshToken();
       if (!token) {
-        throw new Error('No refresh token available');
+        throw new Error("No refresh token available");
       }
       return refreshTokenApi({ refreshToken: token });
     },
@@ -71,7 +76,7 @@ export const useRefreshToken = () => {
       setRefreshToken(data.refreshToken);
       setUser(userProfile);
 
-      const isRemember = !!localStorage.getItem('consumabletracker.token');
+      const isRemember = !!localStorage.getItem("consumabletracker.token");
       saveSession(data.token, data.refreshToken, userProfile, isRemember);
     },
   });
@@ -89,7 +94,7 @@ export const useLogout = () => {
         try {
           await revokeTokenApi({ refreshToken: token });
         } catch (e) {
-          console.warn('Failed to revoke token on backend:', e);
+          console.warn("Failed to revoke token on backend:", e);
         }
       }
       return true;

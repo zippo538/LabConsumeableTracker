@@ -73,6 +73,7 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
 
         var query = _context.Lots
             .AsNoTracking()
+            .Include(lot => lot.Item)
             .OrderBy(lot => lot.ExpiryDate)
             .ThenBy(lot => lot.LotNumber);
 
@@ -200,4 +201,50 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
     public async Task<IReadOnlyList<Lot>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct) =>
         await _context.Lots.AsNoTracking().Include(l => l.Item)
             .Where(l => ids.Contains(l.Id)).ToListAsync(ct);
+    public async Task<IReadOnlyList<Lot>> GetAllWithItemByExpiryConditionAsync(
+      ExpiryCondition expiryCondition,
+      DateOnly evaluationDate,
+      CancellationToken ct = default)
+    {
+        if (!Enum.IsDefined(typeof(ExpiryCondition), expiryCondition))
+        {
+            throw new ArgumentOutOfRangeException(nameof(expiryCondition));
+        }
+
+        _logger.LogDebug(
+            "Retrieving lots with expiry condition {ExpiryCondition} evaluated on {EvaluationDate}",
+            expiryCondition,
+            evaluationDate);
+
+        var query = _context.Lots
+            .AsNoTracking()
+            .Include(lot => lot.Item)
+            .AsQueryable();
+
+        query = expiryCondition switch
+        {
+            ExpiryCondition.Expired => query.Where(lot => lot.ExpiryDate <= evaluationDate),
+
+            ExpiryCondition.ExpiringSoon => query.Where(lot =>
+                lot.ExpiryDate > evaluationDate &&
+                lot.ExpiryDate <= evaluationDate.AddDays(lot.Item.ExpiringSoonDays)),
+
+            ExpiryCondition.Valid => query.Where(lot =>
+                lot.ExpiryDate > evaluationDate.AddDays(lot.Item.ExpiringSoonDays)),
+
+            _ => throw new ArgumentOutOfRangeException(nameof(expiryCondition))
+        };
+
+        var lots = await query
+            .OrderBy(lot => lot.ExpiryDate)
+            .ThenBy(lot => lot.LotNumber)
+            .ToListAsync(ct);
+
+        _logger.LogDebug(
+            "Retrieved {LotCount} lots with expiry condition {ExpiryCondition}",
+            lots.Count,
+            expiryCondition);
+
+        return lots;
+    }
 }

@@ -51,10 +51,39 @@ export interface CreateUserRequest extends RegisterRequest {
 }
 
 export interface ApiErrorPayload {
+  /** RFC 7807 problem type returned by ASP.NET Core. */
+  type?: string;
+  title?: string;
+  status?: number;
+  detail?: string;
+  instance?: string;
   code?: string;
   message?: string;
   traceId?: string;
-  fieldErrors?: Record<string, string[]>;
+  /** FluentValidation/model-binding errors, keyed by request property name. */
+  errors?: Record<string, string[]>;
+}
+
+export const getApiErrorMessage = (payload: ApiErrorPayload): string =>
+  Object.values(payload.errors ?? {})
+    .flat()
+    .filter(Boolean)
+    .join(" ") ||
+  payload.message ||
+  payload.detail ||
+  payload.title ||
+  "The request could not be completed.";
+
+export class ApiRequestError extends Error {
+  readonly payload: ApiErrorPayload;
+  readonly fieldErrors: Record<string, string[]>;
+
+  constructor(message: string, payload: ApiErrorPayload = {}) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.payload = payload;
+    this.fieldErrors = payload.errors ?? {};
+  }
 }
 export interface LoginResponse {
   token: string;

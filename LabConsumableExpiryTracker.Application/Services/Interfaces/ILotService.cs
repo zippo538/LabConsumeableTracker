@@ -10,7 +10,7 @@ namespace LabConsumableExpiryTracker.Application.Services.Interfaces
     public interface ILotService
     {
         Task<ServiceResult<IEnumerable<LotDto>>> GetAllLot(CancellationToken ct);
-        Task<ServiceResult<DTOs.PagedDTOs.PagedResult<LotDto>>> GetAllLotPage(int page, int pageSize, CancellationToken ct);
+        Task<ServiceResult<PagedResult<LotDto>>> GetAllLotPage(int page, int pageSize, CancellationToken ct);
         Task<ServiceResult<IEnumerable<LotSummaryDto>>> GetSummaryByItemId(Guid itemId, CancellationToken ct);
         Task<ServiceResult<IEnumerable<LotSummaryDto>>> GetAllSummary(CancellationToken ct);
         Task<ServiceResult<LotDto>> GetByIdLot(Guid id, CancellationToken ct);

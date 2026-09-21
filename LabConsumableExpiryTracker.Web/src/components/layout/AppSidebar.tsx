@@ -1,4 +1,4 @@
-import { type FC, useState } from "react";
+import { type FC} from "react";
 import { NavLink, useNavigate } from "react-router";
 import FormulatrixLogo from "../../assets/logo_formulatrix.png";
 import { useLogout } from "../../hooks/useLogin";
@@ -10,21 +10,21 @@ import { Icon, type IconName } from "../ui/Icon";
 /* ------------------------------------------------------------------ */
 
 const adminNav: ReadonlyArray<readonly [string, string, IconName]> = [
-  ["Dashboard",       "/app/dashboard",    "dashboard"],
-  ["Item & Lot",      "/app/items",        "inventory"],
-  ["Status Lot",      "/app/lots/status",  "status"],
-  ["Disposal",        "/app/disposal",     "clipboard"],
-  ["Audit & Riwayat", "/app/audit",        "history"],
-  ["Kelola Pengguna", "/app/users",        "users"],
-  ["Profil",          "/app/profile",      "profile"],
+  ["Dashboard", "/app/dashboard", "dashboard"],
+  ["Item", "/app/items", "inventory"],
+  ["Lot", "/app/lots", "status"],
+  ["Disposal", "/app/disposal", "clipboard"],
+  ["Audit & Riwayat", "/app/audit", "history"],
+  ["Kelola Pengguna", "/app/users", "users"],
+  ["Profil", "/app/profile", "profile"],
 ];
 
 const scientistNav: ReadonlyArray<readonly [string, string, IconName]> = [
-  ["Dashboard",         "/app/dashboard",    "dashboard"],
-  ["Pilih Consumable",  "/app/consumables",  "inventory"],
-  ["Konsumsi Saya",     "/app/consumptions", "clipboard"],
-  ["Riwayat Penggunaan","/app/history",      "history"],
-  ["Profil",            "/app/profile",      "profile"],
+  ["Dashboard", "/app/dashboard", "dashboard"],
+  ["Pilih Consumable", "/app/consumables", "inventory"],
+  ["Konsumsi Saya", "/app/consumptions", "clipboard"],
+  ["Riwayat Penggunaan", "/app/history", "history"],
+  ["Profil", "/app/profile", "profile"],
 ];
 
 /* ------------------------------------------------------------------ */
@@ -148,14 +148,18 @@ export const AppSidebar: FC<AppSidebarProps> = ({
                 <Icon
                   name={icon}
                   className={`h-3.5 w-3.5 shrink-0 transition-colors ${
-                    isActive ? "text-[#18b4b5]" : "text-slate-500 group-hover:text-slate-300"
+                    isActive
+                      ? "text-[#18b4b5]"
+                      : "text-slate-500 group-hover:text-slate-300"
                   }`}
                 />
 
                 {/* Label — fade out saat collapse */}
                 <span
                   className={`transition-all duration-200 ${
-                    collapsed ? "opacity-0 w-0 pointer-events-none" : "opacity-100"
+                    collapsed
+                      ? "opacity-0 w-0 pointer-events-none"
+                      : "opacity-100"
                   }`}
                 >
                   {label}
