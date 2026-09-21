@@ -80,37 +80,48 @@ public class LotController : ControllerBase
     }
     [HttpPost("{id:guid}/disposals")]
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
-    public async Task<ActionResult<ServiceResult<bool>>> Disposals([FromBody] CreateDisposalDto request,
+    public async Task<ActionResult<ServiceResult<CreateDisposalResponseDto>>> DisposeLot(
+    Guid id,
+    [FromBody] CreateDisposalDto request,
     CancellationToken ct = default)
     {
-        var response = await _disposalService.CreateDisposalAsync(request, ct);
+        var response = await _disposalService.CreateDisposalAsync(id, request, ct);
 
-        if (response.Success)
-            return StatusCode(StatusCodes.Status201Created, response);
-
-        return response.Message == "Lot not found."
-            ? NotFound(response)
-            : BadRequest(response);
+        if (!response.Success)
+        {
+            return response.Message switch
+            {
+                "Lot not found." => NotFound(response),
+                "Concurrency conflict. The lot was modified by another user." =>
+                    StatusCode(StatusCodes.Status409Conflict, response),
+                _ => BadRequest(response)
+            };
+        }
+        return CreatedAtAction(
+            nameof(GetById), // Asumsi ada endpoint GET /api/disposals/{id}
+            new { id = response.Data!.Disposal.Id },
+            response
+        );
     }
-    [HttpGet("summary")]
-    [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
-    public async Task<ActionResult<ServiceResult<IEnumerable<LotSummaryDto>>>> GetAllSummary(
-    CancellationToken ct = default)
-    {
-        var response = await _lotService.GetAllSummary(ct);
-        return response.Success ? Ok(response) : BadRequest(response);
+        [HttpGet("summary")]
+        [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
+        public async Task<ActionResult<ServiceResult<IEnumerable<LotSummaryDto>>>> GetAllSummary(
+        CancellationToken ct = default)
+        {
+            var response = await _lotService.GetAllSummary(ct);
+            return response.Success ? Ok(response) : BadRequest(response);
+        }
+        [HttpGet("paged")]
+        [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
+        public async Task<ActionResult<ServiceResult<PagedResult<LotDto>>>> GetAllPage(
+        [FromQuery] int page = 1,
+        [FromQuery] int PageSize = 20,
+        CancellationToken ct = default)
+        {
+            var response = await _lotService.GetAllLotPage(page, PageSize, ct);
+            return response.Success
+                ? Ok(response)
+                : BadRequest(response);
+        }
     }
-    [HttpGet("paged")]
-    [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
-    public async Task<ActionResult<ServiceResult<PagedResult<LotDto>>>> GetAllPage(
-    [FromQuery] int page = 1,
-    [FromQuery] int PageSize = 20,
-    CancellationToken ct = default)
-    {
-        var response = await _lotService.GetAllLotPage(page, PageSize, ct);
-        return response.Success
-            ? Ok(response)
-            : BadRequest(response);
-    }
-}
 

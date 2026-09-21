@@ -8,11 +8,11 @@ public class CreateDisposalValidator : AbstractValidator<CreateDisposalDto>
 {
     public CreateDisposalValidator()
     {
-        RuleFor(x => x.LotId)
-            .NotEmpty()
-            .WithMessage("LotId wajib diisi.")
-            .Must(DisposalHelperValidator.BeValidGuid)
-            .WithMessage("LotId harus berupa GUID yang valid.");
+        RuleFor(x => x.ExpectedRowVersion)
+            .NotNull()
+            .WithMessage("Expected Row Empty.")
+            .Must(value => value is { Length: > 0 })
+            .WithMessage("RowVersion cannot be empty.");
 
         RuleFor(x => x.Quantity)
             .GreaterThan(0)

@@ -93,7 +93,7 @@ export function DetailLot({
         payload: {
           quantity,
           reason,
-          lotId: lot.id,
+          expectedRowVersion: lot.rowVersion,
         },
       });
       

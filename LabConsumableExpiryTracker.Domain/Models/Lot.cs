@@ -100,7 +100,7 @@ public class Lot
 
     public Consumption Consume(Guid jobId, decimal quantity, DateTimeOffset now, Guid consumedBy)
     {
-        
+
         if (!IsEligible(now))
         {
             throw new InvalidOperationException(
@@ -108,14 +108,14 @@ public class Lot
         }
         UpdateRemainingQuantity(quantity);
 
-        if (RemainingQuantity  <= 0)
+        if (RemainingQuantity <= 0)
         {
             AdministrativeStatus = LotAdministrativeStatus.Depleted;
         }
- 
+
         return new Consumption(Guid.NewGuid(), jobId, Id, quantity, now, consumedBy);
     }
-    
+
     public void UpdateStorageLocation(string storageLocation)
     {
         if (string.IsNullOrWhiteSpace(storageLocation))
@@ -180,6 +180,13 @@ public class Lot
         {
             AdministrativeStatus = LotAdministrativeStatus.Disposed;
         }
+    }
+    internal void SetConcurrencyToken(byte[] expectedRowVersion)
+    {
+        if (expectedRowVersion == null || expectedRowVersion.Length == 0)
+            throw new ArgumentException("ExpectedRowVersion tidak boleh kosong.");
+
+        RowVersion = expectedRowVersion;
     }
 
 

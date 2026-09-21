@@ -3,17 +3,9 @@ import type { LotAdministrativeStatus } from "./lot.types";
 export interface Disposal {
   id: string;
   lotId: string;
-  itemId: string;
   quantity: number;
-  baseUnit: string;
   reason: string;
-  disposedAt: string; 
-  disposedBy: string; 
-
-  itemName?: string;
-  itemCode?: string;
-  lotNumber?: string;
-  disposedByName?: string;
+  disposedAt: string;
 }
 
 export interface LotSnapshot {
@@ -27,7 +19,7 @@ export interface LotSnapshot {
 export interface CreateDisposalRequest {
   quantity: number;
   reason: string;
-  lotId: string; 
+  expectedRowVersion: string; // Base64 string dari lot.rowVersion
 }
 
 export interface DisposalListParams {
@@ -41,5 +33,10 @@ export interface DisposalListParams {
 
 export interface CreateDisposalResponse {
   disposal: Disposal;
-  lot: LotSnapshot;
+  lot: {
+    id: string;
+    remainingQuantity: number;
+    administrativeStatus: LotAdministrativeStatus;
+    rowVersion: string; // RowVersion terbaru dari server
+  };
 }
