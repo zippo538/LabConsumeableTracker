@@ -10,10 +10,6 @@ import type { ServiceResult } from "../types/auth.types";
 import type { PagedResult } from "../types/item.types";
 
 export const itemApi = {
-  // =========================
-  // Get all items
-  // Used for KPI / statistics
-  // =========================
 
   getAll: async (): Promise<ItemDto[]> => {
     const response =
@@ -24,10 +20,6 @@ export const itemApi = {
     return response.data.data ?? [];
   },
 
-  // =========================
-  // Get paged items
-  // Used for table
-  // =========================
 
   getPaged: async (
     page: number = 1,
@@ -56,10 +48,6 @@ export const itemApi = {
     return response.data.data;
   },
 
-  // =========================
-  // Get item by ID
-  // =========================
-
   getById: async (
     id: string,
   ): Promise<ItemDto> => {
@@ -77,10 +65,6 @@ export const itemApi = {
 
     return response.data.data;
   },
-
-  // =========================
-  // Create
-  // =========================
 
   create: async (
     payload: CreateItemPayload,
@@ -127,10 +111,6 @@ export const itemApi = {
     return response.data.data;
   },
 
-  // =========================
-  // Update
-  // =========================
-
   update: async (
     payload: UpdateItemPayload,
   ): Promise<ItemDto> => {
@@ -175,13 +155,9 @@ export const itemApi = {
     return response.data.data;
   },
 
-  // =========================
-  // Delete
-  // =========================
-
 delete: async (id: string): Promise<boolean> => {
   const response = await apiClient.delete(`/Item/${id}`);
 
-  return response.data.success;
+  return response.data;
 },
 };

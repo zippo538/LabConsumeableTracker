@@ -80,7 +80,6 @@ namespace LabConsumableExpiryTracker.API.Controllers
 
         [HttpDelete("{id:guid}")]
         [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
-        [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(
             Guid id,
             CancellationToken ct)

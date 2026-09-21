@@ -158,7 +158,6 @@ useEffect(() => {
           </button>
         </div>
 
-        {/* Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2 text-xs font-medium text-rose-700">
@@ -167,7 +166,6 @@ useEffect(() => {
             </div>
           )}
 
-          {/* Item Code */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               Item Code {!isEdit && <span className="text-rose-500">*</span>}
@@ -194,7 +192,6 @@ useEffect(() => {
             )}
           </div>
 
-          {/* Item Name */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               Item Name <span className="text-rose-500">*</span>
@@ -211,7 +208,6 @@ useEffect(() => {
             />
           </div>
 
-          {/* Unit & Minimum Stock */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -254,7 +250,6 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* Expiry Warning Threshold */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               Expiry Warning Threshold (Days){' '}
@@ -282,7 +277,6 @@ useEffect(() => {
             </p>
           </div>
 
-          {/* Item Image */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               Item Image (Optional)
@@ -318,7 +312,6 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* Footer */}
           <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
             <button
               type="button"

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
-  ArrowLeft,
   Edit2,
   Plus,
   Package,
@@ -157,7 +156,6 @@ export const ItemDetailPage: React.FC = () => {
     >
       <div className="space-y-5 pb-12">
 
-        {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-[11px] text-slate-400">
           <button
             type="button"
@@ -178,7 +176,6 @@ export const ItemDetailPage: React.FC = () => {
           </span>
         </div>
 
-        {/* Header */}
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs px-5 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 
@@ -214,7 +211,6 @@ export const ItemDetailPage: React.FC = () => {
 
             <div className="flex items-center gap-2">
 
-              {/* Edit Item */}
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(true)}
@@ -224,7 +220,6 @@ export const ItemDetailPage: React.FC = () => {
                 Edit Item
               </button>
 
-              {/* Register Lot */}
               <button
                 type="button"
                 onClick={() =>
@@ -239,10 +234,8 @@ export const ItemDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* KPI */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-          {/* Usable Stock */}
           <div className="bg-[#FCEBEB] rounded-2xl border border-[#C93838] p-4 shadow-2xs">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center">
@@ -267,7 +260,6 @@ export const ItemDetailPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Minimum Stock */}
           <div className="bg-[#FFF5DB] rounded-2xl border border-[#B86E00] p-4 shadow-2xs">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center">
@@ -290,7 +282,6 @@ export const ItemDetailPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Expiry Warning */}
           <div className="bg-[#E5F7F7] rounded-2xl border border-[#0EA5A5] p-4 shadow-2xs">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center">
@@ -337,10 +328,10 @@ export const ItemDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Content */}
+    
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-5">
 
-          {/* Lots */}
+    
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
 
             <div className="px-5 py-4 flex items-center justify-between">
@@ -539,7 +530,6 @@ export const ItemDetailPage: React.FC = () => {
           stock
         </p>
 
-        {/* Edit Item Modal */}
         <ItemModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
