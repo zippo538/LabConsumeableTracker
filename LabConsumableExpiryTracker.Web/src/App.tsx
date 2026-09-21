@@ -29,16 +29,25 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+
             <Route
-              path="/dashboard"
+              path="/app/dashboard"
               element={
                 <ProtectedRoute>
                   <DashboardPage />
                 </ProtectedRoute>
               }
             />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+            <Route
+              path="/"
+              element={<Navigate to="/app/dashboard" replace />}
+            />
+
+            <Route
+              path="*"
+              element={<Navigate to="/app/dashboard" replace />}
+            />
           </Routes>
         </BrowserRouter>
       </QueryClientProvider>

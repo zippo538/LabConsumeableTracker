@@ -8,6 +8,7 @@ namespace LabConsumableExpiryTracker.Application.DTOs.DashboardDTOs
     public class DashboardSummaryDto
     {
         public int LowStockItemCount { get; set; }
+        public int ValidLotCount { get; set; }
         public int ExpiringSoonLotCount { get; set; }
         public int ExpiredLotCount { get; set; }
         public int BlockedLotCount { get; set; }

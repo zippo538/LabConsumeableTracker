@@ -1,13 +1,4 @@
-
-
-export type AppRole = 'Scientist' | 'WarehouseAdmin' | string;
-
-export interface UserProfile {
-  id: string;
-  fullName: string;
-  userName: string;
-  role: string;
-}
+import type {AppRole} from "./api"; // ← import dari api.ts
 
 export interface LoginRequest {
   username: string;
@@ -21,10 +12,12 @@ export interface RefreshTokenRequest {
 export interface LoginResponse {
   token: string;
   refreshToken: string;
+  tokenType: string; 
+  expiresAt: string; 
   id: string;
   username: string;
   fullName: string;
-  role: string;
+  role: string; 
 }
 
 export interface ServiceResult<T> {
@@ -33,3 +26,4 @@ export interface ServiceResult<T> {
   data?: T;
   errors: string[];
 }
+export type { AppRole};

@@ -3,6 +3,7 @@ import type { UserProfile } from "../types/auth.types";
 import { useDashboardSummary } from "../hooks/useDashboard";
 import { Icon } from "./DashboardPage";
 import { DashboardAlertsCard } from "../components/dashboard/DashboardAlertsCard";
+import { ExpiryStatusChart } from "../components/dashboard/ExpiryStatusChart";
 
 interface DashboardProps {
   user: UserProfile | null;
@@ -118,7 +119,7 @@ export const WarehouseAdminDashboard: FC<DashboardProps> = ({ user }) => {
             <DashboardAlertsCard />
           </div>
 
-          <section className="mt-7 grid gap-5 lg:grid-cols-[1fr_199px]">
+          <section className="mt-7 grid gap-5 lg:grid-cols-[1fr_220px]">
             <div className="rounded-xl border border-slate-200 bg-white p-5">
               <h3 className="text-[13px] font-bold">Ringkasan perhatian</h3>
               <p className="mt-1 text-[8px] leading-3.5 text-slate-400">
@@ -144,22 +145,25 @@ export const WarehouseAdminDashboard: FC<DashboardProps> = ({ user }) => {
                 </div>
               </div>
             </div>
-            <aside className="rounded-xl border border-[#b9e9ed] bg-[#effdff] p-4">
-              <div className="flex items-center gap-3">
-                <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#13aaad] text-white">
-                  ✓
-                </span>
-                <p className="text-[9px] font-bold">
-                  Kontrol eligibility aktif
+            <aside className="space-y-5">
+              <ExpiryStatusChart summary={data} />
+              <div className="rounded-xl border border-[#b9e9ed] bg-[#effdff] p-4">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#13aaad] text-white">
+                    ✓
+                  </span>
+                  <p className="text-[9px] font-bold">
+                    Kontrol eligibility aktif
+                  </p>
+                </div>
+                <p className="mt-3 text-[8px] leading-3 text-slate-500">
+                  Lot expired, quarantined, blocked, disposed, atau depleted
+                  tidak masuk alokasi.
                 </p>
+                <span className="mt-3 inline-block rounded-full bg-[#d7f9f8] px-3 py-1 text-[7px] font-semibold text-teal-600">
+                  FEFO siap digunakan
+                </span>
               </div>
-              <p className="mt-3 text-[8px] leading-3 text-slate-500">
-                Lot expired, quarantined, blocked, disposed, atau depleted tidak
-                masuk alokasi.
-              </p>
-              <span className="mt-3 inline-block rounded-full bg-[#d7f9f8] px-3 py-1 text-[7px] font-semibold text-teal-600">
-                FEFO siap digunakan
-              </span>
             </aside>
           </section>
         </>

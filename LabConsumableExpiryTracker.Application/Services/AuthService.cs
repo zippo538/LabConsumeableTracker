@@ -59,6 +59,7 @@ public class AuthService : IAuthService
         var roles = await _userManager.GetRolesAsync(user);
         var role = roles.FirstOrDefault() ?? string.Empty;
 
+        var expiresAt = DateTime.UtcNow.AddHours(_jwtSettings.AccessTokenExpiryMinutes);
         var token = _tokenGenerator.GenerateToken(user, role);
         var refreshTokenString = _tokenGenerator.GenerateRefreshToken();
 
@@ -76,6 +77,8 @@ public class AuthService : IAuthService
         var response = _mapper.Map<LoginResponseDto>(user);
         response.Token = token;
         response.RefreshToken = refreshTokenString;
+        response.TokenType = "Bearer";
+        response.ExpiresAt = expiresAt;
         response.Role = role;
 
         return ServiceResult<LoginResponseDto>.SuccessResult(response);
@@ -88,13 +91,15 @@ public class AuthService : IAuthService
         {
             return ServiceResult<LoginResponseDto>.ErrorResult("Refresh token not valid or has been expired.");
         }
-        
+
         existingToken.IsRevoked = true;
         existingToken.RevokedOnUtc = DateTime.UtcNow;
         await _refreshTokenRepository.UpdateAsync(existingToken);
-        
+
         var roles = await _userManager.GetRolesAsync(existingToken.User);
         var role = roles.FirstOrDefault() ?? string.Empty;
+        var expiresAt = DateTime.UtcNow.AddHours(_jwtSettings.AccessTokenExpiryMinutes);
+
         var newAccessToken = _tokenGenerator.GenerateToken(existingToken.User, role);
         var newRefreshTokenString = _tokenGenerator.GenerateRefreshToken();
 
@@ -104,12 +109,14 @@ public class AuthService : IAuthService
             UserId = existingToken.UserId,
             ExpiresOnUtc = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpiryDays)
         };
-        
+
         await _refreshTokenRepository.AddAsync(newRefreshToken);
 
         var response = _mapper.Map<LoginResponseDto>(existingToken.User);
         response.Token = newAccessToken;
         response.RefreshToken = newRefreshTokenString;
+        response.TokenType = "Bearer";
+        response.ExpiresAt = expiresAt;
         response.Role = role;
 
         return ServiceResult<LoginResponseDto>.SuccessResult(response);
