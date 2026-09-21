@@ -262,7 +262,6 @@ export const LotsPage = () => {
           eligible.
         </p>
 
-        {/* Modals — menggunakan komponen reusable */}
         <CreateLotModal
           isOpen={isCreateModalOpen}
           onClose={() => {

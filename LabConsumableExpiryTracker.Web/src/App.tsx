@@ -40,10 +40,8 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
-            {/* Public */}
             <Route path="/login" element={<LoginPage />} />
 
-            {/* Dashboard */}
             <Route
               path="/app/dashboard"
               element={
@@ -53,7 +51,6 @@ export default function App() {
               }
             />
 
-            {/* Master Item */}
             <Route
               path="/app/items"
               element={
@@ -68,7 +65,6 @@ export default function App() {
                 <ItemDetailPage />
               </ProtectedRoute>}
             />
-            {/* Lot */}
             <Route
               path="/app/lots"
               element={
@@ -78,13 +74,11 @@ export default function App() {
               }
             />
 
-            {/* Root redirect */}
             <Route
               path="/"
               element={<Navigate to="/app/dashboard" replace />}
             />
 
-            {/* Unknown route */}
             <Route
               path="*"
               element={<Navigate to="/app/dashboard" replace />}

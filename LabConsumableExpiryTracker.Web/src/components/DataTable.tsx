@@ -26,7 +26,6 @@ export type DataTableProps<T> = {
   caption?: string;
   className?: string;
   getRowClassName?: (row: T) => string | undefined;
-  // Pagination props
   page?: number;
   pageSize?: number;
   totalItems?: number;
@@ -40,7 +39,6 @@ type SortState<T> = {
   direction: SortDirection;
 };
 
-// ✅ Badge Tone
 export type BadgeTone =
   | "neutral"
   | "success"
@@ -49,7 +47,6 @@ export type BadgeTone =
   | "info"
   | "cyan";
 
-// ✅ ItemBadge Props
 export interface ItemBadgeProps {
   imageUrl?: string | null;
   imageAlt?: string;
@@ -63,10 +60,9 @@ export interface ItemBadgeProps {
   statusTone?: StatusTone;
   className?: string;
   badgeSize?: "sm" | "md" | "lg";
-  showStatusDot?: boolean; // ✅ Dot indicator untuk status
+  showStatusDot?: boolean; 
 }
 
-// ✅ ItemBadge Component
 export function ItemBadge({
   imageUrl,
   imageAlt = "",
@@ -152,7 +148,6 @@ export function ItemBadge({
   );
 }
 
-// ✅ DataTable Component
 export function DataTable<T>({
   columns,
   rows,
@@ -411,7 +406,6 @@ export function TableToolbar({ children }: { children: ReactNode }) {
   );
 }
 
-// ✅ EntityCell Component
 export function EntityCell({
   title,
   subtitle,
@@ -490,7 +484,6 @@ export function EntityCell({
   );
 }
 
-// ✅ StatusTone & StatusBadge dengan dot indicator
 export type StatusTone = "neutral" | "success" | "warning" | "danger" | "info";
 
 export function StatusBadge({
@@ -517,7 +510,6 @@ export function StatusBadge({
   );
 }
 
-// ✅ RowAction dengan icon support
 export function RowAction({
   children,
   label = "Open row actions",
@@ -608,7 +600,6 @@ const statusToneClass: Record<StatusTone, string> = {
   info: "bg-sky-100 text-sky-700",
 };
 
-// ✅ Dot color classes untuk StatusBadge
 const statusDotClass: Record<StatusTone, string> = {
   neutral: "bg-slate-500",
   success: "bg-green-500",
