@@ -1,9 +1,10 @@
 
 import { useMutation } from '@tanstack/react-query';
 
-import { useSetAtom} from 'jotai';
+import { useSetAtom } from 'jotai';
 import { loginApi, refreshTokenApi, revokeTokenApi } from '../api/authApi';
-import type { LoginRequest, LoginResponse, RefreshTokenRequest, UserProfile } from '../types/auth.types';
+import type { LoginRequest, LoginResponse, RefreshTokenRequest } from '../types/auth.types';
+import type { AppRole, UserProfile } from '../types/api';
 import {
   clearSession,
   getStoredRefreshToken,
@@ -29,7 +30,9 @@ export const useLogin = () => {
         id: data.id,
         fullName: data.fullName,
         userName: data.username,
-        role: data.role,
+        email: '',
+        isActive: true,
+        roles: data.role ? [data.role as AppRole] : [],
       };
 
       setToken(data.token);
@@ -59,7 +62,9 @@ export const useRefreshToken = () => {
         id: data.id,
         fullName: data.fullName,
         userName: data.username,
-        role: data.role,
+        email: '',
+        isActive: true,
+        roles: data.role ? [data.role as AppRole] : [],
       };
 
       setToken(data.token);

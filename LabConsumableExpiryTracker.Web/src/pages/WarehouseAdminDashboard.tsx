@@ -1,7 +1,6 @@
 import type { FC } from "react";
-import type { UserProfile } from "../types/auth.types";
+import type { UserProfile } from "../types/api";
 import { useDashboardSummary } from "../hooks/useDashboard";
-import { Icon } from "./DashboardPage";
 import { DashboardAlertsCard } from "../components/dashboard/DashboardAlertsCard";
 import { ExpiryStatusChart } from "../components/dashboard/ExpiryStatusChart";
 
@@ -70,10 +69,7 @@ export const WarehouseAdminDashboard: FC<DashboardProps> = ({ user }) => {
           disabled={isFetching}
           className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-4 py-2 text-[8px] font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-60"
         >
-          <Icon
-            name="refresh"
-            className={`h-2.5 w-2.5 ${isFetching ? "animate-spin" : ""}`}
-          />
+        
           {isFetching ? "Memperbarui..." : "Perbarui"}
         </button>
       </section>

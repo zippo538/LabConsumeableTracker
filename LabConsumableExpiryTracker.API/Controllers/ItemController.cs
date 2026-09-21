@@ -19,11 +19,10 @@ namespace LabConsumableExpiryTracker.API.Controllers
         private readonly ILotService _lotService;
 
 
-
         public ItemController(
             IItemService itemService,
             ILotService lotService
-            )
+        )
         {
             _itemService = itemService;
             _lotService = lotService;
@@ -63,6 +62,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
             {
                 result.Data.ImagePath = $"{Request.Scheme}://{Request.Host}/{result.Data.ImagePath}";
             }
+
             return Ok(result);
         }
 
@@ -80,13 +80,21 @@ namespace LabConsumableExpiryTracker.API.Controllers
 
         [HttpDelete("{id:guid}")]
         [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
-        public async Task<ActionResult<ServiceResult<bool>>> Delete(
+        public async Task<IActionResult> Delete(
             Guid id,
-            CancellationToken ct = default)
+            CancellationToken ct)
         {
-            var response = await _itemService.DeleteItem(id, ct);
+            var result = await _itemService.DeleteItem(id, ct);
 
-            return response.Success ? Ok(response) : NotFound(response);
+            if (!result.Success)
+            {
+                if (result.Message == "Item not found.")
+                    return NotFound(result);
+
+                return Conflict(result);
+            }
+
+            return Ok(result);
         }
 
         [HttpGet("item/{itemId:guid}/summary")]
@@ -98,6 +106,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
             var response = await _lotService.GetSummaryByItemId(itemId, ct);
             return response.Success ? Ok(response) : BadRequest(response);
         }
+
         [HttpGet("paged")]
         [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
         public async Task<ActionResult<ServiceResult<PagedResult<ItemDto>>>> GetAllPage(
@@ -105,7 +114,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
             [FromQuery] int pageSize = 20,
             CancellationToken ct = default)
         {
-            var response = await _itemService.GetAllItemPage(page, pageSize,ct);
+            var response = await _itemService.GetAllItemPage(page, pageSize, ct);
             return response.Success
                 ? Ok(response)
                 : BadRequest(response);
