@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useAtomValue } from 'jotai';
+import React, {useState} from 'react';
+import {useAtomValue} from 'jotai';
 import {
     Search,
     Plus,
@@ -14,13 +14,13 @@ import type {
     UpdateItemPayload,
 } from '../types/item.types';
 
-import { AppLayout } from '../components/layout/AppLayout';
-import { useNavigate } from 'react-router';
-import { ItemModal } from '../components/Item/ItemModal';
-import { userAtom } from '../lib/auth/authAtom';
-import { useItem } from '../hooks/useItem';
-import { ItemTable } from '../components/Item/ItemTable';
-import { Pagination } from '../components/Pagination';
+import {AppLayout} from '../components/layout/AppLayout';
+import {useNavigate} from 'react-router';
+import {ItemModal} from '../components/Item/ItemModal';
+import {userAtom} from '../lib/auth/authAtom';
+import {useItem} from '../hooks/useItem';
+import {ItemTable} from '../components/Item/ItemTable';
+import {Pagination} from '../components/Pagination';
 
 export const ItemListPage: React.FC = () => {
     const user = useAtomValue(userAtom);
@@ -74,7 +74,7 @@ export const ItemListPage: React.FC = () => {
 
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
-
+    const [createSuccess, setCreateSuccess] = useState<string | null>(null);
     const handleOpenCreate = () => {
         setSelectedItemForEdit(null);
         setIsModalOpen(true);
@@ -119,15 +119,21 @@ export const ItemListPage: React.FC = () => {
     const handleModalSubmit = async (
         payload: CreateItemPayload | UpdateItemPayload,
     ) => {
-        if ('id' in payload) {
-            await updateItem(payload);
-        } else {
-            await createItem(payload);
+        setCreateSuccess(null);
+
+        try {
+            if ('id' in payload) {
+                await updateItem(payload);
+            } else {
+                await createItem(payload);
+                setCreateSuccess('Item added successfully.');
+            }
+
+            setIsModalOpen(false);
+        } catch (error) {
+            throw error;
         }
-
-        setIsModalOpen(false);
     };
-
     return (
         <AppLayout
             title="Items & Lots"
@@ -153,7 +159,7 @@ export const ItemListPage: React.FC = () => {
 
                     <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs">
                         <div className="flex items-center gap-2 mb-2">
-                            <span className="w-2.5 h-2.5 rounded-xs bg-blue-600" />
+                            <span className="w-2.5 h-2.5 rounded-xs bg-blue-600"/>
 
                             <span className="text-2xl font-bold text-slate-900">
                                 {stats.totalActive}
@@ -167,7 +173,7 @@ export const ItemListPage: React.FC = () => {
 
                     <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs">
                         <div className="flex items-center gap-2 mb-2">
-                            <span className="w-2.5 h-2.5 rounded-xs bg-amber-500" />
+                            <span className="w-2.5 h-2.5 rounded-xs bg-amber-500"/>
 
                             <span className="text-2xl font-bold text-slate-900">
                                 {stats.lowStock}
@@ -181,7 +187,7 @@ export const ItemListPage: React.FC = () => {
 
                     <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs">
                         <div className="flex items-center gap-2 mb-2">
-                            <span className="w-2.5 h-2.5 rounded-xs bg-teal-500" />
+                            <span className="w-2.5 h-2.5 rounded-xs bg-teal-500"/>
 
                             <span className="text-2xl font-bold text-slate-900">
                                 {stats.uniqueUnitsCount}
@@ -196,13 +202,13 @@ export const ItemListPage: React.FC = () => {
                     <div
                         className="bg-[#F0FAFC] rounded-2xl border border-[#BDE5E8] p-4 shadow-2xs flex flex-col justify-center">
                         <p className="text-xs font-bold text-sky-900 flex items-center gap-1.5">
-                            <Info className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                            <Info className="w-3.5 h-3.5 text-sky-600 shrink-0"/>
                             <span>Item ≠ Lot</span>
                         </p>
 
                         <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
                             Quantity is not managed at the item level.
-                            <br />
+                            <br/>
 
                             <span className="font-medium text-sky-700">
                                 Stock is managed on the Lot page.
@@ -214,7 +220,7 @@ export const ItemListPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
 
                     <div className="relative flex-1">
-                        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"/>
 
                         <input
                             type="text"
@@ -255,7 +261,7 @@ export const ItemListPage: React.FC = () => {
                             onClick={handleOpenCreate}
                             className="flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors shrink-0"
                         >
-                            <Plus className="w-4 h-4" />
+                            <Plus className="w-4 h-4"/>
                             <span>Add Master Item</span>
                         </button>
                     )}
@@ -271,12 +277,17 @@ export const ItemListPage: React.FC = () => {
                         {deleteSuccess}
                     </div>
                 )}
-
+                {createSuccess && (
+                    <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                        {createSuccess}
+                    </div>
+                )}
+                
                 <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
                     {isLoading ? (
                         <div className="py-20 text-center">
                             <div
-                                className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-emerald-600" />
+                                className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-emerald-600"/>
 
                             <p className="mt-3 text-xs text-slate-500 font-medium">
                                 Loading master items...
@@ -284,7 +295,7 @@ export const ItemListPage: React.FC = () => {
                         </div>
                     ) : isError ? (
                         <div className="py-16 text-center text-rose-600 px-4">
-                            <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-rose-500" />
+                            <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-rose-500"/>
 
                             <p className="text-sm font-semibold">
                                 Failed to load master items
@@ -297,7 +308,7 @@ export const ItemListPage: React.FC = () => {
                         </div>
                     ) : filteredItems.length === 0 ? (
                         <div className="py-20 text-center text-slate-400">
-                            <PackageCheck className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                            <PackageCheck className="w-10 h-10 mx-auto mb-2 opacity-50"/>
 
                             <p className="text-sm font-medium text-slate-600">
                                 No matching items found
@@ -320,7 +331,7 @@ export const ItemListPage: React.FC = () => {
                                 onDelete={setItemToDelete}
                             />
 
-                         <Pagination page={page} totalPages={totalPages} onPageChange={setPage}/>
+                            <Pagination page={page} totalPages={totalPages} onPageChange={setPage}/>
                         </div>
 
                     )}
