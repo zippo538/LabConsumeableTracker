@@ -69,9 +69,6 @@ export const ItemListPage: React.FC = () => {
     const [itemToDelete, setItemToDelete] =
         useState<ItemDto | null>(null);
 
-    const [openDropdownId, setOpenDropdownId] =
-        useState<string | null>(null);
-
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
     const [createSuccess, setCreateSuccess] = useState<string | null>(null);
@@ -136,13 +133,10 @@ export const ItemListPage: React.FC = () => {
     };
     return (
         <AppLayout
-            title="Items & Lots"
+            title="Items"
             description="Manage laboratory master items and lots"
         >
-            <div
-                className="space-y-6 pb-12"
-                onClick={() => setOpenDropdownId(null)}
-            >
+            <div className="space-y-6 pb-12">
 
                 <div>
                     <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
