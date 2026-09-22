@@ -1,5 +1,4 @@
 import {
-  type FormEvent,
   type ReactNode,
   useEffect,
   useId,
@@ -124,7 +123,7 @@ type FormModalProps = Omit<ModalShellProps, "children" | "footer" | "tone"> & {
   mode: "create" | "update";
   children: ReactNode;
   submitLabel: string;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: React.SyntheticEvent<HTMLFormElement>) => void;
   cancelLabel?: string;
   identity?: ReactNode;
   guard?: ReactNode;
