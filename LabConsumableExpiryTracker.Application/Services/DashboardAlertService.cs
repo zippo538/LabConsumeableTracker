@@ -45,7 +45,6 @@ public class DashboardAlertService : IDashboardAlertService
         var validation = await _validator.ValidateAsync(query, ct);
         if (!validation.IsValid)
         {
-            // Log kegagalan validasi dengan detail error yang aman
             _logger.LogWarning("Dashboard alert query validation failed: {ValidationErrors}",
                 string.Join("; ", validation.Errors.Select(x => x.ErrorMessage)));
 

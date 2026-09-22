@@ -36,7 +36,7 @@ public class DisposalRepository : Repository<Disposal, Guid>, IDisposalRepositor
         var query = _context.Disposals
             .AsNoTracking()
             .Include(d => d.Lot)
-            .ThenInclude(l => l.Item)   // ← ini yang kemungkinan hilang/kurang
+            .ThenInclude(l => l.Item)   
             .AsQueryable();
 
         if (lotId is not null) query = query.Where(d => d.LotId == lotId);

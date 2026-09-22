@@ -98,7 +98,7 @@ public class LotController : ControllerBase
             };
         }
         return CreatedAtAction(
-            nameof(GetById), // Asumsi ada endpoint GET /api/disposals/{id}
+            nameof(GetById), 
             new { id = response.Data!.Disposal.Id },
             response
         );
@@ -119,7 +119,7 @@ public class LotController : ControllerBase
     [FromQuery] string? search = null,
     [FromQuery] Guid? itemId = null,
     [FromQuery] string? administrativeStatus = null,
-    [FromQuery] string? expiryCondition = null, // Tambahkan parameter ini
+    [FromQuery] string? expiryCondition = null, 
     CancellationToken ct = default)
     {
         var response = await _lotService.GetAllLotPage(

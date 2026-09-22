@@ -186,16 +186,13 @@ namespace LabConsumableExpiryTracker.Application.Services
                 return ServiceResult<LotDto>.ErrorResult("Lot not found.");
             }
 
-            // Validasi RowVersion wajib
             if (updateLotDto.RowVersion == null || updateLotDto.RowVersion.Length == 0)
             {
                 return ServiceResult<LotDto>.ErrorResult("RowVersion is required for update.");
             }
 
-            // Track apakah ada perubahan
             var hasChanges = false;
 
-            // Partial update: hanya update field yang dikirim (tidak null)
             if (updateLotDto.LotNumber != null)
             {
                 existing.UpdateLotNumber(updateLotDto.LotNumber);
@@ -232,7 +229,6 @@ namespace LabConsumableExpiryTracker.Application.Services
                 hasChanges = true;
             }
 
-            // Jika tidak ada perubahan, return data saat ini
             if (!hasChanges)
             {
                 _logger.LogInformation("Lot {LotId} update skipped because no changes detected", id);
@@ -241,10 +237,8 @@ namespace LabConsumableExpiryTracker.Application.Services
                 return ServiceResult<LotDto>.SuccessResult(hasNoResponse, "No changes detected.");
             }
 
-            // Set concurrency token untuk optimistic concurrency check
             existing.SetConcurrencyToken(updateLotDto.RowVersion);
 
-            // Update dan save
             var updated = await _lotRepository.UpdateAsync(existing, ct);
             await _unitOfWork.SaveChangesAsync(ct);
 
@@ -276,7 +270,6 @@ namespace LabConsumableExpiryTracker.Application.Services
                 "Lot deleted successfully.");
         }
 
-        // Lot Summary 
         public async Task<ServiceResult<IEnumerable<LotSummaryDto>>> GetSummaryByItemId(Guid itemId,
             CancellationToken ct)
         {
@@ -315,13 +308,11 @@ namespace LabConsumableExpiryTracker.Application.Services
             string? administrativeStatus = null,
             string? expiryCondition = null)
         {
-            // Panggil repository dengan SEMUA parameter filter
             var pagedLots = await _lotRepository.GetAllWithItemAsyncPage(
                 page, pageSize, search, itemId, administrativeStatus, expiryCondition, ct);
 
             var now = _timeProvider.GetUtcNow();
 
-            // Mapping saja, TIDAK PERLU filter lagi
             var lotDtos = pagedLots.Items.Select(lot =>
             {
                 var warningDays = lot.Item?.ExpiringSoonDays ?? 0;
@@ -333,7 +324,7 @@ namespace LabConsumableExpiryTracker.Application.Services
                 Items = lotDtos,
                 Page = pagedLots.Page,
                 PageSize = pagedLots.PageSize,
-                TotalCount = pagedLots.TotalCount // Sekarang totalCount dan items akan sinkron
+                TotalCount = pagedLots.TotalCount 
             };
 
             return ServiceResult<PagedResult<LotDto>>.SuccessResult(

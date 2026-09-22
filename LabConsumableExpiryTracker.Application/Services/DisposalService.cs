@@ -60,37 +60,30 @@ public class DisposalService : IDisposalService
 
         try
         {
-            // 1. CRITICAL: Set RowVersion dari client agar EF Core bisa melakukan concurrency check
-            // EF Core akan menggunakan nilai ini sebagai "OriginalValue" untuk klausa WHERE
              var expectedBytes = Convert.FromBase64String(request.ExpectedRowVersion);
             lot.SetConcurrencyToken(expectedBytes);
 
             var now = _timeProvider.GetUtcNow();
 
-            // 2. Kurangi stok menggunakan method domain
             lot.UpdateRemainingQuantity(request.Quantity);
             
-            // 3. Jika stok habis, ubah status menjadi Disposed (sesuai Lot.cs)
             if (lot.RemainingQuantity == 0)
             {
                 lot.Dispose();
             }
 
-            // 4. Buat entitas Disposal
             var disposal = Disposal.Create(lotId, request.Quantity, request.Reason, now);
             
-            // 5. Simpan perubahan (AppDbContext akan auto-generate RowVersion baru di sini)
             await _lotRepository.UpdateAsync(lot, ct);
             await _disposalRepository.AddAsync(disposal, ct);
             await _unitOfWork.SaveChangesAsync(ct);
 
             _logger.LogInformation("Disposal {DisposalId} created for lot {LotId}", disposal.Id, lotId);
 
-            // 6. Map response menggunakan AutoMapper
             var response = new CreateDisposalResponseDto
             {
                 Disposal = _mapper.Map<DisposalDto>(disposal),
-                Lot = _mapper.Map<LotSnapshotDto>(lot) // Lot ini sekarang punya RowVersion baru dari DB
+                Lot = _mapper.Map<LotSnapshotDto>(lot) 
             };
 
             return ServiceResult<CreateDisposalResponseDto>.SuccessResult(response, "Lot disposed successfully.");

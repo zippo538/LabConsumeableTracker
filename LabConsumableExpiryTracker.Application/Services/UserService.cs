@@ -80,7 +80,7 @@ public class UserService : IUserService
 
         var roles = await _userManager.GetRolesAsync(user);
         var response = _mapper.Map<UserResponseDto>(user);
-        response.Roles = roles.ToList(); // ✅ FIX: Map semua role ke List
+        response.Roles = roles.ToList(); 
         return ServiceResult<UserResponseDto>.SuccessResult(response, "User profile retrieved successfully.");
     }
 
@@ -109,9 +109,6 @@ public class UserService : IUserService
             return ServiceResult<UserResponseDto>.ErrorResult("User not found.");
         }
 
-        // ⚠️ PENTING: Jangan pakai _mapper.Map(request, user) jika request berasal dari admin 
-        // yang punya field Role/IsActive, karena bisa menimpa data sensitif.
-        // Untuk update FullName saja, lakukan manual assignment yang aman:
         user.FullName = request.FullName;
 
         var result = await _userManager.UpdateAsync(user);

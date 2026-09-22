@@ -80,7 +80,6 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
             .Include(lot => lot.Item)
             .AsQueryable();
 
-        // Filter Search
         if (!string.IsNullOrWhiteSpace(search))
         {
             var searchLower = search.Trim().ToLower();
@@ -90,13 +89,11 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
                 lot.Item.Code.ToLower().Contains(searchLower));
         }
 
-        // Filter ItemId
         if (itemId.HasValue)
         {
             query = query.Where(lot => lot.ItemId == itemId.Value);
         }
 
-        // Filter AdministrativeStatus
         if (!string.IsNullOrWhiteSpace(administrativeStatus))
         {
             if (Enum.TryParse<LotAdministrativeStatus>(administrativeStatus, true, out var status))
@@ -105,12 +102,10 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
             }
         }
 
-        // Filter ExpiryCondition (DI DATABASE LEVEL)
         if (!string.IsNullOrWhiteSpace(expiryCondition))
         {
             if (Enum.TryParse<ExpiryCondition>(expiryCondition, true, out var condition))
             {
-                // Gunakan DateOnly dari UTC now untuk konsistensi
                 var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
                 query = condition switch

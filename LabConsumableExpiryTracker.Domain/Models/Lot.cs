@@ -121,7 +121,7 @@ public class Lot
             throw new ArgumentException("Lot number is required.", nameof(lotNumber));
 
         var trimmed = lotNumber.Trim();
-        if (LotNumber == trimmed) return; // Tidak ada perubahan
+        if (LotNumber == trimmed) return;
 
         LotNumber = trimmed;
     }
@@ -129,7 +129,7 @@ public class Lot
     public void UpdateSupplierLotNumber(string? supplierLotNumber)
     {
         var trimmed = supplierLotNumber?.Trim();
-        if (SupplierLotNumber == trimmed) return; // Tidak ada perubahan
+        if (SupplierLotNumber == trimmed) return; 
 
         SupplierLotNumber = trimmed;
     }
@@ -137,7 +137,7 @@ public class Lot
     public void UpdateSupplierName(string? supplierName)
     {
         var trimmed = supplierName?.Trim();
-        if (SupplierName == trimmed) return; // Tidak ada perubahan
+        if (SupplierName == trimmed) return; 
 
         SupplierName = trimmed;
     }
@@ -149,13 +149,13 @@ public class Lot
             throw new ArgumentException("Storage location is required.", nameof(storageLocation));
         }
         var trimmed = storageLocation.Trim();
-        if (StorageLocation == trimmed) return; // Tidak ada perubahan
+        if (StorageLocation == trimmed) return; 
 
         StorageLocation = trimmed;
     }
     public void UpdateExpiryDate(DateOnly expiryDate)
     {
-        if (ExpiryDate == expiryDate) return; // Tidak ada perubahan
+        if (ExpiryDate == expiryDate) return; 
         ExpiryDate = expiryDate;
     }
     public void UpdateAdministrativeStatus(LotAdministrativeStatus status)
