@@ -31,7 +31,7 @@ export const LotFilterBar = ({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
       {/* Search */}
-      <div className="w-15">
+      <div className="w-30">
         <input
           type="text"
           placeholder="Search Lot number..."

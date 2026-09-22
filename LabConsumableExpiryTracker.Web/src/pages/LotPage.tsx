@@ -156,7 +156,7 @@ export const LotsPage = () => {
       cell: (lot: Lot) => (
         <div className="flex items-center gap-3">
           <ItemBadge
-            icon={Grid2x2}
+            imageAlt=""
             fallbackText={lot.lotNumber.slice(0, 2)}
             tone="cyan"
             label={`View details for ${lot.itemName} - ${lot.lotNumber}`}

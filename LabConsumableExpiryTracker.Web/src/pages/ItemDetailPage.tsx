@@ -30,7 +30,6 @@ export const ItemDetailPage: React.FC = () => {
         data: item,
         isLoading,
         isError,
-        error,
         refetch,
     } = useItemDetail(id);
 

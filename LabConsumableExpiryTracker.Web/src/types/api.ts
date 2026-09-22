@@ -51,7 +51,6 @@ export interface CreateUserRequest extends RegisterRequest {
 }
 
 export interface ApiErrorPayload {
-  /** RFC 7807 problem type returned by ASP.NET Core. */
   type?: string;
   title?: string;
   status?: number;
@@ -60,8 +59,8 @@ export interface ApiErrorPayload {
   code?: string;
   message?: string;
   traceId?: string;
-  /** FluentValidation/model-binding errors, keyed by request property name. */
   errors?: Record<string, string[]>;
+  fieldErrors?: Record<string, string[]>;
 }
 
 export const getApiErrorMessage = (payload: ApiErrorPayload): string =>

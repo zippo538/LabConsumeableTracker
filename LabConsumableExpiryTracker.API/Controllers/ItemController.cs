@@ -29,7 +29,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
+        [Authorize]
         public async Task<ActionResult<ServiceResult<IEnumerable<ItemDto>>>> GetAll
         (
             CancellationToken ct = default)
@@ -39,7 +39,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
         }
 
         [HttpGet("{id:guid}")]
-        [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
+        [Authorize]
         public async Task<ActionResult<ServiceResult<ItemDto>>> GetById(
             Guid id,
             CancellationToken ct = default)
