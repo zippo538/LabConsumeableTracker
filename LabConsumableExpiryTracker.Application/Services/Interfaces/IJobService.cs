@@ -15,7 +15,7 @@ namespace LabConsumableExpiryTracker.Application.Services.Interfaces
         Task<ServiceResult<JobDto>> StartAsync(Guid id, CancellationToken ct = default);
         Task<ServiceResult<JobDto>> CancelAsync(Guid id, CancellationToken ct = default);
         Task<ServiceResult<JobDto>> CompleteAsync(Guid id, CancellationToken ct = default);
-        Task<ServiceResult<JobDto>> UpdateStatusAsync(Guid id, UpdateJobDto dto, CancellationToken ct = default);
+        Task<ServiceResult<JobDto>> UpdateAsync(Guid id, UpdateJobDto dto, CancellationToken ct = default);
 
     }
 }
