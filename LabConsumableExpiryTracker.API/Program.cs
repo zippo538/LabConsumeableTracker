@@ -98,6 +98,8 @@ builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 builder.Services.AddScoped<IDashboardAlertRepository, DashboardAlertRepository>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IDashboardSummaryService, DashboardSummaryService>();
+builder.Services.AddScoped<IConsumptionHistoryService, ConsumptionHistoryService>();
+builder.Services.AddScoped<IConsumptionHistoryRepository, ConsumptionHistoryRepository>();
 
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IUserLookupService, UserLookupService>();
