@@ -282,7 +282,7 @@ export function DataTable<T>({
                   {columns.map((column) => (
                     <td
                       key={column.id}
-                      className={`${densityClass[density]} border-t border-slate-100 px-6 align-middle text-sm text-slate-800 ${alignClass[column.align ?? "left"]} ${column.className ?? ""}`}
+                      className={`${densityClass[density]} border-t border-slate-100 px-6 align-middle text-sm text-slate-700 font-bold leading-snug ${alignClass[column.align ?? "left"]} ${column.className ?? ""}`}
                     >
                       {column.cell(row)}
                     </td>

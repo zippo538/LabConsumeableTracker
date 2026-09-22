@@ -306,13 +306,22 @@ namespace LabConsumableExpiryTracker.Application.Services
                 summaries,
                 "Lot summaries retrieved successfully.");
         }
-        public async Task<ServiceResult<PagedResult<LotDto>>> GetAllLotPage(int page, int pageSize, CancellationToken ct)
+        public async Task<ServiceResult<PagedResult<LotDto>>> GetAllLotPage(
+            CancellationToken ct,
+            int page,
+            int pageSize,
+            string? search = null,
+            Guid? itemId = null,
+            string? administrativeStatus = null,
+            string? expiryCondition = null)
         {
-            _logger.LogDebug("Retrieving paged lots. Page: {Page}, PageSize: {PageSize}", page, pageSize);
-
-            var pagedLots = await _lotRepository.GetAllWithItemAsyncPage(page, pageSize, ct);
+            // Panggil repository dengan SEMUA parameter filter
+            var pagedLots = await _lotRepository.GetAllWithItemAsyncPage(
+                page, pageSize, search, itemId, administrativeStatus, expiryCondition, ct);
 
             var now = _timeProvider.GetUtcNow();
+
+            // Mapping saja, TIDAK PERLU filter lagi
             var lotDtos = pagedLots.Items.Select(lot =>
             {
                 var warningDays = lot.Item?.ExpiringSoonDays ?? 0;
@@ -324,14 +333,8 @@ namespace LabConsumableExpiryTracker.Application.Services
                 Items = lotDtos,
                 Page = pagedLots.Page,
                 PageSize = pagedLots.PageSize,
-                TotalCount = pagedLots.TotalCount
+                TotalCount = pagedLots.TotalCount // Sekarang totalCount dan items akan sinkron
             };
-
-            _logger.LogInformation(
-                "Retrieved {LotCount} lots on page {Page} with expiry evaluated at {EvaluationTime}",
-                lotDtos.Count,
-                page,
-                now);
 
             return ServiceResult<PagedResult<LotDto>>.SuccessResult(
                 pagedResult,

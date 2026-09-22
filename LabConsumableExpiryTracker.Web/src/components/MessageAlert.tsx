@@ -11,28 +11,24 @@ type AlertProps = {
   className?: string;
 };
 
-const alertStyles: Record<
+const alertConfig: Record<
   AlertVariant,
-  { wrapper: string; icon: string; symbol: ReactNode }
+  { dotColor: string; symbol: ReactNode }
 > = {
   success: {
-    wrapper: "border-[#7ada96] bg-[#e3faeb] text-[#14873b]",
-    icon: "bg-[#14873b] text-white",
+    dotColor: "bg-emerald-500",
     symbol: "✓",
   },
   warning: {
-    wrapper: "border-[#f5c95e] bg-[#fff5db] text-[#8c5908]",
-    icon: "bg-[#8c5908] text-white",
+    dotColor: "bg-amber-500",
     symbol: "!",
   },
   error: {
-    wrapper: "border-[#f5adad] bg-[#ffeeee] text-[#bd1f1f]",
-    icon: "bg-[#bd1f1f] text-white",
+    dotColor: "bg-red-500",
     symbol: "!",
   },
   info: {
-    wrapper: "border-[#85bff0] bg-[#e6f5ff] text-[#0a599e]",
-    icon: "bg-[#0a599e] text-white",
+    dotColor: "bg-blue-600",
     symbol: "i",
   },
 };
@@ -45,40 +41,40 @@ export function Alert({
   onDismiss,
   className = "",
 }: AlertProps) {
-  const style = alertStyles[variant];
+  const config = alertConfig[variant];
 
   return (
     <div
       role="alert"
-      className={`flex items-start gap-3 rounded-xl border px-4 py-3.5 ${style.wrapper} ${className}`}
+      className={`rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs ${className}`}
     >
-      <span
-        aria-hidden="true"
-        className={`flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-bold ${style.icon}`}
-      >
-        {style.symbol}
-      </span>
+      <div className="flex items-start gap-3">
+        {/* Dot indicator */}
+        <span
+          aria-hidden="true"
+          className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-xs ${config.dotColor}`}
+        />
 
-      <div className="min-w-0 flex-1">
-        <p className="text-base font-semibold leading-[22px]">{title}</p>
+        {/* Content */}
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-slate-900">{title}</p>
+          {description && (
+            <p className="mt-1 text-xs text-slate-500">{description}</p>
+          )}
+        </div>
 
-        {description && (
-          <p className="mt-0.5 text-xs leading-[18px] opacity-90">
-            {description}
-          </p>
+        {/* Dismiss button */}
+        {dismissible && (
+          <button
+            type="button"
+            aria-label="Tutup notifikasi"
+            onClick={onDismiss}
+            className="-mt-1 shrink-0 rounded p-1 text-lg leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          >
+            ×
+          </button>
         )}
       </div>
-
-      {dismissible && (
-        <button
-          type="button"
-          aria-label="Tutup notifikasi"
-          onClick={onDismiss}
-          className="ml-1 -mt-1 shrink-0 rounded p-1 text-lg leading-none hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-current"
-        >
-          ×
-        </button>
-      )}
     </div>
   );
 }

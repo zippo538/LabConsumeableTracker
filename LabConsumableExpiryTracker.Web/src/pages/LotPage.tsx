@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useAtomValue } from "jotai";
 import { useNavigate } from "react-router";
 import { userAtom } from "../lib/auth/authAtom";
-import { Grid2x2 } from "lucide-react";
+// 1. Tambahkan ikon yang diperlukan
+import { Grid2x2, MoreHorizontal, Edit2, Trash2 } from "lucide-react";
 import {
   useLots,
   useLotSummary,
@@ -32,15 +33,19 @@ export const LotsPage = () => {
   const user = useAtomValue(userAtom);
   const isWarehouseAdmin = user?.roles?.includes("WarehouseAdmin") ?? false;
   const navigate = useNavigate();
+
+  // State untuk filter
   const [search, setSearch] = useState("");
   const [filterItem, setFilterItem] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
+  const [filterAdministrativeStatus, setFilterAdministrativeStatus] =
+    useState("");
+  const [filterExpiryCondition, setFilterExpiryCondition] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  
+  // 2. State untuk Dropdown Menu
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
-  // Tambahkan isError dan refetch untuk menangani state error
   const {
     data: lotsData,
     isLoading: isLotsLoading,
@@ -51,13 +56,12 @@ export const LotsPage = () => {
     pageSize,
     search: search || undefined,
     itemId: filterItem || undefined,
-    status: filterStatus || undefined,
+    administrativeStatus: filterAdministrativeStatus || undefined,
+    expiryCondition: filterExpiryCondition || undefined,
   });
 
   const { data: summary } = useLotSummary();
-
   const { data: items } = useItems();
-
   const createMutation = useCreateLot();
   const updateMutation = useUpdateLot();
   const deleteMutation = useDeleteLot();
@@ -65,11 +69,27 @@ export const LotsPage = () => {
   const lots = lotsData?.items ?? [];
   const totalItems = lotsData?.totalCount ?? 0;
 
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+  const handleFilterItemChange = (value: string) => {
+    setFilterItem(value);
+    setPage(1);
+  };
+  const handleFilterAdministrativeStatusChange = (value: string) => {
+    setFilterAdministrativeStatus(value);
+    setPage(1);
+  };
+  const handleFilterExpiryConditionChange = (value: string) => {
+    setFilterExpiryCondition(value);
+    setPage(1);
+  };
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedLot, setSelectedLot] = useState<Lot | null>(null);
-
   const [createError, setCreateError] = useState<string | undefined>();
   const [updateError, setUpdateError] = useState<string | undefined>();
 
@@ -84,12 +104,14 @@ export const LotsPage = () => {
     setSelectedLot(lot);
     setUpdateError(undefined);
     setIsUpdateModalOpen(true);
+    setOpenDropdownId(null); // Tutup dropdown setelah klik
   };
 
   const handleDeleteLot = (lot: Lot) => {
     if (!isWarehouseAdmin) return;
     setSelectedLot(lot);
     setIsDeleteModalOpen(true);
+    setOpenDropdownId(null); // Tutup dropdown setelah klik
   };
 
   const handleCreateSubmit = async (payload: CreateLotRequest) => {
@@ -106,10 +128,7 @@ export const LotsPage = () => {
   const handleUpdateSubmit = async (payload: UpdateLotRequest) => {
     if (!selectedLot) return;
     try {
-      await updateMutation.mutateAsync({
-        id: selectedLot.id,
-        payload,
-      });
+      await updateMutation.mutateAsync({ id: selectedLot.id, payload });
       setIsUpdateModalOpen(false);
       setSelectedLot(null);
     } catch (err) {
@@ -126,7 +145,7 @@ export const LotsPage = () => {
       setIsDeleteModalOpen(false);
       setSelectedLot(null);
     } catch (err) {
-      // Handle delete error if needed
+      /* Handle error */
     }
   };
 
@@ -141,9 +160,7 @@ export const LotsPage = () => {
             fallbackText={lot.lotNumber.slice(0, 2)}
             tone="cyan"
             label={`View details for ${lot.itemName} - ${lot.lotNumber}`}
-            onClick={() => {
-              navigate(`/app/lots/${lot.id}`);
-            }}
+            onClick={() => navigate(`/app/lots/${lot.id}`)}
           />
           <div className="grid min-w-0 gap-0.5">
             <span className="truncate font-semibold text-slate-900">
@@ -189,29 +206,62 @@ export const LotsPage = () => {
       ),
     },
     {
-      id: "status",
-      header: "Status",
+      id: "administrativeStatus",
+      header: "Admin Status",
+      cell: (lot: Lot) => <LotStatusBadge status={lot.administrativeStatus} />,
+    },
+    {
+      id: "expiryCondition",
+      header: "Expiry Condition",
       cell: (lot: Lot) => <LotStatusBadge status={lot.expiryCondition} />,
     },
+    // 3. Kolom Actions dengan Dropdown Menu
     ...(isWarehouseAdmin
       ? [
           {
             id: "actions",
             header: "Actions",
             cell: (lot: Lot) => (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleUpdateLot(lot)}
-                  className="rounded px-2 py-1 text-xs font-medium text-teal-600 hover:bg-teal-50"
+              <div className="relative text-right">
+                <div
+                  className="inline-block"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteLot(lot)}
-                  className="rounded px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
-                >
-                  Delete
-                </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOpenDropdownId(
+                        openDropdownId === lot.id ? null : lot.id,
+                      )
+                    }
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                    aria-label="Open actions menu"
+                  >
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+
+                  {openDropdownId === lot.id && (
+                    <div className="absolute right-0 top-10 z-20 w-36 bg-white rounded-xl shadow-lg border border-slate-100 py-1.5 text-left animate-in fade-in zoom-in-95 duration-100">
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateLot(lot)}
+                        className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-emerald-700 transition-colors"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        <span>Edit</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteLot(lot)}
+                        className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ),
           },
@@ -232,20 +282,24 @@ export const LotsPage = () => {
 
         <div className="flex items-center gap-4">
           <div className="w-1/2">
-          {summary && <LotSummaryCards summary={summary} />}
+            {summary && <LotSummaryCards summary={summary} />}
           </div>
           <div className="w-1/2">
-          <FefoInfoBox />
+            <FefoInfoBox />
           </div>
         </div>
 
         <LotFilterBar
           search={search}
-          onSearchChange={setSearch}
+          onSearchChange={handleSearchChange}
           filterItem={filterItem}
-          onFilterItemChange={setFilterItem}
-          filterStatus={filterStatus}
-          onFilterStatusChange={setFilterStatus}
+          onFilterItemChange={handleFilterItemChange}
+          filterAdministrativeStatus={filterAdministrativeStatus}
+          onFilterAdministrativeStatusChange={
+            handleFilterAdministrativeStatusChange
+          }
+          filterExpiryCondition={filterExpiryCondition}
+          onFilterExpiryConditionChange={handleFilterExpiryConditionChange}
           items={items ?? []}
           onRegisterNew={handleCreateLot}
           canRegister={isWarehouseAdmin}
@@ -265,8 +319,22 @@ export const LotsPage = () => {
             loading={isLotsLoading}
             emptyState={
               <EmptyState
-                title="Belum ada lot yang sesuai"
-                description="Coba gunakan kata kunci pencarian atau filter yang lain."
+                title={
+                  search ||
+                  filterItem ||
+                  filterAdministrativeStatus ||
+                  filterExpiryCondition
+                    ? "Tidak ada lot yang sesuai filter"
+                    : "Belum ada lot yang terdaftar"
+                }
+                description={
+                  search ||
+                  filterItem ||
+                  filterAdministrativeStatus ||
+                  filterExpiryCondition
+                    ? "Coba ubah kata kunci pencarian atau filter yang lain."
+                    : "Klik 'Register New Lot' untuk menambahkan lot baru."
+                }
                 icon={<Grid2x2 />}
               />
             }
@@ -295,6 +363,7 @@ export const LotsPage = () => {
           isLoading={createMutation.isPending}
           error={createError}
         />
+
         <UpdateLotModal
           isOpen={isUpdateModalOpen}
           onClose={() => {
@@ -307,6 +376,7 @@ export const LotsPage = () => {
           isLoading={updateMutation.isPending}
           error={updateError}
         />
+
         <DeleteLotModal
           isOpen={isDeleteModalOpen}
           onClose={() => {

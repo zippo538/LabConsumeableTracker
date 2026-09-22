@@ -1,11 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { lotApi } from "../api/lotApi";
-import type {
-  CreateLotRequest,
-  UpdateLotRequest,
-  LotAdministrativeStatus,
-  ExpiryCondition,
-} from "../types/lot.types";
+import type { CreateLotRequest, UpdateLotRequest } from "../types/lot.types";
 
 export const lotQueryKeys = {
   all: ["lots"] as const,
@@ -23,13 +18,13 @@ export const useLots = (params?: {
   pageSize?: number;
   search?: string;
   itemId?: string;
-  status?: LotAdministrativeStatus | string;
-  expiryCondition?: ExpiryCondition | string;
+  administrativeStatus?: string;
+  expiryCondition?: string;
 }) => {
   return useQuery({
     queryKey: lotQueryKeys.list(params || {}),
     queryFn: () => lotApi.getLots(params),
-    staleTime: 30 * 1000, 
+    staleTime: 30 * 1000,
   });
 };
 
@@ -37,7 +32,7 @@ export const useLotSummary = () => {
   return useQuery({
     queryKey: lotQueryKeys.summary(),
     queryFn: lotApi.getLotSummary,
-    staleTime: 60 * 1000, 
+    staleTime: 60 * 1000,
   });
 };
 
@@ -45,7 +40,7 @@ export const useItems = () => {
   return useQuery({
     queryKey: lotQueryKeys.items(),
     queryFn: lotApi.getItems,
-    staleTime: 5 * 60 * 1000, 
+    staleTime: 5 * 60 * 1000,
   });
 };
 

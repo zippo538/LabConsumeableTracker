@@ -12,8 +12,6 @@ import type {
   LotSummary,
   CreateLotRequest,
   UpdateLotRequest,
-  LotAdministrativeStatus,
-  ExpiryCondition,
   ItemOption,
 } from "../types/lot.types";
 
@@ -37,12 +35,21 @@ export const lotApi = {
     pageSize?: number;
     search?: string;
     itemId?: string;
-    status?: LotAdministrativeStatus | string;
-    expiryCondition?: ExpiryCondition | string;
+    administrativeStatus?: string;
+    expiryCondition?: string;
   }): Promise<PageResult<Lot>> => {
     const response = await apiClient.get<ServiceResult<PageResult<Lot>>>(
       "/Lot/paged",
-      { params },
+      {
+        params: {
+          Page: params?.page || 1,
+          PageSize: params?.pageSize || 20,
+          Search: params?.search || undefined,
+          ItemId: params?.itemId || undefined,
+          AdministrativeStatus: params?.administrativeStatus || undefined,
+          ExpiryCondition: params?.expiryCondition || undefined,
+        },
+      },
     );
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.message || "Failed to fetch lots.");

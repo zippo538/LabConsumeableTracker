@@ -13,9 +13,8 @@ const adminNav: ReadonlyArray<readonly [string, string, IconName]> = [
   ["Dashboard", "/app/dashboard", "dashboard"],
   ["Item", "/app/items", "inventory"],
   ["Lot", "/app/lots", "status"],
-  ["Disposal", "/app/disposal", "clipboard"],
-  ["Audit & Riwayat", "/app/audit", "history"],
-  ["Kelola Pengguna", "/app/users", "users"],
+  ["Audit & History", "/app/audit", "history"],
+  ["User Management", "/app/users", "users"],
   ["Profil", "/app/profile", "profile"],
 ];
 

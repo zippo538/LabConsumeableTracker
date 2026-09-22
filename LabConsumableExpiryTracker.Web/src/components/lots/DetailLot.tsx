@@ -129,7 +129,8 @@ export function DetailLot({ lot }: DetailLotProps) {
           lotNumber: lot.lotNumber,
           administrativeStatus: status,
           rowVersion: lot.rowVersion,
-          suppliername: lot.suppliername ?? "", // Handle optional field
+          suppliername: lot.suppliername ?? "",
+          supplierLotNumber: lot.supplierLotNumber ?? "", // Handle optional field
           expiryDate: lot.expiryDate,
           storageLocation: lot.storageLocation,
         },

@@ -1,14 +1,16 @@
-// src/components/lots/LotStatusBadge.tsx
-import type { ExpiryCondition } from "../../types/lot.types";
+import type {
+  ExpiryCondition,
+  LotAdministrativeStatus,
+} from "../../types/lot.types";
 
 interface LotStatusBadgeProps {
-  status: ExpiryCondition;
+  status: ExpiryCondition | LotAdministrativeStatus;
 }
 
 export const LotStatusBadge = ({ status }: LotStatusBadgeProps) => {
-  const config = {
+  const config: Record<string, { label: string; className: string }> = {
     Valid: {
-      label: "Active",
+      label: "Valid",
       className: "bg-green-100 text-green-700",
     },
     ExpiringSoon: {
@@ -19,6 +21,22 @@ export const LotStatusBadge = ({ status }: LotStatusBadgeProps) => {
       label: "Expired",
       className: "bg-red-100 text-red-700",
     },
+    Active: {
+      label: "Active",
+      className: "bg-emerald-100 text-emerald-800",
+    },
+    Quarantined: {
+      label: "Quarantined",
+      className: "bg-amber-100 text-amber-800",
+    },
+    ManuallyBlocked: {
+      label: "Blocked",
+      className: "bg-rose-100 text-rose-800",
+    },
+    Disposed: {
+      label: "Disposed",
+      className: "bg-slate-100 text-slate-600",
+    },
   };
 
   const badge = config[status] || {
@@ -28,7 +46,7 @@ export const LotStatusBadge = ({ status }: LotStatusBadgeProps) => {
 
   return (
     <span
-      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.className}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.className}`}
     >
       {badge.label}
     </span>

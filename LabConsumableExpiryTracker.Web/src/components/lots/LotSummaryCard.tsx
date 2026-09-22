@@ -14,81 +14,24 @@ interface LotSummaryCardsProps {
 export const LotSummaryCards = ({ summary, message }: LotSummaryCardsProps) => {
   const cards = [
     {
-      label: "Active Lots",
+      label: "Active lots",
       value: summary.activeLotCount,
-      color: "green",
-      icon: (
-        <svg
-          className="h-5 w-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M5 13l4 4L19 7"
-          />
-        </svg>
-      ),
+      dotColor: "bg-teal-500",
     },
     {
-      label: "Expiring Soon",
+      label: "Expiring soon",
       value: summary.expiringSoonLotCount,
-      color: "orange",
-      icon: (
-        <svg
-          className="h-5 w-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      ),
+      dotColor: "bg-orange-500",
     },
     {
-      label: "Not Eligible",
+      label: "Not eligible",
       value: summary.notEligibleLotCount,
-      color: "red",
-      icon: (
-        <svg
-          className="h-5 w-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      ),
+      dotColor: "bg-red-500",
     },
   ];
 
-  const colorClasses = {
-    green: "bg-green-50 text-green-700 border-green-200",
-    orange: "bg-orange-50 text-orange-700 border-orange-200",
-    red: "bg-red-50 text-red-700 border-red-200",
-  };
-
-  const iconColorClasses = {
-    green: "bg-green-100 text-green-600",
-    orange: "bg-orange-100 text-orange-600",
-    red: "bg-red-100 text-red-600",
-  };
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-12">
       {/* Message Alert - ditampilkan jika ada pesan dari parent */}
       {message && (
         <Alert
@@ -98,25 +41,20 @@ export const LotSummaryCards = ({ summary, message }: LotSummaryCardsProps) => {
           dismissible={false}
         />
       )}
-
       {/* Summary Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {cards.map((card) => (
           <div
             key={card.label}
-            className={`rounded-lg border p-4 ${colorClasses[card.color as keyof typeof colorClasses]}`}
+            className="rounded-lg border border-gray-200 bg-white p-6"
           >
             <div className="flex items-center gap-3">
-              <div
-                className={`rounded-lg p-2 ${iconColorClasses[card.color as keyof typeof iconColorClasses]}`}
-              >
-                {card.icon}
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{card.value}</p>
-                <p className="text-xs font-medium">{card.label}</p>
-              </div>
+              <div className={`h-3 w-3 rounded-full ${card.dotColor}`} />
+              <span className="text-3xl font-bold text-gray-900">
+                {card.value}
+              </span>
             </div>
+            <p className="mt-2 text-sm text-gray-500">{card.label}</p>
           </div>
         ))}
       </div>
