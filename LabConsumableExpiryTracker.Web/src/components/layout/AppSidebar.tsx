@@ -19,10 +19,9 @@ const adminNav: ReadonlyArray<readonly [string, string, IconName]> = [
 const scientistNav: ReadonlyArray<readonly [string, string, IconName]> = [
     ["Dashboard", "/app/dashboard", "dashboard"],
     ["Job", "/app/jobs", "dashboard"],
-    ["Pilih Consumable", "/app/consumables", "inventory"],
-    ["Konsumsi Saya", "/app/consumptions", "clipboard"],
-    ["Riwayat Penggunaan", "/app/history", "history"],
-    ["Profil", "/app/profile", "profile"],
+    ["Consume", "/app/consumption", "clipboard"],
+    ["Consumption History", "/app/history", "history"],
+    ["Profile", "/app/profile", "profile"],
 ];
 
 
