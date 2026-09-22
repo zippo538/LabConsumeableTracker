@@ -3,10 +3,6 @@ import {useAtomValue} from 'jotai';
 import {
     Search,
     Plus,
-    MoreHorizontal,
-    Layers,
-    Edit2,
-    Trash2,
     AlertTriangle,
     PackageCheck,
     Info,
@@ -23,6 +19,8 @@ import {useNavigate} from 'react-router';
 import {ItemModal} from '../components/Item/ItemModal';
 import {userAtom} from '../lib/auth/authAtom';
 import {useItem} from '../hooks/useItem';
+import {ItemTable} from '../components/Item/ItemTable';
+import {Pagination} from '../components/Pagination';
 
 export const ItemListPage: React.FC = () => {
     const user = useAtomValue(userAtom);
@@ -76,7 +74,7 @@ export const ItemListPage: React.FC = () => {
 
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
-
+    const [createSuccess, setCreateSuccess] = useState<string | null>(null);
     const handleOpenCreate = () => {
         setSelectedItemForEdit(null);
         setIsModalOpen(true);
@@ -85,7 +83,7 @@ export const ItemListPage: React.FC = () => {
     const handleOpenEdit = (item: ItemDto) => {
         setSelectedItemForEdit(item);
         setIsModalOpen(true);
-        setOpenDropdownId(null);
+
     };
 
     const handleConfirmDelete = async () => {
@@ -121,15 +119,21 @@ export const ItemListPage: React.FC = () => {
     const handleModalSubmit = async (
         payload: CreateItemPayload | UpdateItemPayload,
     ) => {
-        if ('id' in payload) {
-            await updateItem(payload);
-        } else {
-            await createItem(payload);
+        setCreateSuccess(null);
+
+        try {
+            if ('id' in payload) {
+                await updateItem(payload);
+            } else {
+                await createItem(payload);
+                setCreateSuccess('Item added successfully.');
+            }
+
+            setIsModalOpen(false);
+        } catch (error) {
+            throw error;
         }
-
-        setIsModalOpen(false);
     };
-
     return (
         <AppLayout
             title="Items & Lots"
@@ -152,14 +156,14 @@ export const ItemListPage: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                
+
                     <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs">
                         <div className="flex items-center gap-2 mb-2">
                             <span className="w-2.5 h-2.5 rounded-xs bg-blue-600"/>
 
                             <span className="text-2xl font-bold text-slate-900">
-                {stats.totalActive}
-              </span>
+                                {stats.totalActive}
+                            </span>
                         </div>
 
                         <p className="text-xs font-medium text-slate-500">
@@ -172,8 +176,8 @@ export const ItemListPage: React.FC = () => {
                             <span className="w-2.5 h-2.5 rounded-xs bg-amber-500"/>
 
                             <span className="text-2xl font-bold text-slate-900">
-                {stats.lowStock}
-              </span>
+                                {stats.lowStock}
+                            </span>
                         </div>
 
                         <p className="text-xs font-medium text-slate-500">
@@ -186,8 +190,8 @@ export const ItemListPage: React.FC = () => {
                             <span className="w-2.5 h-2.5 rounded-xs bg-teal-500"/>
 
                             <span className="text-2xl font-bold text-slate-900">
-                {stats.uniqueUnitsCount}
-              </span>
+                                {stats.uniqueUnitsCount}
+                            </span>
                         </div>
 
                         <p className="text-xs font-medium text-slate-500">
@@ -207,14 +211,14 @@ export const ItemListPage: React.FC = () => {
                             <br/>
 
                             <span className="font-medium text-sky-700">
-                Stock is managed on the Lot page.
-              </span>
+                                Stock is managed on the Lot page.
+                            </span>
                         </p>
                     </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              
+
                     <div className="relative flex-1">
                         <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"/>
 
@@ -273,7 +277,12 @@ export const ItemListPage: React.FC = () => {
                         {deleteSuccess}
                     </div>
                 )}
-
+                {createSuccess && (
+                    <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                        {createSuccess}
+                    </div>
+                )}
+                
                 <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
                     {isLoading ? (
                         <div className="py-20 text-center">
@@ -310,204 +319,23 @@ export const ItemListPage: React.FC = () => {
                             </p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50/50">
-                                    <th className="py-3.5 pl-6 pr-4">
-                                        Code / Name
-                                    </th>
+                        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+                            <ItemTable
+                                items={filteredItems}
+                                isLoading={isLoading}
+                                isError={isError}
+                                imageBaseUrl={IMAGE_BASE_URL}
+                                canManage={isWarehouseAdmin}
+                                onRowClick={(item) => navigate(`/items/${item.id}`)}
+                                onEdit={handleOpenEdit}
+                                onDelete={setItemToDelete}
+                            />
 
-                                    <th className="py-3.5 px-4">
-                                        Base Unit
-                                    </th>
-
-                                    <th className="py-3.5 px-4">
-                                        Min. Stock
-                                    </th>
-
-                                    <th className="py-3.5 px-4">
-                                        Expiry Warning
-                                    </th>
-
-                                    <th className="py-3.5 px-4">
-                                        Status
-                                    </th>
-
-                                    <th className="py-3.5 pr-6 pl-4 text-right">
-                                        Actions
-                                    </th>
-                                </tr>
-                                </thead>
-
-                                <tbody className="divide-y divide-slate-100 text-xs">
-                                {filteredItems.map((item) => (
-                                    <tr
-                                        key={item.id}
-                                        onClick={() => navigate(`/items/${item.id}`)}
-                                        className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
-                                    >
-                                        <td className="py-4 pl-6 pr-4">
-                                            <div className="flex items-center gap-3">
-                                                <div
-                                                    className="w-14 h-14 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-700 shrink-0 overflow-hidden">
-                                                    {item.imagePath ? (
-                                                        <img
-                                                            src={`${IMAGE_BASE_URL}/${item.imagePath}`}
-                                                            alt={item.name}
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <Layers className="w-4 h-4 opacity-75"/>
-                                                    )}
-                                                </div>
-
-                                                <div>
-                                                    <p className="font-bold text-slate-900 leading-snug">
-                                                        {item.code}
-                                                    </p>
-
-                                                    <p className="text-[11px] text-slate-400 leading-tight">
-                                                        {item.name}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </td>
-
-                                        <td className="py-4 px-4 font-medium text-slate-700">
-                                            {item.baseUnit}
-                                        </td>
-
-                                        <td className="py-4 px-4 font-semibold text-slate-800">
-                                            {item.minimumStock}
-                                        </td>
-
-                                        <td className="py-4 px-4 text-slate-600 font-medium">
-                                            {item.expiringSoonDays
-                                                ? `${item.expiringSoonDays} days`
-                                                : '14 days'}
-                                        </td>
-
-                                        {/* Status */}
-                                        <td className="py-4 px-4">
-                        <span
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"/>
-                          Active
-                        </span>
-                                        </td>
-
-                                        <td className="py-4 pr-6 pl-4 text-right relative">
-                                            <div
-                                                className="inline-block"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setOpenDropdownId(
-                                                            openDropdownId === item.id
-                                                                ? null
-                                                                : item.id,
-                                                        )
-                                                    }
-                                                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                                                >
-                                                    <MoreHorizontal className="w-4 h-4"/>
-                                                </button>
-
-                                                {openDropdownId === item.id && (
-                                                    <div
-                                                        className="absolute right-6 top-12 z-20 w-36 bg-white rounded-xl shadow-lg border border-slate-100 py-1.5 text-left animate-in fade-in zoom-in-95 duration-100">
-                                                        {isWarehouseAdmin ? (
-                                                            <>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        handleOpenEdit(item)
-                                                                    }
-                                                                    className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-emerald-700 transition-colors"
-                                                                >
-                                                                    <Edit2 className="w-3.5 h-3.5"/>
-                                                                    <span>Edit</span>
-                                                                </button>
-
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setItemToDelete(item);
-                                                                        setOpenDropdownId(null);
-                                                                    }}
-                                                                    className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors"
-                                                                >
-                                                                    <Trash2 className="w-3.5 h-3.5"/>
-                                                                    <span>Delete</span>
-                                                                </button>
-                                                            </>
-                                                        ) : (
-                                                            <div className="px-3.5 py-2 text-[11px] text-slate-400">
-                                                                View only
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                                </tbody>
-                            </table>
+                            <Pagination page={page} totalPages={totalPages} onPageChange={setPage}/>
                         </div>
 
                     )}
 
-                    {totalPages > 1 && (
-                        <div
-                            className="flex items-center justify-between px-5 py-4 border-t border-slate-100 bg-slate-50/30">
-                            <p className="text-[11px] text-slate-500">
-                                Page <span className="font-semibold text-slate-700">{page}</span> of{' '}
-                                <span className="font-semibold text-slate-700">{totalPages}</span>
-                            </p>
-
-                            <div className="flex items-center gap-1">
-                                <button
-                                    type="button"
-                                    disabled={page <= 1}
-                                    onClick={() => setPage((current) => current - 1)}
-                                    className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-[11px] font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                    Previous
-                                </button>
-
-                                <div className="flex items-center gap-1 mx-1">
-                                    {Array.from({length: totalPages}, (_, index) => index + 1).map(
-                                        (pageNumber) => (
-                                            <button
-                                                key={pageNumber}
-                                                type="button"
-                                                onClick={() => setPage(pageNumber)}
-                                                className={`w-8 h-8 rounded-lg text-[11px] font-semibold transition-colors ${page === pageNumber
-                                                    ? 'bg-emerald-600 text-white shadow-sm'
-                                                    : 'text-slate-600 hover:bg-slate-100'
-                                                }`}
-                                            >
-                                                {pageNumber}
-                                            </button>
-                                        ),
-                                    )}
-                                </div>
-
-                                <button
-                                    type="button"
-                                    disabled={page >= totalPages}
-                                    onClick={() => setPage((current) => current + 1)}
-                                    className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-[11px] font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                    Next
-                                </button>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
 
@@ -535,8 +363,8 @@ export const ItemListPage: React.FC = () => {
                             <p className="text-xs text-slate-500 mt-2">
                                 Are you sure you want to delete{' '}
                                 <span className="font-semibold text-slate-800">
-                  {itemToDelete.name}
-                </span>{' '}
+                                    {itemToDelete.name}
+                                </span>{' '}
                                 ({itemToDelete.code})? This action cannot be
                                 undone.
                             </p>

@@ -19,7 +19,7 @@ namespace LabConsumableExpiryTracker.Application.Services
             TimeProvider timeProvider,
             IMapper mapper,
             IUnitOfWork unitOfWork
-            )
+        )
         {
             _jobRepository = jobRepository;
             _timeProvider = timeProvider;
@@ -28,24 +28,26 @@ namespace LabConsumableExpiryTracker.Application.Services
         }
 
 
-
         public async Task<ServiceResult<JobDto>> CreateAsync(CreateJobDto dto, CancellationToken ct = default)
         {
             if (dto == null)
             {
-                return ServiceResult<JobDto>.ErrorResult("Request cannot be null." );
+                return ServiceResult<JobDto>.ErrorResult("Request cannot be null.");
             }
+
             if (string.IsNullOrWhiteSpace(dto.JobNumber))
             {
                 return ServiceResult<JobDto>.ErrorResult("Job number is required.");
             }
+
             var jobNumber = dto.JobNumber.Trim();
- 
+
             var existing = await _jobRepository.ExistsByJobNumberAsync(jobNumber, ct);
             if (existing)
             {
                 return ServiceResult<JobDto>.ErrorResult($"Job number '{jobNumber}' already exists.");
             }
+
             var job = new Job(Guid.NewGuid(), jobNumber, dto.Description);
             var created = await _jobRepository.AddAsync(job, ct);
             await _unitOfWork.SaveChangesAsync(ct);
@@ -70,52 +72,54 @@ namespace LabConsumableExpiryTracker.Application.Services
             {
                 return ServiceResult<JobDto>.ErrorResult("Id is null");
             }
+
             var create = await _jobRepository.GetByIdAsync(id, ct);
             if (create is null)
             {
                 return ServiceResult<JobDto>.ErrorResult(
                     $"Job with id '{id}' not found.");
             }
+
             var response = _mapper.Map<JobDto>(create);
             return ServiceResult<JobDto>.SuccessResult(
                 response);
-
         }
-        public async Task<ServiceResult<JobDto>> UpdateStatusAsync(
+
+        public async Task<ServiceResult<JobDto>> UpdateAsync(
             Guid id,
             UpdateJobDto dto,
-            CancellationToken ct = default)
+            CancellationToken ct)
         {
-            ArgumentNullException.ThrowIfNull(dto);
-
             var job = await _jobRepository.GetByIdAsync(id, ct);
 
             if (job is null)
-                return ServiceResult<JobDto>.ErrorResult("Job not found.");
-
-            if (!string.IsNullOrWhiteSpace(dto.Description))
             {
-                job.UpdateDescription(dto.Description);
+                return ServiceResult<JobDto>.ErrorResult(
+                    "Job not found.");
             }
 
-            var result = dto.Status switch
-            {
-                JobStatus.InProgress => await StartAsync(id, ct),
-                JobStatus.Completed => await CompleteAsync(id, ct),
-                _ => throw new InvalidOperationException(
-                    "Only InProgress and Completed are valid lifecycle updates.")
-            };
+            job.UpdateJobNumber(dto.JobNumber);
+            job.UpdateDescription(dto.Description);
 
-            return result;
+            var updated = await _jobRepository.UpdateAsync(job, ct);
+
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            var response = _mapper.Map<JobDto>(updated);
+
+            return ServiceResult<JobDto>.SuccessResult(
+                response,
+                "Job updated successfully.");
         }
 
         public async Task<ServiceResult<JobDto>> StartAsync(Guid id, CancellationToken ct = default)
         {
             return await TransitionAsync(
-               id,
-               job => job.Start(_timeProvider.GetUtcNow()),
-               ct);
+                id,
+                job => job.Start(_timeProvider.GetUtcNow()),
+                ct);
         }
+
         public async Task<ServiceResult<JobDto>> CancelAsync(Guid id, CancellationToken ct = default)
         {
             return await TransitionAsync(
@@ -123,6 +127,7 @@ namespace LabConsumableExpiryTracker.Application.Services
                 job => job.Cancel(_timeProvider.GetUtcNow()),
                 ct);
         }
+
         public async Task<ServiceResult<JobDto>> CompleteAsync(Guid id, CancellationToken ct = default)
         {
             return await TransitionAsync(
@@ -130,25 +135,25 @@ namespace LabConsumableExpiryTracker.Application.Services
                 job => job.Complete(_timeProvider.GetUtcNow()),
                 ct);
         }
+
         private async Task<ServiceResult<JobDto>> TransitionAsync(Guid id, Action<Job> transition, CancellationToken ct)
         {
             if (id == Guid.Empty)
             {
                 return ServiceResult<JobDto>.ErrorResult("Job id is null");
-
             }
+
             var job = await _jobRepository.GetByIdAsync(id, ct);
             if (job is null)
             {
                 return ServiceResult<JobDto>.ErrorResult($"Job with id '{id}' not found.");
             }
+
             transition(job);
             var create = await _jobRepository.UpdateAsync(job, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             var response = _mapper.Map<JobDto>(create);
             return ServiceResult<JobDto>.SuccessResult(response);
         }
-
-
     }
 }

@@ -59,11 +59,11 @@ namespace LabConsumableExpiryTracker.API.Controllers
                 : Conflict(response);
         }
 
-        [HttpPut]
+        [HttpPut("{id:guid}")]
         [Authorize(Roles = nameof(UserRole.Scientist))]
         public async Task<ActionResult<ServiceResult<JobDto>>> Update(Guid id, UpdateJobDto dto, CancellationToken ct)
         {
-            var response = await _jobService.UpdateStatusAsync(id, dto, ct);
+            var response = await _jobService.UpdateAsync(id, dto, ct);
             if (!response.Success)
             {
                 return NotFound(response);

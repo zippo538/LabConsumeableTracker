@@ -33,6 +33,11 @@ public class Job
         Status = JobStatus.Draft;
     }
 
+    public void UpdateJobNumber(string? jobNumber)
+    {
+        JobNumber = string.IsNullOrWhiteSpace(jobNumber) ? null : jobNumber.Trim();
+    }
+
     public void UpdateDescription(string? description)
     {
         Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();

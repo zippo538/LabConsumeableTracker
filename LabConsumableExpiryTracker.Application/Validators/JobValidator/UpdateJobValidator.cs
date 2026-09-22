@@ -12,11 +12,13 @@ namespace LabConsumableExpiryTracker.Application.Validators.JobValidator
     {
         public UpdateJobValidator()
         {
-            RuleFor(x => x.Status)
-            .IsInEnum()
-            .WithMessage("Status Job tidak valid.")
-            .Must(status => status is JobStatus.InProgress or JobStatus.Completed)
-            .WithMessage("Status hanya boleh InProgress atau Completed.");
+            RuleFor(x => x.JobNumber)
+                .NotEmpty()
+                .WithMessage("Job Number must be filled.");
+
+            RuleFor(x => x.Description)
+                .NotEmpty()
+                .WithMessage("Description must be filled.");
         }
     }
 }
