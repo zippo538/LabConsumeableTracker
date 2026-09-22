@@ -541,7 +541,10 @@ const inputClass =
                             {job.status === "InProgress" && (
                               <button
                                 type="button"
-                                onClick={(event) => event.stopPropagation()}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  navigate(`/app/consumption?jobId=${job.id}`);
+                                }}
                                 className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#12a9ad] px-5 text-[11px] font-semibold text-white transition-colors hover:bg-[#0e969a]"
                               >
                                 <FlaskConical className="h-3.5 w-3.5" />
@@ -655,9 +658,13 @@ const inputClass =
                         {job.status === "InProgress" && (
                           <button
                             type="button"
-                            onClick={(event) => event.stopPropagation()}
-                            className="w-full rounded-lg bg-[#12a9ad] py-2.5 text-[11px] font-semibold text-white"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              navigate(`/app/consumption?jobId=${job.id}`);
+                            }}
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#12a9ad] py-2.5 text-[11px] font-semibold text-white"
                           >
+                            <FlaskConical className="h-3.5 w-3.5" />
                             Consume
                           </button>
                         )}
