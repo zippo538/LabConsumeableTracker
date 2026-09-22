@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { FormModal, ModalField } from "../Modal";
 import type {
   Lot,
-  LotAdministrativeStatus,
   UpdateLotRequest,
 } from "../../types/lot.types";
 
@@ -16,11 +15,6 @@ interface UpdateLotModalProps {
   error?: string;
 }
 
-const ADMINISTRATIVE_STATUS_OPTIONS: LotAdministrativeStatus[] = [
-  "Active",
-  "Quarantined",
-  "ManuallyBlocked",
-];
 
 export const UpdateLotModal = ({
   isOpen,
@@ -34,21 +28,22 @@ export const UpdateLotModal = ({
     lotNumber: "",
     expiryDate: "",
     storageLocation: "",
-    supplierName: "",
+    suppliername: "",
     rowVersion: "",
+    supplierLotNumber: "",
     administrativeStatus: "Active",
   });
   useEffect(() => {
     if (lot) {
-      // Format tanggal ke YYYY-MM-DD agar kompatibel dengan <input type="date">
       const formattedDate = lot.expiryDate ? lot.expiryDate.split("T")[0] : "";
 
       setFormData({
         lotNumber: lot.lotNumber,
         administrativeStatus: lot.administrativeStatus,
         expiryDate: formattedDate,
+        supplierLotNumber : lot.supplierLotNumber ?? "",
         storageLocation: lot.storageLocation,
-        supplierName: lot.supplierName ?? "",
+        suppliername: lot.suppliername ?? "",
         rowVersion: lot.rowVersion,
       });
     }
@@ -56,7 +51,7 @@ export const UpdateLotModal = ({
 
   if (!lot) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSubmit(formData);
   };
@@ -162,9 +157,9 @@ export const UpdateLotModal = ({
         <input
           id="update-supplierName"
           type="text"
-          value={formData.supplierName}
+          value={formData.suppliername}
           onChange={(e) =>
-            setFormData({ ...formData, supplierName: e.target.value })
+            setFormData({ ...formData, suppliername: e.target.value })
           }
           placeholder="Nama supplier"
           className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
@@ -180,7 +175,7 @@ export const UpdateLotModal = ({
         <input
           id="update-supplierLotNumber"
           type="text"
-          value={formData.lotNumber ?? ""}
+          value={formData.supplierLotNumber ?? ""}
           onChange={(e) =>
             setFormData({
               ...formData,
@@ -207,31 +202,6 @@ export const UpdateLotModal = ({
           className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
         />
       </ModalField>
-
-      <ModalField
-        label="Administrative Status"
-        htmlFor="update-administrativeStatus"
-        required
-      >
-        <select
-          id="update-administrativeStatus"
-          value={formData.administrativeStatus}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              administrativeStatus: e.target.value as LotAdministrativeStatus,
-            })
-          }
-          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
-        >
-          {ADMINISTRATIVE_STATUS_OPTIONS.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-      </ModalField>
-
       {/* ✅ RowVersion tersembunyi - dikirim otomatis, tidak perlu ditampilkan */}
       <input type="hidden" value={formData.rowVersion} />
     </FormModal>

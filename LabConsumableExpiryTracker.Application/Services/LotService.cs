@@ -186,14 +186,58 @@ namespace LabConsumableExpiryTracker.Application.Services
                 return ServiceResult<LotDto>.ErrorResult("Lot not found.");
             }
 
-            existing.UpdateStorageLocation(updateLotDto.StorageLocation);
-            _logger.LogInformation(
-                "Updating lot {LotId} status from {CurrentStatus} to {NewStatus}",
-                id,
-                existing.AdministrativeStatus,
-                updateLotDto.AdministrativeStatus);
+            if (updateLotDto.RowVersion == null || updateLotDto.RowVersion.Length == 0)
+            {
+                return ServiceResult<LotDto>.ErrorResult("RowVersion is required for update.");
+            }
 
-            existing.UpdateAdministrativeStatus(updateLotDto.AdministrativeStatus);
+            var hasChanges = false;
+
+            if (updateLotDto.LotNumber != null)
+            {
+                existing.UpdateLotNumber(updateLotDto.LotNumber);
+                hasChanges = true;
+            }
+
+            if (updateLotDto.SupplierLotNumber != null)
+            {
+                existing.UpdateSupplierLotNumber(updateLotDto.SupplierLotNumber);
+                hasChanges = true;
+            }
+
+            if (updateLotDto.SupplierName != null)
+            {
+                existing.UpdateSupplierName(updateLotDto.SupplierName);
+                hasChanges = true;
+            }
+
+            if (updateLotDto.StorageLocation != null)
+            {
+                existing.UpdateStorageLocation(updateLotDto.StorageLocation);
+                hasChanges = true;
+            }
+
+            if (updateLotDto.ExpiryDate.HasValue)
+            {
+                existing.UpdateExpiryDate(updateLotDto.ExpiryDate.Value);
+                hasChanges = true;
+            }
+
+            if (updateLotDto.AdministrativeStatus.HasValue)
+            {
+                existing.UpdateAdministrativeStatus(updateLotDto.AdministrativeStatus.Value);
+                hasChanges = true;
+            }
+
+            if (!hasChanges)
+            {
+                _logger.LogInformation("Lot {LotId} update skipped because no changes detected", id);
+                var hasNow = _timeProvider.GetUtcNow();
+                var hasNoResponse = MapToDtoWithExpiryEngine(existing, existing.Item.ExpiringSoonDays, hasNow);
+                return ServiceResult<LotDto>.SuccessResult(hasNoResponse, "No changes detected.");
+            }
+
+            existing.SetConcurrencyToken(updateLotDto.RowVersion);
 
             var updated = await _lotRepository.UpdateAsync(existing, ct);
             await _unitOfWork.SaveChangesAsync(ct);
@@ -202,10 +246,8 @@ namespace LabConsumableExpiryTracker.Application.Services
             var response = MapToDtoWithExpiryEngine(updated, updated.Item.ExpiringSoonDays, now);
 
             _logger.LogInformation("Lot {LotId} updated successfully", id);
+            return ServiceResult<LotDto>.SuccessResult(response, "Lot updated successfully.");
 
-            return ServiceResult<LotDto>.SuccessResult(
-                response,
-                "Lot updated successfully.");
         }
 
         public async Task<ServiceResult<bool>> DeleteLot(Guid id, CancellationToken ct)
@@ -228,7 +270,6 @@ namespace LabConsumableExpiryTracker.Application.Services
                 "Lot deleted successfully.");
         }
 
-        // Lot Summary 
         public async Task<ServiceResult<IEnumerable<LotSummaryDto>>> GetSummaryByItemId(Guid itemId,
             CancellationToken ct)
         {
@@ -258,13 +299,20 @@ namespace LabConsumableExpiryTracker.Application.Services
                 summaries,
                 "Lot summaries retrieved successfully.");
         }
-        public async Task<ServiceResult<PagedResult<LotDto>>> GetAllLotPage(int page, int pageSize, CancellationToken ct)
+        public async Task<ServiceResult<PagedResult<LotDto>>> GetAllLotPage(
+            CancellationToken ct,
+            int page,
+            int pageSize,
+            string? search = null,
+            Guid? itemId = null,
+            string? administrativeStatus = null,
+            string? expiryCondition = null)
         {
-            _logger.LogDebug("Retrieving paged lots. Page: {Page}, PageSize: {PageSize}", page, pageSize);
-
-            var pagedLots = await _lotRepository.GetAllWithItemAsyncPage(page, pageSize, ct);
+            var pagedLots = await _lotRepository.GetAllWithItemAsyncPage(
+                page, pageSize, search, itemId, administrativeStatus, expiryCondition, ct);
 
             var now = _timeProvider.GetUtcNow();
+
             var lotDtos = pagedLots.Items.Select(lot =>
             {
                 var warningDays = lot.Item?.ExpiringSoonDays ?? 0;
@@ -276,14 +324,8 @@ namespace LabConsumableExpiryTracker.Application.Services
                 Items = lotDtos,
                 Page = pagedLots.Page,
                 PageSize = pagedLots.PageSize,
-                TotalCount = pagedLots.TotalCount
+                TotalCount = pagedLots.TotalCount 
             };
-
-            _logger.LogInformation(
-                "Retrieved {LotCount} lots on page {Page} with expiry evaluated at {EvaluationTime}",
-                lotDtos.Count,
-                page,
-                now);
 
             return ServiceResult<PagedResult<LotDto>>.SuccessResult(
                 pagedResult,

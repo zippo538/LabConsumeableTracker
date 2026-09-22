@@ -12,8 +12,6 @@ import type {
   LotSummary,
   CreateLotRequest,
   UpdateLotRequest,
-  LotAdministrativeStatus,
-  ExpiryCondition,
   ItemOption,
 } from "../types/lot.types";
 
@@ -32,18 +30,26 @@ const toLotRequestError = (error: unknown): Error => {
 };
 
 export const lotApi = {
-  // Get lots with pagination and filters
   getLots: async (params?: {
     page?: number;
     pageSize?: number;
     search?: string;
     itemId?: string;
-    status?: LotAdministrativeStatus | string;
-    expiryCondition?: ExpiryCondition | string;
+    administrativeStatus?: string;
+    expiryCondition?: string;
   }): Promise<PageResult<Lot>> => {
     const response = await apiClient.get<ServiceResult<PageResult<Lot>>>(
       "/Lot/paged",
-      { params },
+      {
+        params: {
+          Page: params?.page || 1,
+          PageSize: params?.pageSize || 20,
+          Search: params?.search || undefined,
+          ItemId: params?.itemId || undefined,
+          AdministrativeStatus: params?.administrativeStatus || undefined,
+          ExpiryCondition: params?.expiryCondition || undefined,
+        },
+      },
     );
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.message || "Failed to fetch lots.");
@@ -51,17 +57,46 @@ export const lotApi = {
     return response.data.data;
   },
 
-  // Get lot summary for dashboard cards
   getLotSummary: async (): Promise<LotSummary> => {
-    const response =
-      await apiClient.get<ServiceResult<LotSummary>>("/Lot/summary");
+    const response = await apiClient.get<ServiceResult<Lot[]>>("/Lot");
+
     if (!response.data.success || !response.data.data) {
-      throw new Error(response.data.message || "Failed to fetch lot summary.");
+      throw new Error(
+        response.data.message || "Failed to fetch lots for summary.",
+      );
     }
-    return response.data.data;
+
+    const lots = response.data.data;
+
+    let activeLotCount = 0;
+    let expiringSoonLotCount = 0;
+    let notEligibleLotCount = 0;
+    let latestEvaluatedAt = "";
+
+    for (const lot of lots) {
+      // 1. Hitung Active
+      if (lot.administrativeStatus === "Active") activeLotCount++;
+
+      // 2. Hitung ExpiringSoon
+      if (lot.expiryCondition === "ExpiringSoon") expiringSoonLotCount++;
+
+      // 3. Hitung Not Eligible
+      if (!lot.isEligible) notEligibleLotCount++;
+
+      // 4. Cari timestamp evaluasi terbaru
+      if (!latestEvaluatedAt || lot.evaluatedAt > latestEvaluatedAt) {
+        latestEvaluatedAt = lot.evaluatedAt;
+      }
+    }
+
+    return {
+      activeLotCount,
+      expiringSoonLotCount,
+      notEligibleLotCount,
+      evaluatedAt: latestEvaluatedAt || new Date().toISOString(),
+    };
   },
 
-  // Get items for dropdown
   getItems: async (): Promise<ItemOption[]> => {
     const response = await apiClient.get<ServiceResult<ItemOption[]>>("/Item");
     if (!response.data.success || !response.data.data) {
@@ -70,7 +105,6 @@ export const lotApi = {
     return response.data.data;
   },
 
-  // Get single lot by ID
   getLotById: async (id: string): Promise<Lot> => {
     const response = await apiClient.get<ServiceResult<Lot>>(`/Lot/${id}`);
     if (!response.data.success || !response.data.data) {
@@ -79,7 +113,6 @@ export const lotApi = {
     return response.data.data;
   },
 
-  // Create new lot
   createLot: async (payload: CreateLotRequest): Promise<Lot> => {
     try {
       const response = await apiClient.post<ServiceResult<Lot>>(
@@ -95,7 +128,6 @@ export const lotApi = {
     }
   },
 
-  // Update lot
   updateLot: async (id: string, payload: UpdateLotRequest): Promise<Lot> => {
     try {
       const response = await apiClient.put<ServiceResult<Lot>>(
@@ -111,7 +143,6 @@ export const lotApi = {
     }
   },
 
-  // Delete lot
   deleteLot: async (id: string): Promise<void> => {
     const response = await apiClient.delete<ServiceResult<boolean>>(
       `/lot/${id}`,

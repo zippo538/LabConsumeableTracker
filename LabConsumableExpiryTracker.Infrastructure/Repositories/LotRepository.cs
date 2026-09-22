@@ -1,3 +1,4 @@
+using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
@@ -62,29 +63,73 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
         return lots;
     }
 
-    public async Task<PagedResult<Lot>> GetAllWithItemAsyncPage(int page, int pageSize, CancellationToken ct = default)
+    public async Task<PagedResult<Lot>> GetAllWithItemAsyncPage(
+        int page,
+        int pageSize,
+        string? search = null,
+        Guid? itemId = null,
+        string? administrativeStatus = null,
+        string? expiryCondition = null,
+        CancellationToken ct = default)
     {
-        if (page < 0)
-            throw new ArgumentOutOfRangeException(nameof(page));
-
-        if (pageSize is < 1 or > 100)
-            throw new ArgumentOutOfRangeException(nameof(pageSize));
-        _logger.LogDebug($"Retrieving lot of {pageSize}");
+        if (page < 1) throw new ArgumentOutOfRangeException(nameof(page));
+        if (pageSize is < 1 or > 100) throw new ArgumentOutOfRangeException(nameof(pageSize));
 
         var query = _context.Lots
             .AsNoTracking()
             .Include(lot => lot.Item)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchLower = search.Trim().ToLower();
+            query = query.Where(lot =>
+                lot.LotNumber.ToLower().Contains(searchLower) ||
+                lot.Item.Name.ToLower().Contains(searchLower) ||
+                lot.Item.Code.ToLower().Contains(searchLower));
+        }
+
+        if (itemId.HasValue)
+        {
+            query = query.Where(lot => lot.ItemId == itemId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(administrativeStatus))
+        {
+            if (Enum.TryParse<LotAdministrativeStatus>(administrativeStatus, true, out var status))
+            {
+                query = query.Where(lot => lot.AdministrativeStatus == status);
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(expiryCondition))
+        {
+            if (Enum.TryParse<ExpiryCondition>(expiryCondition, true, out var condition))
+            {
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+                query = condition switch
+                {
+                    ExpiryCondition.Expired => query.Where(lot => lot.ExpiryDate <= today),
+                    ExpiryCondition.ExpiringSoon => query.Where(lot =>
+                        lot.ExpiryDate > today &&
+                        lot.ExpiryDate <= today.AddDays(lot.Item.ExpiringSoonDays)),
+                    ExpiryCondition.Valid => query.Where(lot =>
+                        lot.ExpiryDate > today.AddDays(lot.Item.ExpiringSoonDays)),
+                    _ => query
+                };
+            }
+        }
+
+        query = query
             .OrderBy(lot => lot.ExpiryDate)
             .ThenBy(lot => lot.LotNumber);
 
         var totalCount = await query.CountAsync(ct);
-
         var lots = await query
-            .Skip((page - 1) * pageSize
-            )
+            .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
-        _logger.LogDebug($"Querry success retrive {lots} with total count {totalCount}");
 
         return new PagedResult<Lot>
         {
@@ -94,6 +139,7 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
             TotalCount = totalCount
         };
     }
+
 
     public async Task<Lot?> GetByIdWithItemAsync(
         Guid id,

@@ -100,7 +100,7 @@ public class Lot
 
     public Consumption Consume(Guid jobId, decimal quantity, DateTimeOffset now, Guid consumedBy)
     {
-        
+
         if (!IsEligible(now))
         {
             throw new InvalidOperationException(
@@ -108,24 +108,55 @@ public class Lot
         }
         UpdateRemainingQuantity(quantity);
 
-        if (RemainingQuantity  <= 0)
+        if (RemainingQuantity <= 0)
         {
             AdministrativeStatus = LotAdministrativeStatus.Depleted;
         }
- 
+
         return new Consumption(Guid.NewGuid(), jobId, Id, quantity, now, consumedBy);
     }
-    
+    public void UpdateLotNumber(string lotNumber)
+    {
+        if (string.IsNullOrWhiteSpace(lotNumber))
+            throw new ArgumentException("Lot number is required.", nameof(lotNumber));
+
+        var trimmed = lotNumber.Trim();
+        if (LotNumber == trimmed) return;
+
+        LotNumber = trimmed;
+    }
+
+    public void UpdateSupplierLotNumber(string? supplierLotNumber)
+    {
+        var trimmed = supplierLotNumber?.Trim();
+        if (SupplierLotNumber == trimmed) return; 
+
+        SupplierLotNumber = trimmed;
+    }
+
+    public void UpdateSupplierName(string? supplierName)
+    {
+        var trimmed = supplierName?.Trim();
+        if (SupplierName == trimmed) return; 
+
+        SupplierName = trimmed;
+    }
+
     public void UpdateStorageLocation(string storageLocation)
     {
         if (string.IsNullOrWhiteSpace(storageLocation))
         {
-            throw new ArgumentException(
-                "Storage location is required.",
-                nameof(storageLocation));
+            throw new ArgumentException("Storage location is required.", nameof(storageLocation));
         }
+        var trimmed = storageLocation.Trim();
+        if (StorageLocation == trimmed) return; 
 
-        StorageLocation = storageLocation.Trim();
+        StorageLocation = trimmed;
+    }
+    public void UpdateExpiryDate(DateOnly expiryDate)
+    {
+        if (ExpiryDate == expiryDate) return; 
+        ExpiryDate = expiryDate;
     }
     public void UpdateAdministrativeStatus(LotAdministrativeStatus status)
     {
@@ -180,6 +211,13 @@ public class Lot
         {
             AdministrativeStatus = LotAdministrativeStatus.Disposed;
         }
+    }
+    internal void SetConcurrencyToken(byte[] expectedRowVersion)
+    {
+        if (expectedRowVersion == null || expectedRowVersion.Length == 0)
+            throw new ArgumentException("ExpectedRowVersion tidak boleh kosong.");
+
+        RowVersion = expectedRowVersion;
     }
 
 

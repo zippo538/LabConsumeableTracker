@@ -7,10 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Repositories;
 
-/// <summary>
-/// Produces dashboard read models only. No mutation is performed here or by the
-/// quick-action links returned to the client.
-/// </summary>
 public class DashboardAlertRepository : IDashboardAlertRepository
 {
     private readonly AppDbContext _context;
@@ -24,8 +20,6 @@ public class DashboardAlertRepository : IDashboardAlertRepository
     {
         var today = DateOnly.FromDateTime(evaluatedAt.UtcDateTime);
 
-        // BR-07: low stock is based on usable (active, unexpired) stock, not
-        // on all RemainingQuantity values.
         var lowStock = _context.Items.AsNoTracking()
             .Select(item => new
             {

@@ -47,7 +47,7 @@ public class UpdateLotValidator : AbstractValidator<UpdateLotDto>
 
             RuleFor(x => x.RowVersion)
                   .NotNull()
-                  .WithMessage("RowVersion is reuqired.")
+                  .WithMessage("RowVersion is required.")
                   .Must(value => value is { Length: > 0 })
                   .WithMessage("RowVersion cannot be empty.");
       }

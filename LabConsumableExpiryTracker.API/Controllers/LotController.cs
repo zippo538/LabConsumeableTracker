@@ -1,4 +1,5 @@
 using LabConsumableExpiryTracker.Application.Common.Result;
+using LabConsumableExpiryTracker.Application.DTOs.DisposalDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
@@ -10,14 +11,16 @@ namespace LabConsumableExpiryTracker.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
 public class LotController : ControllerBase
 {
     private readonly ILotService _lotService;
+    private readonly IDisposalService _disposalService;
 
-    public LotController(ILotService lotService)
+    public LotController(ILotService lotService, IDisposalService disposalService)
     {
         _lotService = lotService;
+        _disposalService = disposalService;
     }
 
     [HttpGet]
@@ -75,6 +78,31 @@ public class LotController : ControllerBase
 
         return response.Success ? Ok(response) : NotFound(response);
     }
+    [HttpPost("{id:guid}/disposals")]
+    [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
+    public async Task<ActionResult<ServiceResult<CreateDisposalResponseDto>>> DisposeLot(
+    Guid id,
+    [FromBody] CreateDisposalDto request,
+    CancellationToken ct = default)
+    {
+        var response = await _disposalService.CreateDisposalAsync(id, request, ct);
+
+        if (!response.Success)
+        {
+            return response.Message switch
+            {
+                "Lot not found." => NotFound(response),
+                "Concurrency conflict. The lot was modified by another user." =>
+                    StatusCode(StatusCodes.Status409Conflict, response),
+                _ => BadRequest(response)
+            };
+        }
+        return CreatedAtAction(
+            nameof(GetById), 
+            new { id = response.Data!.Disposal.Id },
+            response
+        );
+    }
     [HttpGet("summary")]
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
     public async Task<ActionResult<ServiceResult<IEnumerable<LotSummaryDto>>>> GetAllSummary(
@@ -87,13 +115,16 @@ public class LotController : ControllerBase
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
     public async Task<ActionResult<ServiceResult<PagedResult<LotDto>>>> GetAllPage(
     [FromQuery] int page = 1,
-    [FromQuery] int PageSize = 20,
+    [FromQuery] int pageSize = 20,
+    [FromQuery] string? search = null,
+    [FromQuery] Guid? itemId = null,
+    [FromQuery] string? administrativeStatus = null,
+    [FromQuery] string? expiryCondition = null, 
     CancellationToken ct = default)
     {
-        var response = await _lotService.GetAllLotPage(page, PageSize, ct);
-        return response.Success
-            ? Ok(response)
-            : BadRequest(response);
+        var response = await _lotService.GetAllLotPage(
+            ct, page, pageSize, search, itemId, administrativeStatus, expiryCondition);
+        return response.Success ? Ok(response) : BadRequest(response);
     }
 }
 

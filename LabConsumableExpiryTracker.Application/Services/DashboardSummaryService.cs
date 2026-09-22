@@ -46,7 +46,6 @@ namespace LabConsumableExpiryTracker.Application.Services
             }
             else
             {
-                // Menggunakan method yang ada: memuat semua item beserta lots-nya
                 var items = await _itemRepository.GetAllWithLotsAsync(ct);
 
                 foreach (var item in items)

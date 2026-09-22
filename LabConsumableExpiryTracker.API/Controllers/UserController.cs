@@ -19,7 +19,6 @@ public class UserController : ControllerBase
         _userService = userService;
     }
 
-    // ✅ PERUBAHAN: Route "profile" diubah menjadi "me" sesuai SRS 7.2 & Frontend
     [Authorize]
     [HttpGet("me")]
     public async Task<ActionResult<ServiceResult<UserResponseDto>>> GetMe(CancellationToken ct)
@@ -36,7 +35,6 @@ public class UserController : ControllerBase
         return Ok(result);
     }
 
-    // ✅ TAMBAHAN: Endpoint untuk update FullName sendiri (SRS FR-11-01)
     [Authorize]
     [HttpPatch("me")]
     public async Task<ActionResult<ServiceResult<UserResponseDto>>> UpdateMe(
@@ -49,8 +47,6 @@ public class UserController : ControllerBase
             return Unauthorized(ServiceResult<UserResponseDto>.ErrorResult("Invalid user token."));
         }
 
-        // Anda perlu membuat DTO sederhana: public class UpdateFullNameRequestDto { public string FullName { get; set; } }
-        // Atau gunakan logic mapping di service untuk update partial
         var result = await _userService.UpdateUserAsync(userId, new UpdateUserRequestDto { FullName = request.FullName });
         if (!result.Success)
             return BadRequest(result);

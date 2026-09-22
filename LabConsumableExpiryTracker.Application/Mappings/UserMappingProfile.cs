@@ -14,8 +14,8 @@ public class UserMappingProfile : Profile
                 opt => opt.MapFrom(src => src.UserName)
             )
             .ForMember(
-                dest => dest.Roles, // ✅ PERBAIKAN: Ubah dari 'Role' menjadi 'Roles'
-                opt => opt.Ignore() // Tetap di-ignore karena diisi manual di Service via UserManager
+                dest => dest.Roles, 
+                opt => opt.Ignore() 
             );
 
         CreateMap<CreateUserRequestDto, ApplicationUser>()

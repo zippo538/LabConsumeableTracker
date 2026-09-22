@@ -13,7 +13,6 @@ namespace LabConsumableExpiryTracker.Application.Validators.Helpers
                 return guid;
             }
 
-            // Melempar exception dengan pesan custom yang nantinya ditangkap oleh ModelState
             throw new JsonException("Format GUID tidak valid.");
         }
 

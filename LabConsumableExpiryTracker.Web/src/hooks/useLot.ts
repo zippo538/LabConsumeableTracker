@@ -1,14 +1,7 @@
-// src/hooks/useLots.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { lotApi } from "../api/lotApi";
-import type {
-  CreateLotRequest,
-  UpdateLotRequest,
-  LotAdministrativeStatus,
-  ExpiryCondition,
-} from "../types/lot.types";
+import type { CreateLotRequest, UpdateLotRequest } from "../types/lot.types";
 
-// Query keys
 export const lotQueryKeys = {
   all: ["lots"] as const,
   lists: () => [...lotQueryKeys.all, "list"] as const,
@@ -20,41 +13,37 @@ export const lotQueryKeys = {
   items: () => [...lotQueryKeys.all, "items"] as const,
 };
 
-// Hook: Get lots with pagination and filters
 export const useLots = (params?: {
   page?: number;
   pageSize?: number;
   search?: string;
   itemId?: string;
-  status?: LotAdministrativeStatus | string; // ✅ Accept both
-  expiryCondition?: ExpiryCondition | string; // ✅ Accept both
+  administrativeStatus?: string;
+  expiryCondition?: string;
 }) => {
   return useQuery({
     queryKey: lotQueryKeys.list(params || {}),
     queryFn: () => lotApi.getLots(params),
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 30 * 1000,
   });
 };
 
-// Hook: Get lot summary
 export const useLotSummary = () => {
   return useQuery({
     queryKey: lotQueryKeys.summary(),
     queryFn: lotApi.getLotSummary,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 60 * 1000,
   });
 };
 
-// Hook: Get items for dropdown
 export const useItems = () => {
   return useQuery({
     queryKey: lotQueryKeys.items(),
     queryFn: lotApi.getItems,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 };
 
-// Hook: Get single lot
 export const useLot = (id: string | null) => {
   return useQuery({
     queryKey: lotQueryKeys.detail(id || ""),
@@ -66,21 +55,18 @@ export const useLot = (id: string | null) => {
   });
 };
 
-// Hook: Create lot
 export const useCreateLot = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: CreateLotRequest) => lotApi.createLot(payload),
     onSuccess: () => {
-      // Invalidate lots list and summary
       queryClient.invalidateQueries({ queryKey: lotQueryKeys.lists() });
       queryClient.invalidateQueries({ queryKey: lotQueryKeys.summary() });
     },
   });
 };
 
-// Hook: Update lot
 export const useUpdateLot = () => {
   const queryClient = useQueryClient();
 
@@ -88,23 +74,19 @@ export const useUpdateLot = () => {
     mutationFn: ({ id, payload }: { id: string; payload: UpdateLotRequest }) =>
       lotApi.updateLot(id, payload),
     onSuccess: (data) => {
-      // Update the specific lot in cache
       queryClient.setQueryData(lotQueryKeys.detail(data.id), data);
-      // Invalidate lists and summary
       queryClient.invalidateQueries({ queryKey: lotQueryKeys.lists() });
       queryClient.invalidateQueries({ queryKey: lotQueryKeys.summary() });
     },
   });
 };
 
-// Hook: Delete lot
 export const useDeleteLot = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) => lotApi.deleteLot(id),
     onSuccess: () => {
-      // Invalidate lots list and summary
       queryClient.invalidateQueries({ queryKey: lotQueryKeys.lists() });
       queryClient.invalidateQueries({ queryKey: lotQueryKeys.summary() });
     },

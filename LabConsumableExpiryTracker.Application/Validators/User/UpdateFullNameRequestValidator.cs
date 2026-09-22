@@ -12,7 +12,7 @@ public class UpdateFullNameRequestValidator : AbstractValidator<UpdateFullNameRe
             .WithMessage("Nama lengkap wajib diisi.")
             .MaximumLength(100)
             .WithMessage("Nama lengkap tidak boleh lebih dari 100 karakter.")
-            .Matches(@"^[a-zA-Z0-9\s\.\-]+$") // Opsional: cegah karakter aneh/injection
+            .Matches(@"^[a-zA-Z0-9\s\.\-]+$") 
             .WithMessage("Nama lengkap hanya boleh mengandung huruf, angka, spasi, titik, dan strip.");
     }
 }

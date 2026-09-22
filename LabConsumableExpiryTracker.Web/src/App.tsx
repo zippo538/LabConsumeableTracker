@@ -16,6 +16,7 @@ import {ItemDetailPage} from "./pages/ItemDetailPage";
 import {ProtectedRoute} from "./components/route/ProtectedRoute";
 import { JobPage } from "./pages/JobPage";
 import { JobDetailPage } from "./pages/JobDetailPage";
+import { LotDetailPage } from "./pages/LotDetailPage";
 import { ConsumptionPage } from "./pages/ConsumptionPage";
 
 const queryClient = new QueryClient({
@@ -49,7 +50,6 @@ export default function App() {
                                 </ProtectedRoute>
                             }
                         />
-
                         <Route
                             path="/app/items"
                             element={
@@ -77,6 +77,14 @@ export default function App() {
                             element={
                                 <ProtectedRoute allowedRoles={["WarehouseAdmin"]}>
                                     <LotsPage/>
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/app/lots/:id"
+                            element={
+                                <ProtectedRoute allowedRoles={["WarehouseAdmin"]}>
+                                    <LotDetailPage/>
                                 </ProtectedRoute>
                             }
                         />
@@ -109,7 +117,6 @@ export default function App() {
                             path="/"
                             element={<Navigate to="/app/dashboard" replace/>}
                         />
-
                         <Route
                             path="*"
                             element={<Navigate to="/app/dashboard" replace/>}

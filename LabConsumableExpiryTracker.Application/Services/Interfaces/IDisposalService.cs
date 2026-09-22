@@ -5,7 +5,8 @@ namespace LabConsumableExpiryTracker.Application.Services.Interfaces;
 
 public interface IDisposalService
 {
-    Task<ServiceResult<DisposalDto>> CreateDisposalAsync(
+    Task<ServiceResult<CreateDisposalResponseDto>> CreateDisposalAsync(
+        Guid lotId,
         CreateDisposalDto request,
         CancellationToken ct = default);
 }

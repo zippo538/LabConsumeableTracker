@@ -23,7 +23,7 @@ export interface Lot {
   storageLocation: string;
   rowVersion: string;
   evaluatedAt: string;
-  supplierName?: string;
+  suppliername?: string;
   supplierLotNumber?: string;
 }
 
@@ -41,7 +41,7 @@ export interface CreateLotRequest {
   expiryDate: string;
   storageLocation: string;
   receivedAt: string; 
-  supplierName: string; 
+  suppliername: string; 
   supplierLotNumber: string; 
 }
 
@@ -49,9 +49,30 @@ export interface UpdateLotRequest {
   storageLocation: string;
   administrativeStatus: LotAdministrativeStatus;
   rowVersion: string;
-  supplierName: string;
+  suppliername: string;
+  supplierLotNumber:  string;
   lotNumber: string;
   expiryDate: string;
+}
+
+export type UpdatableLotAdministrativeStatus = Exclude<
+  LotAdministrativeStatus,
+  "Disposed"
+>;
+
+export interface UpdateLotAdministrativeStatusRequest {
+  administrativeStatus: UpdatableLotAdministrativeStatus;
+  rowVersion: string;
+}
+
+export interface DisposeLotRequest {
+  LotId: number;
+  quantity: number;
+  reason: string;
+}
+
+export interface LotDetailRouteState {
+  lot?: Lot;
 }
 
 export interface ItemOption {

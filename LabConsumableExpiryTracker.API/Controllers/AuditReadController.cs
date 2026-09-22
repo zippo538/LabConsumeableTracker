@@ -46,24 +46,4 @@ public class AuditReadController : ControllerBase
 
         return response.Success ? Ok(response) : NotFound(response);
     }
-
-    [HttpGet("disposals")]
-    public async Task<ActionResult<ServiceResult<PagedResult<DisposalAuditDto>>>> GetDisposals(
-        [FromQuery] AuditQuery query,
-        CancellationToken ct)
-    {
-        var response = await _auditService.GetDisposalsAsync(query, ct);
-
-        return response.Success ? Ok(response) : BadRequest(response);
-    }
-
-    [HttpGet("disposals/{id:guid}")]
-    public async Task<ActionResult<ServiceResult<DisposalAuditDto>>> GetDisposal(
-        Guid id,
-        CancellationToken ct)
-    {
-        var response = await _auditService.GetDisposalByIdAsync(id, ct);
-
-        return response.Success ? Ok(response) : NotFound(response);
-    }
 }

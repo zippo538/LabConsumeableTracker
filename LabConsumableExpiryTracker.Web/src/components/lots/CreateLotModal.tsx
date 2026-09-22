@@ -12,6 +12,7 @@ interface CreateLotModalProps {
   error?: string;
 }
 
+
 export const CreateLotModal = ({
   isOpen,
   onClose,
@@ -27,9 +28,10 @@ export const CreateLotModal = ({
     expiryDate: "",
     storageLocation: "",
     receivedAt: new Date().toISOString().slice(0, 10),
-    supplierName: "",
+    suppliername: "",
     supplierLotNumber: "",
   });
+  
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,9 +149,9 @@ export const CreateLotModal = ({
         <input
           id="create-supplierName"
           type="text"
-          value={formData.supplierName}
+          value={formData.suppliername}
           onChange={(e) =>
-            setFormData({ ...formData, supplierName: e.target.value })
+            setFormData({ ...formData, suppliername: e.target.value })
           }
           placeholder="Nama supplier"
           className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
