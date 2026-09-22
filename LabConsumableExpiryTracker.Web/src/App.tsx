@@ -16,6 +16,7 @@ import {ItemDetailPage} from "./pages/ItemDetailPage";
 import {ProtectedRoute} from "./components/route/ProtectedRoute";
 import { JobPage } from "./pages/JobPage";
 import { JobDetailPage } from "./pages/JobDetailPage";
+import { ConsumptionPage } from "./pages/ConsumptionPage";
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -94,6 +95,15 @@ export default function App() {
                                   <JobDetailPage/>
                                 </ProtectedRoute>
                             } />
+
+                        <Route
+                            path="/app/consumption"
+                            element={
+                                <ProtectedRoute allowedRoles={["Scientist"]}>
+                                    <ConsumptionPage/>
+                                </ProtectedRoute>
+                            }
+                        />
 
                         <Route
                             path="/"

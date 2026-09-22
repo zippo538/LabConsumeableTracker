@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { ArrowLeft, Ban, Pencil, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Ban, Pencil, CheckCircle2, FlaskConical } from "lucide-react";
 
 import { useCancelJob, useJob, useUpdateJob } from "../hooks/useJob";
 
@@ -147,6 +147,17 @@ export const JobDetailPage = () => {
                     </div>
 
                     <div className="flex shrink-0 items-center gap-3">
+                        {job.status === "InProgress" && (
+                            <button
+                                type="button"
+                                onClick={() => navigate(`/app/consumption?jobId=${job.id}`)}
+                                className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#12a9ad] px-4 text-[12px] font-semibold text-white transition-colors hover:bg-[#0e969a]"
+                            >
+                                <FlaskConical className="h-3.5 w-3.5" />
+                                Consume
+                            </button>
+                        )}
+
                         <button
                             type="button"
                             onClick={handleOpenEdit}
