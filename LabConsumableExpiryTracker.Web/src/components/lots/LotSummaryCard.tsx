@@ -1,6 +1,7 @@
 // src/components/lots/LotSummaryCards.tsx
 import type { LotSummary } from "../../types/lot.types";
 import { Alert } from "../MessageAlert";
+import { SummaryStatsCard } from "../SummaryStatsCard";
 
 interface LotSummaryCardsProps {
   summary: LotSummary;
@@ -45,24 +46,28 @@ export const LotSummaryCards = ({ summary, message }: LotSummaryCardsProps) => {
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-4">
         {/* Summary Cards */}
         <div className="lg:col-span-3">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {cards.map((card) => (
-              <div
-                key={card.label}
-                className="rounded-lg border border-gray-200 bg-white p-6"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`h-3 w-3 rounded-full ${card.dotColor}`} />
-
-                  <span className="text-2xl font-bold text-gray-900">
-                    {card.value}
-                  </span>
-                </div>
-
-                <p className="mt-2 text-sm text-gray-500">{card.label}</p>
-              </div>
-            ))}
-          </div>
+          <SummaryStatsCard
+            className="mt-0 grid-cols-1 sm:grid-cols-3"
+            stats={
+              [
+                {
+                  value: cards[0].value,
+                  title: cards[0].label,
+                  color: "blue",
+                },
+                {
+                  value: cards[1].value,
+                  title: cards[1].label,
+                  color: "amber",
+                },
+                {
+                  value: cards[2].value,
+                  title: cards[2].label,
+                  color: "teal",
+                },
+              ] as const
+            }
+          />
         </div>
 
         {/* FEFO Information Card */}

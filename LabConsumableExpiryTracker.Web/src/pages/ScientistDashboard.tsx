@@ -4,7 +4,9 @@ import { Icon } from "../components/ui/Icon";
 import { useDashboardSummary } from "../hooks/useDashboard";
 import { DashboardError, DashboardLoading } from "./WarehouseAdminDashboard";
 import { DashboardAlertsCard } from "../components/dashboard/DashboardAlertsCard";
-import {formatEvaluatedAt} from "../pages/WarehouseAdminDashboard"
+import { formatEvaluatedAt } from "../pages/WarehouseAdminDashboard";
+import { SummaryStatsCard } from "../components/SummaryStatsCard";
+
 interface DashboardProps {
   user: UserProfile | null;
 }
@@ -12,28 +14,7 @@ interface DashboardProps {
 export const ScientistDashboard: FC<DashboardProps> = ({ user }) => {
   const { data, isLoading, isFetching, isError, error, refetch } =
     useDashboardSummary();
-  const stats = data
-    ? ([
-        [
-          data.expiringSoonLotCount,
-          "Expiring Soon Lots",
-          "Still eligible; use according to FEFO order",
-          "bg-amber-50 text-amber-500",
-        ],
-        [
-          data.lowStockItemCount,
-          "Low Stock Items",
-          "Stock availability requires attention",
-          "bg-rose-50 text-[#df2431]",
-        ],
-        [
-          data.expiredLotCount + data.blockedLotCount,
-          "Ineligible Lots",
-          "Expired or blocked lots cannot be used",
-          "bg-red-50 text-red-600",
-        ],
-      ] as const)
-    : [];
+
   return (
     <div>
       <section className="flex items-start justify-between">
@@ -70,34 +51,31 @@ export const ScientistDashboard: FC<DashboardProps> = ({ user }) => {
           <p className="mt-2 text-xs text-slate-400">
             Last Refresh : {formatEvaluatedAt(data.evaluatedAt)}
           </p>
-          <section className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {stats.map(([value, title, note, tone]) => (
-              <article
-                key={title}
-                className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgb(15_23_42/0.02)]"
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${tone}`}
-                  >
-                    <span className="h-2.5 w-2.5 rounded-[3px] bg-current" />
-                  </span>
-
-                  <div>
-                    <strong className="text-2xl font-bold leading-6 text-slate-900">
-                      {value}
-                    </strong>
-
-                    <span className="block text-xs font-medium text-slate-500">
-                      {title}
-                    </span>
-                  </div>
-                </div>
-
-                <p className="mt-4 text-xs text-slate-400">{note}</p>
-              </article>
-            ))}
-          </section>
+          <SummaryStatsCard
+            className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3"
+            stats={
+              [
+                {
+                  value: data.expiringSoonLotCount,
+                  title: "Expiring Soon Lots",
+                  note: "Still eligible; use according to FEFO order",
+                  color: "amber",
+                },
+                {
+                  value: data.lowStockItemCount,
+                  title: "Low Stock Items",
+                  note: "Stock availability requires attention",
+                  color: "rose",
+                },
+                {
+                  value: data.expiredLotCount + data.blockedLotCount,
+                  title: "Ineligible Lots",
+                  note: "Expired or blocked lots cannot be used",
+                  color: "red",
+                },
+              ] as const
+            }
+          />
           <div className="mt-7">
             <DashboardAlertsCard />
           </div>
