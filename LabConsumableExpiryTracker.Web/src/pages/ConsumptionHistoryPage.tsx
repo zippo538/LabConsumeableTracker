@@ -197,7 +197,7 @@ export default function ConsumptionHistoryPage() {
     >
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+         <h1 className="text-[26px] font-bold tracking-tight text-slate-900">
             Consumption History
           </h1>
 
