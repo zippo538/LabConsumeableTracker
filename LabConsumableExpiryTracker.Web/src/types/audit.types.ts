@@ -12,7 +12,7 @@ export interface AuditEvent {
   baseUnit: string;
   occurredAt: string;
   actorId: string;
-  actorName: string;
+  fullName: string;
   jobId: string | null;
   jobNumber: string | null;
   reason: string | null;
@@ -32,6 +32,7 @@ export interface AuditFilter {
   jobId: string | null;
   from: string | null;
   to: string | null;
+  search: string | null;
   page: number;
   pageSize: number;
 }
@@ -43,6 +44,7 @@ export const DEFAULT_AUDIT_FILTER: AuditFilter = {
   jobId: null,
   from: null,
   to: null,
+  search : "",
   page: 1,
   pageSize: 20,
 };

@@ -28,6 +28,9 @@ function buildAuditQueryParams(filter: AuditFilter): URLSearchParams {
   if (filter.to) {
     params.set("To", filter.to);
   }
+  if (filter.search) {
+    params.set("Search", filter.search);
+  }
   if (filter.from) {
     params.set("From", `${filter.from}T00:00:00+00:00`);
   }

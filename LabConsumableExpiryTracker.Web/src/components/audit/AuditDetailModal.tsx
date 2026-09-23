@@ -114,10 +114,11 @@ export function AuditDetailModal({
                 {formatDateTime(event.occurredAt)}
               </dd>
             </div>
-            <div>
+              {isConsumption ? (<div>
               <dt className="text-slate-500">Performed By</dt>
-              <dd className="font-medium text-slate-900">{event.actorName}</dd>
-            </div>
+              <dd className="font-medium text-slate-900">{event.fullName}</dd>
+            </div>): (null)} 
+            
           </dl>
         </div>
 

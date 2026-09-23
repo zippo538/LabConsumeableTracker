@@ -39,6 +39,7 @@ export const useAuditEvents = (params?: AuditFilter) => {
     lotId: null,
     jobId: null,
     from: null,
+    search: "",
     to: null,
     page: 1,
     pageSize: 20,
@@ -59,6 +60,7 @@ export const useAuditStats = (params?: Omit<AuditFilter, "page" | "pageSize">) =
     eventType: "All",
     itemId: null,
     lotId: null,
+    search: null,
     jobId: null,
     from: null,
     to: null,
@@ -108,6 +110,7 @@ export const useConsumptions = (params?: {
   jobId?: string;
   itemId?: string;
   lotId?: string;
+  search? : string,
   from?: string;
   to?: string;
 }) => {
@@ -116,6 +119,7 @@ export const useConsumptions = (params?: {
     lotId: params?.lotId || null,
     jobId: params?.jobId || null,
     from: params?.from || null,
+    search: params?.search || "",
     to: params?.to || null,
     page: params?.page || 1,
     pageSize: params?.pageSize || 20,
@@ -136,6 +140,7 @@ export const useDisposals = (params?: {
   pageSize?: number;
   itemId?: string;
   lotId?: string;
+  search : string,
   from?: string;
   to?: string;
 }) => {
@@ -145,6 +150,7 @@ export const useDisposals = (params?: {
     jobId: null, // Disposal tidak punya jobId
     from: params?.from || null,
     to: params?.to || null,
+    search: params?.search || "",
     page: params?.page || 1,
     pageSize: params?.pageSize || 20,
   };

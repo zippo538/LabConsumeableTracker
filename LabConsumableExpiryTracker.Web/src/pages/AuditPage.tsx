@@ -57,6 +57,7 @@ export function AuditHistoryPage() {
 
   // URL search params untuk filter persistence (UI-14, UI-15)
   const [searchParams, setSearchParams] = useSearchParams();
+  
 
   // Parse filter dari URL atau gunakan default
   const initialFilter = useMemo<AuditFilter>(() => {
@@ -69,6 +70,7 @@ export function AuditHistoryPage() {
       jobId: searchParams.get("jobId") || DEFAULT_AUDIT_FILTER.jobId,
       from: searchParams.get("from") || DEFAULT_AUDIT_FILTER.from,
       to: searchParams.get("to") || DEFAULT_AUDIT_FILTER.to,
+      search : searchParams.get("search") || DEFAULT_AUDIT_FILTER.search,
       page: parseInt(searchParams.get("page") || "1", 10),
       pageSize: parseInt(searchParams.get("pageSize") || "20", 10),
     };
@@ -155,6 +157,7 @@ export function AuditHistoryPage() {
     if (filter.jobId) params.set("jobId", filter.jobId);
     if (filter.from) params.set("from", filter.from);
     if (filter.to) params.set("to", filter.to);
+    if (filter.search) params.set("search", filter.search);
     if (filter.page > 1) params.set("page", String(filter.page));
     if (filter.pageSize !== 20) params.set("pageSize", String(filter.pageSize));
 

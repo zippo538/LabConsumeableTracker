@@ -1,12 +1,10 @@
-// ============================================================
-// AuditFilterBar — Search & Filter Component
-// Filter: EventType, Item, Lot, Date Range
-// UI-14: Query URL hanya memuat filter aman
-// ============================================================
-
 import { type FormEvent, useCallback } from "react";
 import { Search, Calendar, Filter } from "lucide-react";
-import type { AuditFilter, AuditEventType, LookupOption } from "../../types/audit.types";
+import type {
+  AuditFilter,
+  AuditEventType,
+  LookupOption,
+} from "../../types/audit.types";
 
 interface AuditFilterBarProps {
   filter: AuditFilter;
@@ -18,7 +16,6 @@ interface AuditFilterBarProps {
   lotCountLoading?: boolean;
 }
 
-/** Opsi dropdown EventType */
 const EVENT_TYPE_OPTIONS: { value: AuditEventType | "All"; label: string }[] = [
   { value: "All", label: "All events" },
   { value: "Consumption", label: "Consumption" },
@@ -43,7 +40,6 @@ export function AuditFilterBar({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    // Trigger search — page sudah direset ke 1 oleh updateFilter
   };
 
   const handleReset = () => {
@@ -61,9 +57,10 @@ export function AuditFilterBar({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search event ID, item ID, or lot number..."
+            placeholder="Search lot number or item code..."
+            value={filter.search ?? ""}
             className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-            aria-label="Search audit events"
+            onChange={(e) => updateFilter({ search: e.target.value || null })}
           />
         </div>
 
