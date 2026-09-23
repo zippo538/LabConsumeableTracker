@@ -246,4 +246,34 @@ public class UserService : IUserService
         return ServiceResult<bool>.SuccessResult(true,
             $"User {(isActive ? "activated" : "deactivated")} successfully.");
     }
+    
+    public async Task<ServiceResult<UserStatisticsResponseDto>> GetUserStatisticsAsync()
+    {
+        var totalCount = await _userManager.Users
+            .CountAsync();
+
+        var activeCount = await _userManager.Users
+            .CountAsync(u => u.IsActive);
+
+        var deactivatedCount = await _userManager.Users
+            .CountAsync(u => !u.IsActive);
+
+        var adminUsers = await _userManager.GetUsersInRoleAsync(
+            nameof(UserRole.WarehouseAdmin)
+        );
+
+        var activeAdminCount = adminUsers
+            .Count(u => u.IsActive);
+
+        var response = new UserStatisticsResponseDto
+        {
+            TotalCount = totalCount,
+            ActiveCount = activeCount,
+            ActiveAdminCount = activeAdminCount,
+            DeactivatedCount = deactivatedCount
+        };
+
+        return ServiceResult<UserStatisticsResponseDto>
+            .SuccessResult(response);
+    }
 }

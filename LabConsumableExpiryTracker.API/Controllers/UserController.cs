@@ -117,4 +117,14 @@ public class UserController : ControllerBase
             return BadRequest(result);
         return Ok(result);
     }
+    
+    [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
+    [HttpGet("stats")]
+    public async Task<ActionResult<ServiceResult<UserStatisticsResponseDto>>>
+        GetUserStatistics()
+    {
+        var result = await _userService.GetUserStatisticsAsync();
+
+        return Ok(result);
+    }
 }

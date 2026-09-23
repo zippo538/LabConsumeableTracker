@@ -15,5 +15,5 @@ public interface IUserService
         string? status);
     Task<ServiceResult<UserResponseDto>> UpdateUserAsync(Guid id, UpdateUserRequestDto request);
     Task<ServiceResult<bool>> SetUserActiveStatusAsync(Guid currentAdminId, Guid targetUserId, bool isActive);
-
+    Task<ServiceResult<UserStatisticsResponseDto>> GetUserStatisticsAsync();
 }
