@@ -49,13 +49,13 @@ export const Pagination: React.FC<PaginationProps> = ({
             <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
                 {totalItems > 0 && (
                     <span aria-live="polite">
-                        Menampilkan {firstItem}–{lastItem} dari {totalItems} data
+                        Showing {firstItem}–{lastItem} of {totalItems} data
                     </span>
                 )}
 
                 {onPageSizeChange && (
                     <label className="flex items-center gap-2">
-                        <span>Baris per halaman</span>
+                        <span>data per page</span>
                         <select
                             value={pageSize}
                             onChange={(e) => changePageSize(Number(e.target.value))}
@@ -79,7 +79,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                         disabled={page <= 1}
                         className="h-8 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 transition hover:border-teal-300 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                        Sebelumnya
+                        Previous
                     </button>
 
                     {visiblePages.map((pageNumber, index) => {
@@ -111,7 +111,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                         disabled={page >= totalPages}
                         className="h-8 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 transition hover:border-teal-300 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                        Berikutnya
+                        Next
                     </button>
                 </nav>
             )}

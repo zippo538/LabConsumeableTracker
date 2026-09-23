@@ -282,7 +282,7 @@ const inputClass =
       title="Job List"
       description="Manage laboratory jobs and stock consumption"
     >
-      <div className="min-h-full bg-[#f7fafc] px-6 py-7 lg:px-10">
+      <div className="min-h-full bg-[#f7fafc] space-y-7">
         <div className="mx-auto max-w-[1200px]">
           {/* Header */}
           <div className="mb-5">
