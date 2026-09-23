@@ -20,7 +20,7 @@ const scientistNav: ReadonlyArray<readonly [string, string, IconName]> = [
     ["Dashboard", "/app/dashboard", "dashboard"],
     ["Job", "/app/jobs", "dashboard"],
     ["Consume", "/app/consumption", "clipboard"],
-    ["Consumption History", "/app/history", "history"],
+    ["Consumption History", "/app/consumption-history", "history"],
     ["Profile", "/app/profile", "profile"],
 ];
 
