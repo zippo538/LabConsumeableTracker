@@ -1,3 +1,4 @@
+using Bogus;
 using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
@@ -6,11 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Repositories;
 
-/// <summary>
-/// Read-only projections. Filtering takes place in SQL before Count/Skip/Take.
-/// It assumes Consumption has Id, LotId, JobId, Quantity, ConsumedAt and ConsumedBy,
-/// and Disposal has DisposedBy. These actor IDs are required by SRS FR-08-02.
-/// </summary>
 public sealed class AuditRepository : IAuditRepository
 {
     private readonly AppDbContext _context;
@@ -23,18 +19,25 @@ public sealed class AuditRepository : IAuditRepository
             from consumption in _context.Consumptions.AsNoTracking()
             join lot in _context.Lots.AsNoTracking() on consumption.LotId equals lot.Id
             join item in _context.Items.AsNoTracking() on lot.ItemId equals item.Id
+            join user in _context.Users.AsNoTracking() on consumption.ConsumedBy equals user.Id
+            join job in _context.Jobs.AsNoTracking() on consumption.JobId equals job.Id
+
             select new AuditEventDto
             {
                 EventType = AuditEventType.Consumption,
                 EventId = consumption.Id,
                 ItemId = lot.ItemId,
+                ItemName = item.Name,
+                itemCode = item.Code,
                 LotId = lot.Id,
                 LotNumber = lot.LotNumber,
                 Quantity = consumption.Quantity,
                 BaseUnit = item.BaseUnit,
                 OccurredAt = consumption.ConsumedAt,
                 ActorId = consumption.ConsumedBy,
+                FullName = user.FullName,
                 JobId = consumption.JobId,
+                JobNumber = job.JobNumber,
                 Reason = null
             };
 
@@ -47,13 +50,17 @@ public sealed class AuditRepository : IAuditRepository
                 EventType = AuditEventType.Disposal,
                 EventId = disposal.Id,
                 ItemId = lot.ItemId,
+                ItemName = item.Name,
+                itemCode = item.Code,
                 LotId = lot.Id,
                 LotNumber = lot.LotNumber,
                 Quantity = disposal.Quantity,
                 BaseUnit = item.BaseUnit,
                 OccurredAt = disposal.DisposedAt,
                 ActorId = disposal.DisposedBy,
+                FullName = string.Empty,
                 JobId = null,
+                JobNumber = string.Empty,
                 Reason = disposal.Reason
             };
 
@@ -89,17 +96,24 @@ public sealed class AuditRepository : IAuditRepository
             from consumption in _context.Consumptions.AsNoTracking()
             join lot in _context.Lots.AsNoTracking() on consumption.LotId equals lot.Id
             join item in _context.Items.AsNoTracking() on lot.ItemId equals item.Id
+            join user in _context.Users.AsNoTracking() on consumption.ConsumedBy equals user.Id
+            join job in _context.Jobs.AsNoTracking() on consumption.JobId equals job.Id
             select new ConsumptionAuditDto
             {
                 Id = consumption.Id,
                 JobId = consumption.JobId,
                 LotId = lot.Id,
                 ItemId = lot.ItemId,
+                ItemName = item.Name,
+                itemCode = item.Code,
                 LotNumber = lot.LotNumber,
                 Quantity = consumption.Quantity,
                 BaseUnit = item.BaseUnit,
                 ConsumedAt = consumption.ConsumedAt,
+                FullName = user.FullName,
+                JobNumber = job.JobNumber,
                 ConsumedBy = consumption.ConsumedBy
+
             };
 
         source = ApplyConsumptionFilters(source, query);
@@ -114,6 +128,8 @@ public sealed class AuditRepository : IAuditRepository
         (from consumption in _context.Consumptions.AsNoTracking()
          join lot in _context.Lots.AsNoTracking() on consumption.LotId equals lot.Id
          join item in _context.Items.AsNoTracking() on lot.ItemId equals item.Id
+         join user in _context.Users.AsNoTracking() on consumption.ConsumedBy equals user.Id
+         join job in _context.Jobs.AsNoTracking() on consumption.JobId equals job.Id
          where consumption.Id == id
          select new ConsumptionAuditDto
          {
@@ -121,10 +137,14 @@ public sealed class AuditRepository : IAuditRepository
              JobId = consumption.JobId,
              LotId = lot.Id,
              ItemId = lot.ItemId,
+             ItemName = item.Name,
+             itemCode = item.Code,
              LotNumber = lot.LotNumber,
              Quantity = consumption.Quantity,
              BaseUnit = item.BaseUnit,
              ConsumedAt = consumption.ConsumedAt,
+             FullName = user.FullName,
+             JobNumber = job.JobNumber,
              ConsumedBy = consumption.ConsumedBy
          }).FirstOrDefaultAsync(ct);
 
@@ -166,6 +186,13 @@ public sealed class AuditRepository : IAuditRepository
         if (query.JobId.HasValue) source = source.Where(x => x.JobId == query.JobId.Value);
         if (query.From.HasValue) source = source.Where(x => x.OccurredAt >= query.From.Value);
         if (query.To.HasValue) source = source.Where(x => x.OccurredAt < query.To.Value);
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var pattern = $"%{query.Search.Trim()}%";
+            source = source.Where(x =>
+                EF.Functions.ILike(x.LotNumber, pattern) ||
+                EF.Functions.ILike(x.itemCode, pattern));
+        }
         return source;
     }
 
@@ -176,6 +203,13 @@ public sealed class AuditRepository : IAuditRepository
         if (query.JobId.HasValue) source = source.Where(x => x.JobId == query.JobId.Value);
         if (query.From.HasValue) source = source.Where(x => x.ConsumedAt >= query.From.Value);
         if (query.To.HasValue) source = source.Where(x => x.ConsumedAt < query.To.Value);
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var pattern = $"%{query.Search.Trim()}%";
+            source = source.Where(x =>
+                EF.Functions.ILike(x.LotNumber, pattern) ||
+                EF.Functions.ILike(x.itemCode, pattern));
+        }
         return source;
     }
 
@@ -185,6 +219,13 @@ public sealed class AuditRepository : IAuditRepository
         if (query.LotId.HasValue) source = source.Where(x => x.LotId == query.LotId.Value);
         if (query.From.HasValue) source = source.Where(x => x.DisposedAt >= query.From.Value);
         if (query.To.HasValue) source = source.Where(x => x.DisposedAt < query.To.Value);
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var keyword = query.Search.Trim();
+
+            source = source.Where(x =>
+                EF.Functions.ILike(x.LotNumber, $"%{keyword}%"));
+        }
         return source;
     }
 }

@@ -46,7 +46,7 @@ public class ExportsController : ControllerBase
 
     [HttpGet("disposals")]
     public async Task<IActionResult> ExportDisposals(
-       DisposalExportFilterDto filter,
+       [FromQuery] DisposalExportFilterDto filter,
         CancellationToken ct)
     {
         var result = await _exportService.GetDisposalExport(
@@ -56,7 +56,7 @@ public class ExportsController : ControllerBase
             ? ToCsvFile(result.Data!, "disposals-export")
             : BadRequest(result);
     }
-    
+
     private FileContentResult ToCsvFile<T>(IEnumerable<T> rows, string fileNamePrefix)
     {
         using var memoryStream = new MemoryStream();
