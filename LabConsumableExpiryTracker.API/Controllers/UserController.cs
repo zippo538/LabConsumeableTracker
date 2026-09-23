@@ -66,9 +66,11 @@ public class UserController : ControllerBase
 
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
     [HttpGet]
-    public async Task<ActionResult<ServiceResult<List<UserResponseDto>>>> GetAllUsers()
+    public async Task<ActionResult<ServiceResult<PagedUsersResponseDto>>> GetAllUsers(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
     {
-        var result = await _userService.GetAllUsersAsync();
+        var result = await _userService.GetAllUsersAsync(page, pageSize);
         return Ok(result);
     }
 

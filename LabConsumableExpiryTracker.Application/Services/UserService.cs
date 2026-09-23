@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using LabConsumableExpiryTracker.Application.DTOs.UserDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
+using LabConsumableExpiryTracker.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -80,14 +81,28 @@ public class UserService : IUserService
 
         var roles = await _userManager.GetRolesAsync(user);
         var response = _mapper.Map<UserResponseDto>(user);
-        response.Roles = roles.ToList(); 
+        response.Roles = roles.ToList();
         return ServiceResult<UserResponseDto>.SuccessResult(response, "User profile retrieved successfully.");
     }
 
 
-    public async Task<ServiceResult<List<UserResponseDto>>> GetAllUsersAsync()
+    public async Task<ServiceResult<PagedUsersResponseDto>> GetAllUsersAsync(int page, int pageSize)
     {
-        var users = await _userManager.Users.ToListAsync();
+        page = page < 1 ? 1 : page;
+        pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
+        
+        var adminUsers = await _userManager.GetUsersInRoleAsync(nameof(UserRole.WarehouseAdmin));
+        var adminIds = adminUsers.Select(u => u.Id).ToHashSet();
+
+        var totalCount = await _userManager.Users.CountAsync();
+
+        var users = await _userManager.Users
+            .OrderByDescending(u => adminIds.Contains(u.Id)) 
+            .ThenBy(u => u.UserName) 
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
         var resultList = new List<UserResponseDto>();
 
         foreach (var user in users)
@@ -98,7 +113,15 @@ public class UserService : IUserService
             resultList.Add(dto);
         }
 
-        return ServiceResult<List<UserResponseDto>>.SuccessResult(resultList);
+        var response = new PagedUsersResponseDto
+        {
+            Items = resultList,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
+
+        return ServiceResult<PagedUsersResponseDto>.SuccessResult(response);
     }
 
     public async Task<ServiceResult<UserResponseDto>> UpdateUserAsync(Guid id, UpdateUserRequestDto request)
@@ -124,7 +147,9 @@ public class UserService : IUserService
 
         return ServiceResult<UserResponseDto>.SuccessResult(response, "User updated successfully.");
     }
-    public async Task<ServiceResult<bool>> SetUserActiveStatusAsync(Guid currentAdminId, Guid targetUserId, bool isActive)
+
+    public async Task<ServiceResult<bool>> SetUserActiveStatusAsync(Guid currentAdminId, Guid targetUserId,
+        bool isActive)
     {
         if (currentAdminId == targetUserId && !isActive)
         {
@@ -152,6 +177,7 @@ public class UserService : IUserService
         }
 
         _logger.LogInformation("User {Username} status changed to {IsActive}.", user.UserName, isActive);
-        return ServiceResult<bool>.SuccessResult(true, $"User {(isActive ? "activated" : "deactivated")} successfully.");
+        return ServiceResult<bool>.SuccessResult(true,
+            $"User {(isActive ? "activated" : "deactivated")} successfully.");
     }
 }
