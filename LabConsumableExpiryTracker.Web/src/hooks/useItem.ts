@@ -220,46 +220,31 @@ export const useItem = () => {
 
   
     return {
-
         items: allItems,
         filteredItems,
-
-
         page,
         pageSize,
         totalCount,
         totalPages,
         setPage,
-
         isLoading,
         isError: false,
         error: null,
-
-
         stats,
         availableUnits,
-
-
         searchQuery,
         setSearchQuery,
-
         selectedUnit,
         setSelectedUnit,
-
         selectedStatus,
         setSelectedStatus,
-
         createItem,
         updateItem,
         deleteItem,
-
         isCreating:
         createMutation.isPending,
-
         isUpdating:
         updateMutation.isPending,
-
-
         isDeleting:
         deleteMutation.isPending,
     };

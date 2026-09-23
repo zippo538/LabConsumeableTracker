@@ -1,5 +1,5 @@
 // src/pages/LotPage.tsx
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAtomValue } from "jotai";
 import { useNavigate } from "react-router";
 import { userAtom } from "../lib/auth/authAtom";
@@ -33,6 +33,8 @@ export const LotsPage = () => {
   const user = useAtomValue(userAtom);
   const isWarehouseAdmin = user?.roles?.includes("WarehouseAdmin") ?? false;
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const IMAGE_BASE_URL = API_BASE_URL.replace(/\/api$/, '');
 
   // State untuk filter
   const [search, setSearch] = useState("");
@@ -68,6 +70,18 @@ export const LotsPage = () => {
 
   const lots = lotsData?.items ?? [];
   const totalItems = lotsData?.totalCount ?? 0;
+
+  const itemImageMap = useMemo(() => {
+    const map = new Map<string, string>();
+
+    items?.forEach((item) => {
+      if (item.imagePath) {
+        map.set(item.id, item.imagePath);
+      }
+    });
+
+    return map;
+  }, [items]);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -156,7 +170,12 @@ export const LotsPage = () => {
       cell: (lot: Lot) => (
         <div className="flex items-center gap-3">
           <ItemBadge
-            imageAlt=""
+            imageUrl={
+              itemImageMap.get(lot.itemId)
+                ? `${IMAGE_BASE_URL}/${itemImageMap.get(lot.itemId)}`
+                : null
+            }
+            imageAlt={`${lot.itemName} image`}
             fallbackText={lot.lotNumber.slice(0, 2)}
             tone="cyan"
             label={`View details for ${lot.itemName} - ${lot.lotNumber}`}
@@ -307,8 +326,8 @@ export const LotsPage = () => {
 
         {isLotsError ? (
           <ErrorState
-            title="Gagal memuat data Lot"
-            description="Terjadi kesalahan saat mengambil data lot. Silakan coba lagi."
+            title="Failed to load Lot data"
+            description="An error occurred while retrieving lot data. Please try again."
             onRetry={() => refetchLots()}
           />
         ) : (
@@ -324,16 +343,16 @@ export const LotsPage = () => {
                   filterItem ||
                   filterAdministrativeStatus ||
                   filterExpiryCondition
-                    ? "Tidak ada lot yang sesuai filter"
-                    : "Belum ada lot yang terdaftar"
+                    ? "No lots match the filter."
+                    : "No lots have been listed yet."
                 }
                 description={
                   search ||
                   filterItem ||
                   filterAdministrativeStatus ||
                   filterExpiryCondition
-                    ? "Coba ubah kata kunci pencarian atau filter yang lain."
-                    : "Klik 'Register New Lot' untuk menambahkan lot baru."
+                    ? "Try changing the search keywords or other filters."
+                    : "Click 'Register New Lot' to add a new lot."
                 }
                 icon={<Grid2x2 />}
               />
