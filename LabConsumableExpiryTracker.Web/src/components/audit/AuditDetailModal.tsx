@@ -29,7 +29,6 @@ export function AuditDetailModal({
   event,
   loading = false,
 }: AuditDetailModalProps) {
-  // Tutup modal saat Escape ditekan
   useEffect(() => {
     if (!isOpen) return;
     const handleEscape = (e: KeyboardEvent) => {
@@ -53,7 +52,6 @@ export function AuditDetailModal({
       busy={loading}
     >
       <div className="space-y-4">
-        {/* Item & Lot Info */}
         <div className="rounded-lg bg-slate-50 p-4">
           <h4 className="text-sm font-semibold text-slate-700 mb-2">
             Item / Lot
@@ -80,7 +78,6 @@ export function AuditDetailModal({
           </dl>
         </div>
 
-        {/* Event-Specific Info */}
         <div className="rounded-lg bg-slate-50 p-4">
           <h4 className="text-sm font-semibold text-slate-700 mb-2">
             {isConsumption ? "Job Information" : "Disposal Reason"}
@@ -102,7 +99,6 @@ export function AuditDetailModal({
           )}
         </div>
 
-        {/* Actor & Timestamp */}
         <div className="rounded-lg bg-slate-50 p-4">
           <h4 className="text-sm font-semibold text-slate-700 mb-2">
             Audit Trail
@@ -122,7 +118,6 @@ export function AuditDetailModal({
           </dl>
         </div>
 
-        {/* Read-only notice */}
         <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs text-sky-700">
           <strong>Read-only audit trail.</strong> Records cannot be edited or
           deleted.

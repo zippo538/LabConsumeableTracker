@@ -4,36 +4,27 @@ import { Download, ChevronDown } from "lucide-react";
 import { useAtomValue } from "jotai";
 import { userAtom } from "../lib/auth/authAtom";
 
-// Shared components
 import { DataTable, type DataTableColumn } from "../components/DataTable";
 import { InlineAlert } from "../components/FeedBackStates";
 import { LoadingState, EmptyState, ErrorState } from "../components/FeedBackStates";
 
-// Audit components
 import { AuditFilterBar } from "../components/audit/AuditFilterBar";
 import { AuditStatsCards } from "../components/audit/AuditSummaryCard";
 import { AuditDetailModal } from "../components/audit/AuditDetailModal";
 
-// API & types
 import { fetchAuditEvents, fetchAuditStats, parseAuditError } from "../api/auditApi";
 import type { AuditEvent, AuditFilter, AuditPageState, AuditStats, LookupOption } from "../types/audit.types";
 import { DEFAULT_AUDIT_FILTER } from "../types/audit.types";
 
-// Export
 import { useExport, useExportFilterMapper } from "../hooks/useExport";
 import type { ExportType } from "../types/export.types";
 import { EXPORT_TYPE_LABELS } from "../types/export.types";
 
-// Hooks untuk data Item dan Lot
 import { useItem } from "../hooks/useItem";
 import { useLots } from "../hooks/useLot";
 
-// Layout
 import { AppLayout } from "../components/layout/AppLayout";
 
-// ============================================================
-// Helper: Format tanggal ISO ke human-readable
-// ============================================================
 function formatOccurredAt(isoString: string): string {
   const date = new Date(isoString);
   return (
@@ -48,18 +39,13 @@ function formatOccurredAt(isoString: string): string {
   );
 }
 
-// ============================================================
-// Main Page Component
-// ============================================================
 export function AuditHistoryPage() {
   const user = useAtomValue(userAtom);
   const isWarehouseAdmin = user?.roles?.includes("WarehouseAdmin") ?? false;
 
-  // URL search params untuk filter persistence (UI-14, UI-15)
   const [searchParams, setSearchParams] = useSearchParams();
   
 
-  // Parse filter dari URL atau gunakan default
   const initialFilter = useMemo<AuditFilter>(() => {
     return {
       eventType:
@@ -76,7 +62,6 @@ export function AuditHistoryPage() {
     };
   }, [searchParams]);
 
-  // State
   const [filter, setFilter] = useState<AuditFilter>(initialFilter);
   const [pageState, setPageState] = useState<AuditPageState>({
     status: "idle",
@@ -96,22 +81,18 @@ export function AuditHistoryPage() {
   });
   const [detailLoading, setDetailLoading] = useState(false);
 
-  // Export dropdown state
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // PERBAIKAN: Gunakan useExport hook yang sudah memiliki generateFilename dinamis
   const { state: exportState, handleExport, resetState, isExporting } = useExport();
   const { mapDatesForExport } = useExportFilterMapper();
 
-  // Gunakan hooks untuk mendapatkan data Item dan Lot
   const { items: allItems, isLoading: isLoadingItems } = useItem();
   const { data: lotsData, isLoading: isLoadingLots } = useLots({
     page: 1,
     pageSize: 100,
   });
 
-  // Map items ke LookupOption
   const itemOptions: LookupOption[] = useMemo(() => {
     return (allItems ?? []).map((item) => ({
       id: item.id,
@@ -120,7 +101,6 @@ export function AuditHistoryPage() {
     }));
   }, [allItems]);
 
-  // Map lots ke LookupOption
   const lotOptions: LookupOption[] = useMemo(() => {
     const lots = lotsData?.items ?? [];
     return lots.map((lot) => ({
@@ -130,9 +110,6 @@ export function AuditHistoryPage() {
     }));
   }, [lotsData]);
 
-  // ============================================================
-  // Close dropdown saat click outside
-  // ============================================================
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -146,9 +123,6 @@ export function AuditHistoryPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ============================================================
-  // Sync filter ke URL (UI-14: hanya filter aman)
-  // ============================================================
   useEffect(() => {
     const params = new URLSearchParams();
     if (filter.eventType !== "All") params.set("eventType", filter.eventType);
@@ -164,9 +138,6 @@ export function AuditHistoryPage() {
     setSearchParams(params, { replace: true });
   }, [filter, setSearchParams]);
 
-  // ============================================================
-  // Fetch data audit
-  // ============================================================
   const loadData = useCallback(async () => {
     setPageState({ status: "loading" });
     setStatsLoading(true);
@@ -207,9 +178,6 @@ export function AuditHistoryPage() {
     loadData();
   }, [loadData]);
 
-  // ============================================================
-  // Handler: Filter change
-  // ============================================================
   const handleFilterChange = useCallback((newFilter: AuditFilter) => {
     setFilter(newFilter);
   }, []);
@@ -218,9 +186,6 @@ export function AuditHistoryPage() {
     setFilter(DEFAULT_AUDIT_FILTER);
   }, []);
 
-  // ============================================================
-  // Handler: Pagination
-  // ============================================================
   const handlePageChange = useCallback((page: number) => {
     setFilter((prev) => ({ ...prev, page }));
   }, []);
@@ -229,9 +194,6 @@ export function AuditHistoryPage() {
     setFilter((prev) => ({ ...prev, pageSize, page: 1 }));
   }, []);
 
-  // ============================================================
-  // Handler: View detail
-  // ============================================================
   const handleViewDetail = useCallback(async (event: AuditEvent) => {
     setDetailModal({ isOpen: true, event });
     setDetailLoading(true);
@@ -250,16 +212,10 @@ export function AuditHistoryPage() {
     setDetailModal({ isOpen: false, event: null });
   }, []);
 
-  // ============================================================
-  // PERBAIKAN: Handler Export CSV dengan dropdown dan nama file dinamis
-  // ============================================================
   const handleExportClick = useCallback(
     async (exportType: ExportType) => {
-      // Map filter dates ke format ISO 8601 UTC (+00:00)
       const { from, to } = mapDatesForExport(filter.from, filter.to);
 
-      // Panggil handleExport dari useExport hook
-      // Nama file akan di-generate secara dinamis berdasarkan tipe export
       await handleExport(exportType, {
         from,
         to,
@@ -274,9 +230,6 @@ export function AuditHistoryPage() {
     [filter, handleExport, mapDatesForExport]
   );
 
-  // ============================================================
-  // Kolom tabel (DataTable)
-  // ============================================================
   const columns: DataTableColumn<AuditEvent>[] = useMemo(
     () => [
       {
@@ -359,9 +312,6 @@ export function AuditHistoryPage() {
     [handleViewDetail]
   );
 
-  // ============================================================
-  // Render Export Dropdown dengan nama file dinamis
-  // ============================================================
   const renderExportDropdown = () => (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -428,16 +378,12 @@ export function AuditHistoryPage() {
     </div>
   );
 
-  // ============================================================
-  // Render
-  // ============================================================
   return (
     <AppLayout
       title="Audit & History"
       description="Review immutable Consumption and Disposal records from the server"
     >
       <div className="space-y-6">
-        {/* Read-only info banner */}
         <InlineAlert
           tone="info"
           title="Read-only audit trail"
@@ -446,15 +392,12 @@ export function AuditHistoryPage() {
           Records cannot be edited or deleted.
         </InlineAlert>
 
-        {/* Stats Cards */}
         <AuditStatsCards stats={stats} loading={statsLoading} />
 
-        {/* PERBAIKAN: Export Button dengan Dropdown dan nama file dinamis */}
         <div className="flex items-center justify-end">
           {renderExportDropdown()}
         </div>
 
-        {/* PERBAIKAN: Toast Feedback Export dengan nama file yang benar */}
         {(exportState.status === "success" || exportState.status === "error") && (
           <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <InlineAlert
@@ -474,7 +417,6 @@ export function AuditHistoryPage() {
           </div>
         )}
 
-        {/* Filter Bar */}
         <AuditFilterBar
           filter={filter}
           onFilterChange={handleFilterChange}
@@ -485,7 +427,6 @@ export function AuditHistoryPage() {
           lotCountLoading={isLoadingLots}
         />
 
-        {/* Table / State Display */}
         {pageState.status === "loading" && (
           <LoadingState variant="table" rows={5} columns={6} />
         )}
@@ -546,7 +487,6 @@ export function AuditHistoryPage() {
           />
         )}
 
-        {/* Detail Modal */}
         <AuditDetailModal
           isOpen={detailModal.isOpen}
           onClose={handleCloseDetail}

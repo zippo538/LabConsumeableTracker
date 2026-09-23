@@ -29,9 +29,6 @@ export const auditQueryKeys = {
     [...auditQueryKeys.disposals(), filters] as const,
 };
 
-/**
- * Hook: Fetch audit events dengan filter
- */
 export const useAuditEvents = (params?: AuditFilter) => {
   const filter: AuditFilter = params || {
     eventType: "All",
@@ -52,9 +49,6 @@ export const useAuditEvents = (params?: AuditFilter) => {
   });
 };
 
-/**
- * Hook: Fetch audit stats
- */
 export const useAuditStats = (params?: Omit<AuditFilter, "page" | "pageSize">) => {
   const filter: Omit<AuditFilter, "page" | "pageSize"> = params || {
     eventType: "All",
@@ -73,9 +67,6 @@ export const useAuditStats = (params?: Omit<AuditFilter, "page" | "pageSize">) =
   });
 };
 
-/**
- * Hook: Fetch consumption detail
- */
 export const useConsumptionDetail = (id: string | null) => {
   return useQuery({
     queryKey: auditQueryKeys.detail(id || "", "consumption"),
@@ -87,9 +78,6 @@ export const useConsumptionDetail = (id: string | null) => {
   });
 };
 
-/**
- * Hook: Fetch disposal detail
- */
 export const useDisposalDetail = (id: string | null) => {
   return useQuery({
     queryKey: auditQueryKeys.detail(id || "", "disposal"),
@@ -101,9 +89,6 @@ export const useDisposalDetail = (id: string | null) => {
   });
 };
 
-/**
- * Hook: Fetch consumptions list
- */
 export const useConsumptions = (params?: {
   page?: number;
   pageSize?: number;
@@ -132,9 +117,6 @@ export const useConsumptions = (params?: {
   });
 };
 
-/**
- * Hook: Fetch disposals list
- */
 export const useDisposals = (params?: {
   page?: number;
   pageSize?: number;
@@ -162,10 +144,6 @@ export const useDisposals = (params?: {
   });
 };
 
-/**
- * Hook: Invalidate audit queries
- * Berguna untuk refresh data setelah mutation
- */
 export const useInvalidateAuditQueries = () => {
   const queryClient = useQueryClient();
 

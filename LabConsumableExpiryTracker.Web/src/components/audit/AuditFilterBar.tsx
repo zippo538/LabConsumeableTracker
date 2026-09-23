@@ -52,7 +52,6 @@ export function AuditFilterBar({
       className="rounded-xl border border-slate-200 bg-white p-4"
     >
       <div className="flex flex-wrap items-end gap-3">
-        {/* Search Input */}
         <div className="relative flex-1 min-w-[240px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
@@ -64,7 +63,6 @@ export function AuditFilterBar({
           />
         </div>
 
-        {/* EventType Filter */}
         <div className="min-w-[140px]">
           <label htmlFor="eventType" className="sr-only">
             Event Type
@@ -87,7 +85,6 @@ export function AuditFilterBar({
           </select>
         </div>
 
-        {/* Item Filter */}
         <div className="min-w-[160px]">
           <label htmlFor="itemFilter" className="sr-only">
             Item
@@ -108,7 +105,6 @@ export function AuditFilterBar({
           </select>
         </div>
 
-        {/* Lot Filter */}
         <div className="min-w-[160px]">
           <label htmlFor="lotFilter" className="sr-only">
             Lot
@@ -129,7 +125,6 @@ export function AuditFilterBar({
           </select>
         </div>
 
-        {/* Date Range Filter */}
         <div className="flex items-center gap-2 min-w-[200px]">
           <Calendar className="h-4 w-4 text-slate-400" />
           <input
@@ -149,7 +144,6 @@ export function AuditFilterBar({
           />
         </div>
 
-        {/* Action Buttons */}
         <div className="flex items-center gap-2">
           <button
             type="submit"
@@ -168,7 +162,6 @@ export function AuditFilterBar({
         </div>
       </div>
 
-      {/* Helper Text (SRS: Job shown for Consumption, Reason for Disposal) */}
       <p className="mt-3 text-xs text-slate-500">
         Job is shown for Consumption; Reason is shown for Disposal. Select Event
         to view audit details.
