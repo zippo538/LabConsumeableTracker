@@ -39,37 +39,12 @@ export const AppLayout = ({ children, title, description }: AppLayoutProps) => {
         {/* Top navbar */}
         <header className="sticky top-0 z-10 flex h-[58px] shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5 sm:px-7">
           <div>
-            <h1 className="text-[15px] font-bold leading-tight text-slate-800">
+            <h1 className="text-xl font-bold leading-tight text-slate-800">
               {title}
             </h1>
-            <p className="mt-0.5 text-[8px] text-slate-400">{description}</p>
+            <p className="mt-0.5 text-xs text-slate-400">{description}</p>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            {/* Search box */}
-            <label className="hidden h-7 w-[195px] items-center gap-1.5 rounded-md border border-slate-200 px-2.5 sm:flex">
-              <Icon name="search" className="h-3 w-3 text-slate-400" />
-              <input
-                aria-label="Cari item atau lot"
-                placeholder="Cari item atau Lot..."
-                className="w-full border-0 bg-transparent p-0 text-[8px] outline-none placeholder:text-slate-400"
-              />
-            </label>
-
-            {/* Notification dot */}
-            <button
-              type="button"
-              aria-label="Notifikasi"
-              className="grid h-7 w-7 place-items-center rounded-md border border-slate-200 text-amber-500"
-            >
-              <span className="h-1 w-1 rounded-full bg-amber-500" />
-            </button>
-
-            {/* Role badge */}
-            <span className="rounded-full bg-[#eaf5ff] px-3 py-1.5 text-[8px] font-semibold text-[#1772a6]">
-              {roleLabel}
-            </span>
-          </div>
         </header>
 
         {/* Page content */}

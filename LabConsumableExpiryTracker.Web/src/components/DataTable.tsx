@@ -60,7 +60,7 @@ export interface ItemBadgeProps {
   statusTone?: StatusTone;
   className?: string;
   badgeSize?: "sm" | "md" | "lg";
-  showStatusDot?: boolean; 
+  showStatusDot?: boolean;
 }
 
 export function ItemBadge({
@@ -306,11 +306,11 @@ export function DataTable<T>({
         <div className="flex flex-col gap-4 border-t border-slate-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
             <span aria-live="polite">
-              Menampilkan {firstItem}–{lastItem} dari {totalItems} data
+              Showing {firstItem}–{lastItem} of {totalItems} items
             </span>
             {onPageSizeChange && (
               <label className="flex items-center gap-2">
-                <span>Baris per halaman</span>
+                <span>Rows per page</span>
                 <select
                   value={pageSize}
                   onChange={(event) =>
@@ -335,7 +335,7 @@ export function DataTable<T>({
                 disabled={page <= 1}
                 className="h-8 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 transition hover:border-teal-300 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Sebelumnya
+                Previous
               </button>
               {visiblePages.map((pageNumber, index) => {
                 const previousPage = visiblePages[index - 1];
@@ -365,7 +365,7 @@ export function DataTable<T>({
                 disabled={page >= totalPages}
                 className="h-8 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 transition hover:border-teal-300 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Berikutnya
+                Next
               </button>
             </nav>
           )}

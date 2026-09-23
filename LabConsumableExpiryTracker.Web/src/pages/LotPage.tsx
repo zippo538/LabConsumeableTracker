@@ -3,7 +3,6 @@ import { useState, useMemo } from "react";
 import { useAtomValue } from "jotai";
 import { useNavigate } from "react-router";
 import { userAtom } from "../lib/auth/authAtom";
-// 1. Tambahkan ikon yang diperlukan
 import { Grid2x2, MoreHorizontal, Edit2, Trash2 } from "lucide-react";
 import {
   useLots,
@@ -299,14 +298,7 @@ export const LotsPage = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="w-1/2">
             {summary && <LotSummaryCards summary={summary} />}
-          </div>
-          <div className="w-1/2">
-            <FefoInfoBox />
-          </div>
-        </div>
 
         <LotFilterBar
           search={search}
