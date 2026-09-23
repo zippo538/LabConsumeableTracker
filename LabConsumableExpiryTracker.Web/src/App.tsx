@@ -14,6 +14,9 @@ import { JobDetailPage } from "./pages/JobDetailPage";
 import { LotDetailPage } from "./pages/LotDetailPage";
 import { ConsumptionPage } from "./pages/ConsumptionPage";
 import { AuditHistoryPage } from "./pages/AuditPage";
+import ConsumptionHistoryPage from "./pages/ConsumptionHistoryPage";
+import ConsumptionHistoryDetailPage from "./pages/ConsumptionHistoryDetailPage";
+import ScientistProfilePage from "./pages/ScientistProfilePage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -104,6 +107,31 @@ export default function App() {
               element={
                 <ProtectedRoute allowedRoles={["Scientist"]}>
                   <ConsumptionPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/consumption-history"
+              element={
+                <ProtectedRoute allowedRoles={["Scientist"]}>
+                  <ConsumptionHistoryPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/app/consumptions-history/:id"
+              element={
+                <ProtectedRoute allowedRoles={["Scientist"]}>
+                  <ConsumptionHistoryDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/profile"
+              element={
+                <ProtectedRoute allowedRoles={["Scientist"]}>
+                  <ScientistProfilePage />
                 </ProtectedRoute>
               }
             />
