@@ -68,9 +68,19 @@ public class UserController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<ServiceResult<PagedUsersResponseDto>>> GetAllUsers(
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? search = null,
+        [FromQuery] string? role = null,
+        [FromQuery] string? status = null)
     {
-        var result = await _userService.GetAllUsersAsync(page, pageSize);
+        var result = await _userService.GetAllUsersAsync(
+            page,
+            pageSize,
+            search,
+            role,
+            status
+        );
+
         return Ok(result);
     }
 

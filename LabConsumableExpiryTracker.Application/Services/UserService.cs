@@ -86,43 +86,109 @@ public class UserService : IUserService
     }
 
 
-    public async Task<ServiceResult<PagedUsersResponseDto>> GetAllUsersAsync(int page, int pageSize)
+   public async Task<ServiceResult<PagedUsersResponseDto>> GetAllUsersAsync(
+    int page,
+    int pageSize,
+    string? search,
+    string? role,
+    string? status)
+{
+    page = page < 1 ? 1 : page;
+    pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
+
+    var query = _userManager.Users
+        .AsNoTracking()
+        .AsQueryable();
+
+
+    if (!string.IsNullOrWhiteSpace(search))
     {
-        page = page < 1 ? 1 : page;
-        pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
-        
-        var adminUsers = await _userManager.GetUsersInRoleAsync(nameof(UserRole.WarehouseAdmin));
-        var adminIds = adminUsers.Select(u => u.Id).ToHashSet();
+        var keyword = search.Trim();
 
-        var totalCount = await _userManager.Users.CountAsync();
+        query = query.Where(u =>
+            (u.UserName != null &&
+             u.UserName.Contains(keyword)) ||
 
-        var users = await _userManager.Users
-            .OrderByDescending(u => adminIds.Contains(u.Id)) 
-            .ThenBy(u => u.UserName) 
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+            (u.Email != null &&
+             u.Email.Contains(keyword)) ||
 
-        var resultList = new List<UserResponseDto>();
-
-        foreach (var user in users)
-        {
-            var roles = await _userManager.GetRolesAsync(user);
-            var dto = _mapper.Map<UserResponseDto>(user);
-            dto.Roles = roles.ToList();
-            resultList.Add(dto);
-        }
-
-        var response = new PagedUsersResponseDto
-        {
-            Items = resultList,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize
-        };
-
-        return ServiceResult<PagedUsersResponseDto>.SuccessResult(response);
+            (u.FullName != null &&
+             u.FullName.Contains(keyword))
+        );
     }
+    
+
+    if (!string.IsNullOrWhiteSpace(status))
+    {
+        if (status.Equals(
+                "active",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(u => u.IsActive);
+        }
+        else if (status.Equals(
+                     "inactive",
+                     StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(u => !u.IsActive);
+        }
+    }
+    
+
+    if (!string.IsNullOrWhiteSpace(role))
+    {
+        var usersInRole =
+            await _userManager.GetUsersInRoleAsync(role);
+
+        var userIds = usersInRole
+            .Select(u => u.Id)
+            .ToList();
+
+        query = query.Where(u =>
+            userIds.Contains(u.Id));
+    }
+    
+    var totalCount = await query.CountAsync();
+    
+    var adminUsers =
+        await _userManager.GetUsersInRoleAsync(
+            nameof(UserRole.WarehouseAdmin));
+
+    var adminIds = adminUsers
+        .Select(u => u.Id)
+        .ToHashSet();
+    
+    var users = await query
+        .OrderByDescending(u => adminIds.Contains(u.Id))
+        .ThenBy(u => u.UserName)
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+    
+    var resultList = new List<UserResponseDto>();
+
+    foreach (var user in users)
+    {
+        var roles = await _userManager.GetRolesAsync(user);
+
+        var dto = _mapper.Map<UserResponseDto>(user);
+
+        dto.Roles = roles.ToList();
+
+        resultList.Add(dto);
+    }
+    
+    var response = new PagedUsersResponseDto
+    {
+        Items = resultList,
+        TotalCount = totalCount,
+        Page = page,
+        PageSize = pageSize
+    };
+
+    return ServiceResult<PagedUsersResponseDto>
+        .SuccessResult(response);
+}
 
     public async Task<ServiceResult<UserResponseDto>> UpdateUserAsync(Guid id, UpdateUserRequestDto request)
     {
