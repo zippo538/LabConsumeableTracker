@@ -1,17 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useSearchParams } from "react-router";
-import { Download } from "lucide-react";
+import { Download, ChevronDown } from "lucide-react";
+import { useAtomValue } from "jotai";
+import { userAtom } from "../lib/auth/authAtom";
 
 // Shared components
-import {
-  DataTable,
-  type DataTableColumn,
-} from "../components/DataTable";
+import { DataTable, type DataTableColumn } from "../components/DataTable";
 import { InlineAlert } from "../components/FeedBackStates";
-import {
-  LoadingState,
-  EmptyState,
-} from "../components/FeedBackStates";
+import { LoadingState, EmptyState, ErrorState } from "../components/FeedBackStates";
 
 // Audit components
 import { AuditFilterBar } from "../components/audit/AuditFilterBar";
@@ -19,19 +15,18 @@ import { AuditStatsCards } from "../components/audit/AuditSummaryCard";
 import { AuditDetailModal } from "../components/audit/AuditDetailModal";
 
 // API & types
-import {
-  fetchAuditEvents,
-  fetchAuditStats,
-  parseAuditError,
-} from "../api/auditApi";
-import type {
-  AuditEvent,
-  AuditFilter,
-  AuditPageState,
-  AuditStats,
-  LookupOption,
-} from "../types/audit.types";
+import { fetchAuditEvents, fetchAuditStats, parseAuditError } from "../api/auditApi";
+import type { AuditEvent, AuditFilter, AuditPageState, AuditStats, LookupOption } from "../types/audit.types";
 import { DEFAULT_AUDIT_FILTER } from "../types/audit.types";
+
+// Export
+import { useExport, useExportFilterMapper } from "../hooks/useExport";
+import type { ExportType } from "../types/export.types";
+import { EXPORT_TYPE_LABELS } from "../types/export.types";
+
+// Hooks untuk data Item dan Lot
+import { useItem } from "../hooks/useItem";
+import { useLots } from "../hooks/useLot";
 
 // Layout
 import { AppLayout } from "../components/layout/AppLayout";
@@ -53,12 +48,13 @@ function formatOccurredAt(isoString: string): string {
   );
 }
 
-
-
 // ============================================================
 // Main Page Component
 // ============================================================
 export function AuditHistoryPage() {
+  const user = useAtomValue(userAtom);
+  const isWarehouseAdmin = user?.roles?.includes("WarehouseAdmin") ?? false;
+
   // URL search params untuk filter persistence (UI-14, UI-15)
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -98,15 +94,55 @@ export function AuditHistoryPage() {
   });
   const [detailLoading, setDetailLoading] = useState(false);
 
-  // Mock lookup options (ganti dengan API call ke /api/items dan /api/lots)
-  const [itemOptions] = useState<LookupOption[]>([
-    { id: "item-1", label: "Buffer Reagent A", sublabel: "BUF-001" },
-    { id: "item-2", label: "Reagent B", sublabel: "REB-002" },
-  ]);
-  const [lotOptions] = useState<LookupOption[]>([
-    { id: "lot-1", label: "LOT-713947A0-002" },
-    { id: "lot-2", label: "LOT-XXXX-001" },
-  ]);
+  // Export dropdown state
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // PERBAIKAN: Gunakan useExport hook yang sudah memiliki generateFilename dinamis
+  const { state: exportState, handleExport, resetState, isExporting } = useExport();
+  const { mapDatesForExport } = useExportFilterMapper();
+
+  // Gunakan hooks untuk mendapatkan data Item dan Lot
+  const { items: allItems, isLoading: isLoadingItems } = useItem();
+  const { data: lotsData, isLoading: isLoadingLots } = useLots({
+    page: 1,
+    pageSize: 100,
+  });
+
+  // Map items ke LookupOption
+  const itemOptions: LookupOption[] = useMemo(() => {
+    return (allItems ?? []).map((item) => ({
+      id: item.id,
+      label: item.name,
+      sublabel: item.code,
+    }));
+  }, [allItems]);
+
+  // Map lots ke LookupOption
+  const lotOptions: LookupOption[] = useMemo(() => {
+    const lots = lotsData?.items ?? [];
+    return lots.map((lot) => ({
+      id: lot.id,
+      label: lot.lotNumber,
+      sublabel: lot.itemName,
+    }));
+  }, [lotsData]);
+
+  // ============================================================
+  // Close dropdown saat click outside
+  // ============================================================
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsExportDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // ============================================================
   // Sync filter ke URL (UI-14: hanya filter aman)
@@ -133,7 +169,6 @@ export function AuditHistoryPage() {
     setStatsLoading(true);
 
     try {
-      // Fetch stats dan data secara paralel
       const [data, statsData] = await Promise.all([
         fetchAuditEvents(filter),
         fetchAuditStats(filter),
@@ -165,7 +200,6 @@ export function AuditHistoryPage() {
     }
   }, [filter]);
 
-  // Load data saat filter berubah
   useEffect(() => {
     loadData();
   }, [loadData]);
@@ -200,17 +234,9 @@ export function AuditHistoryPage() {
     setDetailLoading(true);
 
     try {
-      // Fetch detail lengkap dari endpoint spesifik
-      // const detail = event.eventType === "Consumption"
-      //   ? await fetchConsumptionDetail(event.eventId)
-      //   : await fetchDisposalDetail(event.eventId);
-      // setDetailModal({ isOpen: true, event: detail });
-
-      // Untuk demo, gunakan data yang sudah ada
       setDetailModal({ isOpen: true, event });
     } catch (error) {
       const parsed = parseAuditError(error);
-      // Tampilkan error di modal atau toast
       console.error("Failed to load detail:", parsed.message);
     } finally {
       setDetailLoading(false);
@@ -222,12 +248,28 @@ export function AuditHistoryPage() {
   }, []);
 
   // ============================================================
-  // Handler: Export (F-10 — Nice/PROPOSED, disabled untuk MVP)
+  // PERBAIKAN: Handler Export CSV dengan dropdown dan nama file dinamis
   // ============================================================
-  const handleExportCSV = useCallback(() => {
-    // F-10 masih Nice/PROPOSED — tampilkan tooltip "Available in future release"
-    alert("Export CSV akan tersedia di rilis mendatang.");
-  }, []);
+  const handleExportClick = useCallback(
+    async (exportType: ExportType) => {
+      // Map filter dates ke format ISO 8601 UTC (+00:00)
+      const { from, to } = mapDatesForExport(filter.from, filter.to);
+
+      // Panggil handleExport dari useExport hook
+      // Nama file akan di-generate secara dinamis berdasarkan tipe export
+      await handleExport(exportType, {
+        from,
+        to,
+        itemId: filter.itemId,
+        lotId: filter.lotId,
+        jobId: filter.jobId,
+      });
+
+      // Tutup dropdown setelah export
+      setIsExportDropdownOpen(false);
+    },
+    [filter, handleExport, mapDatesForExport]
+  );
 
   // ============================================================
   // Kolom tabel (DataTable)
@@ -315,6 +357,75 @@ export function AuditHistoryPage() {
   );
 
   // ============================================================
+  // Render Export Dropdown dengan nama file dinamis
+  // ============================================================
+  const renderExportDropdown = () => (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
+        disabled={isExporting}
+        className={`inline-flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+          isExporting
+            ? "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed"
+            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-teal-300"
+        }`}
+        aria-expanded={isExportDropdownOpen}
+        aria-haspopup="true"
+      >
+        <Download className="h-4 w-4" />
+        {isExporting ? "Exporting..." : "Export CSV"}
+        <ChevronDown
+          className={`h-4 w-4 transition-transform ${
+            isExportDropdownOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {isExportDropdownOpen && (
+        <div className="absolute right-0 top-full z-20 mt-2 w-48 rounded-xl border border-slate-200 bg-white py-1.5 shadow-lg animate-in fade-in zoom-in-95 duration-100">
+          {/* Header */}
+          <div className="px-3.5 py-2 border-b border-slate-100">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              Pilih tipe export
+            </p>
+          </div>
+
+          {/* Menu items */}
+          {(Object.keys(EXPORT_TYPE_LABELS) as ExportType[]).map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => handleExportClick(type)}
+              disabled={isExporting}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span className="grid h-7 w-7 place-items-center rounded-lg bg-cyan-50 text-teal-700">
+                <Download className="h-3.5 w-3.5" />
+              </span>
+              <div className="flex-1">
+                <div className="font-medium">{EXPORT_TYPE_LABELS[type]}</div>
+                <div className="text-[11px] text-slate-500 font-normal">
+                  {type === "stock"
+                    ? "Export stock items"
+                    : `Export ${type.toLowerCase()} records`}
+                </div>
+              </div>
+            </button>
+          ))}
+
+          {/* Info footer */}
+          <div className="px-3.5 py-2 border-t border-slate-100 bg-slate-50">
+            <p className="text-[10px] text-slate-500 leading-tight">
+              Filter tanggal dari pencarian akan diterapkan pada export.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // ============================================================
   // Render
   // ============================================================
   return (
@@ -323,7 +434,7 @@ export function AuditHistoryPage() {
       description="Review immutable Consumption and Disposal records from the server"
     >
       <div className="space-y-6">
-        {/* Read-only info banner (MessageAlert) */}
+        {/* Read-only info banner */}
         <InlineAlert
           tone="info"
           title="Read-only audit trail"
@@ -335,20 +446,30 @@ export function AuditHistoryPage() {
         {/* Stats Cards */}
         <AuditStatsCards stats={stats} loading={statsLoading} />
 
-        {/* Export Buttons (F-10 — Nice/PROPOSED) */}
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleExportCSV}
-            disabled
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-400 cursor-not-allowed"
-            title="Available in future release"
-          >
-            <Download className="h-4 w-4" />
-            Export CSV
-          </button>
-          {/* Export PDF dihapus — tidak ada dalam SRS */}
+        {/* PERBAIKAN: Export Button dengan Dropdown dan nama file dinamis */}
+        <div className="flex items-center justify-end">
+          {renderExportDropdown()}
         </div>
+
+        {/* PERBAIKAN: Toast Feedback Export dengan nama file yang benar */}
+        {(exportState.status === "success" || exportState.status === "error") && (
+          <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <InlineAlert
+              tone={exportState.status === "success" ? "success" : "error"}
+              title={
+                exportState.status === "success"
+                  ? "Export Berhasil"
+                  : "Export Gagal"
+              }
+              onDismiss={resetState}
+              className="min-w-[320px] shadow-lg"
+            >
+              {exportState.status === "success"
+                ? `File ${exportState.filename} telah diunduh.`
+                : exportState.message}
+            </InlineAlert>
+          </div>
+        )}
 
         {/* Filter Bar */}
         <AuditFilterBar
@@ -357,6 +478,8 @@ export function AuditHistoryPage() {
           onReset={handleFilterReset}
           itemOptions={itemOptions}
           lotOptions={lotOptions}
+          itemCountLoading={isLoadingItems}
+          lotCountLoading={isLoadingLots}
         />
 
         {/* Table / State Display */}
@@ -364,7 +487,32 @@ export function AuditHistoryPage() {
           <LoadingState variant="table" rows={5} columns={6} />
         )}
 
-        
+        {pageState.status === "error" && (
+          <ErrorState
+            title="Failed to load audit data"
+            description={pageState.message}
+            onRetry={loadData}
+            retryLabel="Try again"
+          />
+        )}
+
+        {pageState.status === "unauthorized" && (
+          <ErrorState
+            title="Session expired"
+            description="Please log in again to continue."
+            onRetry={() => (window.location.href = "/login")}
+            retryLabel="Sign in again"
+          />
+        )}
+
+        {pageState.status === "forbidden" && (
+          <ErrorState
+            title="Access denied"
+            description="You do not have permission to view this page."
+            onRetry={() => (window.location.href = "/app/dashboard")}
+            retryLabel="Back to Dashboard"
+          />
+        )}
 
         {pageState.status === "empty" && (
           <EmptyState
