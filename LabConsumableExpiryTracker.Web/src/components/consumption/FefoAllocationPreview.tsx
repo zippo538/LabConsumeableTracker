@@ -114,6 +114,7 @@ export const FefoAllocationPreview: React.FC<FefoAllocationPreviewProps> = ({
                     <th className="py-3 px-3">Expiry</th>
                     <th className="py-3 px-3">Available remaining</th>
                     <th className="py-3 px-3">Allocated</th>
+                    <th className="py-3 px-3">Location</th>
                     <th className="py-3 px-2 text-right">Status</th>
                   </tr>
                 </thead>
@@ -135,6 +136,7 @@ export const FefoAllocationPreview: React.FC<FefoAllocationPreviewProps> = ({
                       <td className="py-3.5 px-3 font-bold text-slate-900">
                         {alloc.quantity} {unit}
                       </td>
+                      <td className="py-3.5 px-3 font-bold text-slate-900">{alloc.storageLocation || "-"}</td>
                       <td className="py-3.5 px-2 text-right">
                         <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 border border-emerald-200/60">
                           Active

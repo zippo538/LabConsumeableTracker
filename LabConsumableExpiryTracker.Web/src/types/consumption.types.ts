@@ -9,6 +9,7 @@ export interface LotAllocationDto {
   expiryDate: string;
   remainingQuantity: number;
   quantity: number;
+  storageLocation?: string;
   rowVersion: string | number[];
 }
 

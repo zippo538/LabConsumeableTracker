@@ -397,6 +397,7 @@ namespace LabConsumableExpiryTracker.Application.Services
                         ExpiryDate = lot.ExpiryDate,
                         RemainingQuantity = lot.RemainingQuantity,
                         Quantity = allocation.Quantity,
+                        StorageLocation = lot.StorageLocation,
                         RowVersion = lot.RowVersion
                     };
                 })
