@@ -1,5 +1,6 @@
 import { type ReactNode, type CSSProperties, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
+import { useImage } from "../hooks/useImage";
 
 export type TableAlign = "left" | "center" | "right";
 export type TableDensity = "compact" | "default" | "comfortable";
@@ -48,7 +49,7 @@ export type BadgeTone =
   | "cyan";
 
 export interface ItemBadgeProps {
-  imageUrl?: string | null;
+  imageId?: string | null;
   imageAlt?: string;
   icon?: LucideIcon;
   fallbackText?: string;
@@ -64,7 +65,7 @@ export interface ItemBadgeProps {
 }
 
 export function ItemBadge({
-  imageUrl,
+  imageId,
   imageAlt = "",
   icon: Icon,
   fallbackText,
@@ -78,9 +79,9 @@ export function ItemBadge({
   badgeSize = "md",
   showStatusDot = true,
 }: ItemBadgeProps) {
-  const [imageFailed, setImageFailed] = useState(false);
+  const { imageUrl, isLoading, error } = useImage(imageId);
 
-  const hasImage = imageUrl && !imageFailed;
+  const hasImage = !!imageUrl && !error && !isLoading;
   const hasIcon = Icon !== undefined;
 
   const sizeClasses = {
@@ -105,13 +106,29 @@ export function ItemBadge({
       className={`grid place-items-center overflow-hidden rounded-lg ${sizeClasses[badgeSize]} ${toneClasses[tone]} ${className}`}
     >
       {hasImage ? (
+        // STATE: Gambar berhasil dimuat
         <img
           className="h-full w-full object-cover"
           src={imageUrl}
           alt={imageAlt}
-          onError={() => setImageFailed(true)}
+          onError={(e) => {
+            // Fallback tambahan jika browser gagal merender blob
+            (e.target as HTMLImageElement).style.display = "none";
+          }}
         />
-      ) : hasIcon ? (
+      ) : isLoading ? (
+        // STATE: Sedang Loading (Gunakan animate-pulse agar tidak layout shift)
+        <div className="animate-pulse">
+          {hasIcon ? (
+            <Icon className="h-5 w-5" aria-hidden="true" />
+          ) : (
+            <span className="font-bold" aria-hidden="true">
+              {fallbackText?.slice(0, 1).toUpperCase() ?? "?"}
+            </span>
+          )}
+        </div>
+      ) : // STATE: Error atau Tidak Ada ImageId (Tampilkan fallback normal)
+      hasIcon ? (
         <Icon className="h-5 w-5" aria-hidden="true" />
       ) : (
         <span className="font-bold" aria-hidden="true">
@@ -136,7 +153,6 @@ export function ItemBadge({
       ) : (
         badgeContent
       )}
-
       {statusLabel && (
         <StatusBadge
           label={statusLabel}

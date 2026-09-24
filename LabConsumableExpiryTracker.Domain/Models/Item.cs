@@ -8,7 +8,7 @@ public class Item
     public Guid Id { get; private set; }
     public string Code { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
-    public string? ImagePath { get;  set; }
+    public Guid? ImageId { get; private set; }
     public UnitOfMeasure BaseUnit { get; private set; }
     public decimal MinimumStock { get; private set; }
     public int ExpiringSoonDays { get; private set; }
@@ -35,12 +35,11 @@ public class Item
     }
     
   
-    public void SetImagePath(string? imagePath)
+    public void SetImageId(Guid? imageId)
     {
-        ImagePath = imagePath;
+        ImageId = imageId;
     }
 
-    public void RemoveImage() => ImagePath = null;
 
     public void UpdateDetails(
         string name,

@@ -17,6 +17,7 @@ namespace LabConsumableExpiryTracker.Application.Services
         private readonly IItemRepository _itemRepository;
         private readonly ILotRepository _lotRepository;
         private readonly IFileStorageService _fileStorageService;
+        private readonly IImageStorageRepository _imageStorageRepository;
         private readonly IMapper _mapper;
         private readonly TimeProvider _timeProvider;
         private readonly IUnitOfWork _unitOfWork;
@@ -25,6 +26,7 @@ namespace LabConsumableExpiryTracker.Application.Services
         public ItemService(
             IItemRepository itemRepository,
             IFileStorageService fileStorageService,
+            IImageStorageRepository imageStorageRepository,
             IMapper mapper,
             TimeProvider timeProvider,
             ILotRepository lotRepository,
@@ -33,6 +35,7 @@ namespace LabConsumableExpiryTracker.Application.Services
         {
             _itemRepository = itemRepository;
             _fileStorageService = fileStorageService;
+            _imageStorageRepository = imageStorageRepository;
             _mapper = mapper;
             _timeProvider = timeProvider;
             _lotRepository = lotRepository;
@@ -131,7 +134,6 @@ namespace LabConsumableExpiryTracker.Application.Services
                     "Validation failed.",
                     new List<string> { "BaseUnit tidak valid." });
             }
-
             if (dto.Image is not null)
             {
                 var imageValidation = ValidateImage(dto.Image);
@@ -157,22 +159,10 @@ namespace LabConsumableExpiryTracker.Application.Services
             if (dto.Image is not null)
             {
                 var extension = Path.GetExtension(dto.Image.FileName);
-                var fileName = $"{Guid.NewGuid()}{extension}";
-
-                var folder = Path.Combine(
-                    "uploads",
-                    "items",
-                    created.Id.ToString());
-
                 await using var stream = dto.Image.OpenReadStream();
-
-                var imagePath = await _fileStorageService.SaveAsync(
-                    stream,
-                    fileName,
-                    folder,
-                    ct);
-
-                created.ImagePath = imagePath;
+                
+                var imageId = await _imageStorageRepository.SaveImageAsync(stream, extension, ct);
+                created.SetImageId(imageId);
             }
 
             await _unitOfWork.SaveChangesAsync(ct);
@@ -207,6 +197,17 @@ namespace LabConsumableExpiryTracker.Application.Services
                 return ServiceResult<ItemDto>.ErrorResult(
                     "Item not found.");
             }
+            if (request.Image is not null)
+            {
+                var imageValidation = ValidateImage(request.Image);
+
+                if (imageValidation is not null)
+                {
+                    return ServiceResult<ItemDto>.ErrorResult(
+                        "Validation failed.",
+                        new List<string> { imageValidation });
+                }
+            }
 
             var now = _timeProvider.GetUtcNow();
 
@@ -230,28 +231,18 @@ namespace LabConsumableExpiryTracker.Application.Services
 
             if (request.Image is not null)
             {
-                var oldImagePath = item.ImagePath;
-
+                var oldImageId = item.ImageId;
                 var extension = Path.GetExtension(request.Image.FileName);
-
-                var fileName = $"{Guid.NewGuid()}{extension}";
-                var folder = $"uploads/items/{item.Id}";
-
                 await using var stream = request.Image.OpenReadStream();
+                
+                // Simpan gambar baru
+                var newImageId = await _imageStorageRepository.SaveImageAsync(stream, extension, ct);
+                item.SetImageId(newImageId);
 
-                var newImagePath = await _fileStorageService.SaveAsync(
-                    stream,
-                    fileName,
-                    folder,
-                    ct);
-
-                item.SetImagePath(newImagePath);
-
-                if (!string.IsNullOrWhiteSpace(oldImagePath))
+                // Hapus gambar lama jika ada
+                if (oldImageId.HasValue)
                 {
-                    await _fileStorageService.DeleteAsync(
-                        oldImagePath,
-                        ct);
+                    await _imageStorageRepository.DeleteImageAsync(oldImageId.Value, ct);
                 }
 
                 _logger.LogInformation(

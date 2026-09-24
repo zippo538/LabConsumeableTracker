@@ -21,7 +21,6 @@ import { DataTable, ItemBadge } from "../components/DataTable";
 import { LotStatusBadge } from "../components/lots/LotStatusBadge";
 import { LotSummaryCards } from "../components/lots/LotSummaryCard";
 import { LotFilterBar } from "../components/lots/LotFilterbar";
-import { FefoInfoBox } from "../components/lots/FefoInfoBox";
 import { CreateLotModal } from "../components/lots/CreateLotModal";
 import { UpdateLotModal } from "../components/lots/UpdateLotModal";
 import { DeleteLotModal } from "../components/lots/DeleteLotModal";
@@ -74,14 +73,14 @@ export const LotsPage = () => {
     const map = new Map<string, string>();
 
     items?.forEach((item) => {
-      if (item.imagePath) {
-        map.set(item.id, item.imagePath);
+      if (item.imageId) {
+        map.set(item.id, item.imageId);
       }
     });
 
     return map;
   }, [items]);
-
+  
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setPage(1);
@@ -169,10 +168,8 @@ export const LotsPage = () => {
       cell: (lot: Lot) => (
         <div className="flex items-center gap-3">
           <ItemBadge
-            imageUrl={
-              itemImageMap.get(lot.itemId)
-                ? `${IMAGE_BASE_URL}/${itemImageMap.get(lot.itemId)}`
-                : null
+            imageId={
+              itemImageMap.get(lot.itemId) ?? null
             }
             imageAlt={`${lot.itemName} image`}
             fallbackText={lot.lotNumber.slice(0, 2)}
