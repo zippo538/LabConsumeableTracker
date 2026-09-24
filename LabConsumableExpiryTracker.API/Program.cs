@@ -23,8 +23,8 @@ using LabConsumableExpiryTracker.Application.Common.ErrorHandling;
 using LabConsumableExpiryTracker.Application.Validators.Helpers;
 using LabConsumableExpiryTracker.Infrastructure.Persistence.Seeders;
 using LabConsumableExpiryTracker.Application.Common.Mappings;
-using LabConsumableExpiryTracker.API.CurrentUser;
-using LabConsumableExpiryTracker.Application.Common.CurrentUser;
+using HttpContextCurrentUserContext = LabConsumableExpiryTracker.Application.Services.HttpContextCurrentUserContext;
+using ICurrentUserContext = LabConsumableExpiryTracker.Application.Services.Interfaces.ICurrentUserContext;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -100,6 +100,8 @@ builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IDashboardSummaryService, DashboardSummaryService>();
 builder.Services.AddScoped<IConsumptionHistoryService, ConsumptionHistoryService>();
 builder.Services.AddScoped<IConsumptionHistoryRepository, ConsumptionHistoryRepository>();
+builder.Services.AddScoped<IImageStorageRepository, ImageStorageRepository>();
+builder.Services.AddScoped<IImageService, ImageService>();
 
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IUserLookupService, UserLookupService>();

@@ -57,13 +57,8 @@ namespace LabConsumableExpiryTracker.API.Controllers
             CancellationToken ct)
         {
             var result = await _itemService.CreateItem(dto, ct);
-
-            if (result.Data?.ImagePath is not null)
-            {
-                result.Data.ImagePath = $"{Request.Scheme}://{Request.Host}/{result.Data.ImagePath}";
-            }
-
-            return Ok(result);
+            return result.Success? CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result)
+            : Conflict(result);
         }
 
         [HttpPut("{id:guid}")]

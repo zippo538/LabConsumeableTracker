@@ -14,7 +14,7 @@ export interface ItemDto {
   id: string;
   code: string;
   name: string;
-  imagePath?: string | null;
+  imageId?: string | null;
   baseUnit: UnitOfMeasure;
   minimumStock: number;
   stockStatus: StockLevelStatus;

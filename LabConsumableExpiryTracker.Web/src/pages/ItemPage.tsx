@@ -22,8 +22,6 @@ export const ItemListPage: React.FC = () => {
 
   const isWarehouseAdmin = user?.roles?.includes("WarehouseAdmin") ?? false;
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const IMAGE_BASE_URL = API_BASE_URL.replace(/\/api$/, "");
   const navigate = useNavigate();
   const {
     filteredItems,
@@ -268,7 +266,6 @@ export const ItemListPage: React.FC = () => {
                 items={filteredItems}
                 isLoading={isLoading}
                 isError={isError}
-                imageBaseUrl={IMAGE_BASE_URL}
                 canManage={isWarehouseAdmin}
                 onRowClick={(item) => navigate(`/items/${item.id}`)}
                 onEdit={handleOpenEdit}

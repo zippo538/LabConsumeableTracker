@@ -10,7 +10,7 @@ namespace LabConsumableExpiryTracker.Application.DTOs.ItemDTOs
         public string Code { get; init; } = string.Empty;
 
         public string Name { get; init; } = string.Empty;
-        public string? ImagePath { get; set; }
+        public Guid? ImageId {get;set;}
 
         public UnitOfMeasure BaseUnit { get; init; }
 

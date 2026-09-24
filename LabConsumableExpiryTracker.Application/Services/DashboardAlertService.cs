@@ -1,12 +1,11 @@
 using FluentValidation;
-using LabConsumableExpiryTracker.Application.Common.CurrentUser;
 using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.DashboardDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
-using Microsoft.Extensions.Logging; 
+using Microsoft.Extensions.Logging;
 
 namespace LabConsumableExpiryTracker.Application.Services;
 
@@ -15,7 +14,7 @@ public class DashboardAlertService : IDashboardAlertService
     private const string ScientistRole = nameof(UserRole.Scientist);
     private const string WarehouseAdminRole = nameof(UserRole.WarehouseAdmin);
 
-    private readonly IDashboardAlertRepository _repository;
+    private readonly IDashboardAlertRepository _repository; 
     private readonly IValidator<DashboardAlertQuery> _validator;
     private readonly ICurrentUserContext _currentUser;
     private readonly TimeProvider _timeProvider;
