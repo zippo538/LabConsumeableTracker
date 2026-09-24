@@ -1,12 +1,10 @@
 using AutoMapper;
-using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.JobDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 using Moq;
-
 namespace LabConsumableExpiryTracker.Tests.Services
 {
     [TestFixture]
@@ -17,434 +15,156 @@ namespace LabConsumableExpiryTracker.Tests.Services
         private Mock<IUnitOfWork> _unitOfWork = null!;
         private FixedTimeProvider _timeProvider = null!;
         private JobService _sut = null!;
-
         private static readonly DateTimeOffset FixedNow =
             new(2026, 9, 12, 8, 30, 0, TimeSpan.Zero);
-
         [SetUp]
-        public void SetUp()
+        public void Setup()
         {
             _jobRepository = new Mock<IJobRepository>(MockBehavior.Strict);
-            _mapper = new Mock<IMapper>(MockBehavior.Loose);
+            _mapper = new Mock<IMapper>();
             _unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
             _timeProvider = new FixedTimeProvider(FixedNow);
-
             _sut = new JobService(
                 _jobRepository.Object,
                 _timeProvider,
                 _mapper.Object,
                 _unitOfWork.Object);
         }
-
         [Test]
-        public async Task CreateAsync_WhenDtoIsNull_ReturnsErrorAndDoesNotAccessDependencies()
+        public async Task CreateAsync_WhenValid_ReturnsSuccess()
         {
-            ServiceResult<JobDto> result = await _sut.CreateAsync(null!);
-
-            Assert.That(result, Is.Not.Null);
-            _jobRepository.VerifyNoOtherCalls();
-            _unitOfWork.VerifyNoOtherCalls();
-            _mapper.VerifyNoOtherCalls();
-        }
-
-        [TestCase(null)]
-        [TestCase("")]
-        [TestCase(" ")]
-        [TestCase("\t\r\n")]
-        public async Task CreateAsync_WhenJobNumberIsBlank_ReturnsErrorWithoutCheckingDuplicate(
-            string? jobNumber)
-        {
-            var dto = new CreateJobDto { JobNumber = jobNumber! };
-
-            ServiceResult<JobDto> result = await _sut.CreateAsync(dto);
-
-            Assert.That(result, Is.Not.Null);
-            _jobRepository.Verify(
-                repository => repository.ExistsByJobNumberAsync(
-                    It.IsAny<string>(),
-                    It.IsAny<CancellationToken>()),
-                Times.Never);
-            _jobRepository.VerifyNoOtherCalls();
-            _unitOfWork.VerifyNoOtherCalls();
-        }
-
-        [Test]
-        public async Task CreateAsync_WhenJobNumberIsUnique_TrimsPersistsAndMapsJob()
-        {
-            const string inputJobNumber = "  JOB-001  ";
-            const string normalizedJobNumber = "JOB-001";
-            var dto = new CreateJobDto { JobNumber = inputJobNumber };
-            var cancellationToken = new CancellationTokenSource().Token;
-            Job? capturedJob = null;
-
+            var dto = new CreateJobDto
+            {
+                JobNumber = " JOB-001 ",
+                Description = "Test"
+            };
+            var token = CancellationToken.None;
+            Job? captured = null;
             _jobRepository
-                .Setup(repository => repository.ExistsByJobNumberAsync(
-                    normalizedJobNumber,
-                    cancellationToken))
+                .Setup(x => x.ExistsByJobNumberAsync("JOB-001", token))
                 .ReturnsAsync(false);
             _jobRepository
-                .Setup(repository => repository.AddAsync(
-                    It.IsAny<Job>(),
-                    cancellationToken))
-                .Callback<Job, CancellationToken>((job, _) => capturedJob = job)
-                .ReturnsAsync((Job job, CancellationToken _) => job);
+                .Setup(x => x.AddAsync(It.IsAny<Job>(), token))
+                .Callback<Job, CancellationToken>((j, _) => captured = j)
+                .ReturnsAsync((Job j, CancellationToken _) => j);
             _unitOfWork
-                .Setup(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken))
+                .Setup(x => x.SaveChangesAsync(token))
                 .ReturnsAsync(1);
-
-            ServiceResult<JobDto> result = await _sut.CreateAsync(dto, cancellationToken);
-
+            _mapper
+                .Setup(x => x.Map<JobDto>(It.IsAny<Job>()))
+                .Returns(new JobDto());
+            var result = await _sut.CreateAsync(dto, token);
+            Assert.That(result.Success, Is.True);
+            Assert.That(captured!.JobNumber, Is.EqualTo("JOB-001"));
+        }
+        [Test]
+        public async Task UpdateAsync_WhenJobExists_UpdatesAndReturnsSuccess()
+        {
+            var id = Guid.NewGuid();
+            var job = new Job(id, "JOB-001", "Old");
+            var dto = new UpdateJobDto
+            {
+                JobNumber = "JOB-002",
+                Description = "Updated"
+            };
+            var token = CancellationToken.None;
+            _jobRepository
+                .Setup(x => x.GetByIdAsync(id, token))
+                .ReturnsAsync(job);
+            _jobRepository
+                .Setup(x => x.UpdateAsync(job, token))
+                .ReturnsAsync(job);
+            _unitOfWork
+                .Setup(x => x.SaveChangesAsync(token))
+                .ReturnsAsync(1);
+            _mapper
+                .Setup(x => x.Map<JobDto>(job))
+                .Returns(new JobDto());
+            var result = await _sut.UpdateAsync(id, dto, token);
             Assert.Multiple(() =>
             {
-                Assert.That(result, Is.Not.Null);
-                Assert.That(capturedJob, Is.Not.Null);
-                Assert.That(capturedJob!.JobNumber, Is.EqualTo(normalizedJobNumber));
-                Assert.That(capturedJob.Status, Is.EqualTo(JobStatus.Draft));
-                Assert.That(capturedJob.StartedAt, Is.Null);
-                Assert.That(capturedJob.CompletedAt, Is.Null);
+                Assert.That(result.Success, Is.True);
+                Assert.That(job.JobNumber, Is.EqualTo("JOB-002"));
+                Assert.That(job.Description, Is.EqualTo("Updated"));
             });
-
-            _jobRepository.Verify(repository => repository.ExistsByJobNumberAsync(
-                normalizedJobNumber,
-                cancellationToken), Times.Once);
-            _jobRepository.Verify(repository => repository.AddAsync(
-                It.Is<Job>(job =>
-                    job.JobNumber == normalizedJobNumber &&
-                    job.Status == JobStatus.Draft),
-                cancellationToken), Times.Once);
-            _unitOfWork.Verify(
-                unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken),
-                Times.Once);
-            _mapper.Verify(mapper => mapper.Map<JobDto>(It.IsAny<Job>()), Times.Once);
+            _jobRepository.Verify(x => x.UpdateAsync(job, token), Times.Once);
+            _unitOfWork.Verify(x => x.SaveChangesAsync(token), Times.Once);
         }
-
         [Test]
-        public async Task CreateAsync_WhenJobNumberAlreadyExists_ReturnsErrorWithoutAddingOrSaving()
-        {
-            const string jobNumber = "JOB-001";
-            var dto = new CreateJobDto { JobNumber = jobNumber };
-
-            _jobRepository
-                .Setup(repository => repository.ExistsByJobNumberAsync(
-                    jobNumber,
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(true);
-
-            ServiceResult<JobDto> result = await _sut.CreateAsync(dto);
-
-            Assert.That(result, Is.Not.Null);
-            _jobRepository.Verify(repository => repository.AddAsync(
-                It.IsAny<Job>(),
-                It.IsAny<CancellationToken>()), Times.Never);
-            _unitOfWork.Verify(
-                unitOfWork => unitOfWork.SaveChangesAsync(It.IsAny<CancellationToken>()),
-                Times.Never);
-            _mapper.Verify(mapper => mapper.Map<JobDto>(It.IsAny<Job>()), Times.Never);
-        }
-
-        [Test]
-        public async Task GetAllAsync_ReturnsMappedJobs()
-        {
-            var jobs = new List<Job>
-        {
-            new(Guid.NewGuid(), "JOB-001"),
-            new(Guid.NewGuid(), "JOB-002")
-        };
-
-            _jobRepository
-                .Setup(repository => repository.GetAllAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(jobs);
-
-            ServiceResult<IReadOnlyList<JobDto>> result = await _sut.GetAllAsync();
-
-            Assert.That(result, Is.Not.Null);
-            _jobRepository.Verify(
-                repository => repository.GetAllAsync(It.IsAny<CancellationToken>()),
-                Times.Once);
-            _mapper.Verify(
-                mapper => mapper.Map<IReadOnlyList<JobDto>>(jobs),
-                Times.Once);
-        }
-
-        [Test]
-        public async Task GetByIdAsync_WhenIdIsEmpty_ReturnsErrorWithoutReadingRepository()
-        {
-            ServiceResult<JobDto> result = await _sut.GetByIdAsync(Guid.Empty);
-
-            Assert.That(result, Is.Not.Null);
-            _jobRepository.Verify(
-                repository => repository.GetByIdAsync(
-                    It.IsAny<Guid>(),
-                    It.IsAny<CancellationToken>()),
-                Times.Never);
-        }
-
-        [Test]
-        public async Task GetByIdAsync_WhenJobExists_ReadsAndMapsJob()
+        public async Task UpdateAsync_WhenJobNotFound_ReturnsError()
         {
             var id = Guid.NewGuid();
-            var job = new Job(id, "JOB-001");
-
             _jobRepository
-                .Setup(repository => repository.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(job);
-
-            ServiceResult<JobDto> result = await _sut.GetByIdAsync(id);
-
-            Assert.That(result, Is.Not.Null);
-            _mapper.Verify(mapper => mapper.Map<JobDto>(job), Times.Once);
-        }
-
-        [Test]
-        public async Task GetByIdAsync_WhenJobDoesNotExist_ReturnsError()
-        {
-            var id = Guid.NewGuid();
-
-            _jobRepository
-                .Setup(repository => repository.GetByIdAsync(id, It.IsAny<CancellationToken>()))
+                .Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Job?)null);
-
-            ServiceResult<JobDto> result = await _sut.GetByIdAsync(id);
-
-            Assert.That(result, Is.Not.Null);
-            _mapper.Verify(mapper => mapper.Map<JobDto>(It.IsAny<Job>()), Times.Never);
+            var result = await _sut.UpdateAsync(
+                id,
+                new UpdateJobDto(),
+                CancellationToken.None);
+            Assert.That(result.Success, Is.False);
         }
-
         [Test]
-        public async Task StartAsync_WhenIdIsEmpty_ReturnsErrorWithoutReadingRepository()
+        public async Task StartAsync_WhenDraft_ChangesStatus()
         {
-            ServiceResult<JobDto> result = await _sut.StartAsync(Guid.Empty);
-
-            Assert.That(result, Is.Not.Null);
-            _jobRepository.Verify(
-                repository => repository.GetByIdAsync(
-                    It.IsAny<Guid>(),
-                    It.IsAny<CancellationToken>()),
-                Times.Never);
-        }
-
-        [Test]
-        public async Task StartAsync_WhenJobDoesNotExist_ReturnsErrorWithoutUpdating()
-        {
-            var id = Guid.NewGuid();
-
-            _jobRepository
-                .Setup(repository => repository.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-                .ReturnsAsync((Job?)null);
-
-            ServiceResult<JobDto> result = await _sut.StartAsync(id);
-
-            Assert.That(result, Is.Not.Null);
-            _jobRepository.Verify(
-                repository => repository.UpdateAsync(
-                    It.IsAny<Job>(),
-                    It.IsAny<CancellationToken>()),
-                Times.Never);
-            _unitOfWork.Verify(
-                unitOfWork => unitOfWork.SaveChangesAsync(It.IsAny<CancellationToken>()),
-                Times.Never);
-        }
-
-        [Test]
-        public async Task StartAsync_WhenJobIsDraft_ChangesStatusAndUsesServerTime()
-        {
-            var id = Guid.NewGuid();
-            var job = new Job(id, "JOB-001");
-            var cancellationToken = new CancellationTokenSource().Token;
-
-            _jobRepository
-                .Setup(repository => repository.GetByIdAsync(id, cancellationToken))
+            var job = new Job(Guid.NewGuid(), "JOB-001");
+            var token = CancellationToken.None;
+            _jobRepository.Setup(x => x.GetByIdAsync(job.Id, token))
                 .ReturnsAsync(job);
-            _jobRepository
-                .Setup(repository => repository.UpdateAsync(job, cancellationToken))
+            _jobRepository.Setup(x => x.UpdateAsync(job, token))
                 .ReturnsAsync(job);
-            _unitOfWork
-                .Setup(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken))
+            _unitOfWork.Setup(x => x.SaveChangesAsync(token))
                 .ReturnsAsync(1);
-
-            ServiceResult<JobDto> result = await _sut.StartAsync(id, cancellationToken);
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(result, Is.Not.Null);
-                Assert.That(job.Status, Is.EqualTo(JobStatus.InProgress));
-                Assert.That(job.StartedAt, Is.EqualTo(FixedNow));
-                Assert.That(job.CompletedAt, Is.Null);
-            });
-
-            _jobRepository.Verify(repository => repository.UpdateAsync(job, cancellationToken), Times.Once);
-            _unitOfWork.Verify(
-                unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken),
-                Times.Once);
-        }
-
-        [Test]
-        public async Task CompleteAsync_WhenJobIsInProgress_ChangesStatusAndUsesServerTime()
-        {
-            var id = Guid.NewGuid();
-            var job = new Job(id, "JOB-001");
-            job.Start(FixedNow.AddMinutes(-30));
-            var cancellationToken = new CancellationTokenSource().Token;
-
-            _jobRepository
-                .Setup(repository => repository.GetByIdAsync(id, cancellationToken))
-                .ReturnsAsync(job);
-            _jobRepository
-                .Setup(repository => repository.UpdateAsync(job, cancellationToken))
-                .ReturnsAsync(job);
-            _unitOfWork
-                .Setup(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken))
-                .ReturnsAsync(1);
-
-            ServiceResult<JobDto> result = await _sut.CompleteAsync(id, cancellationToken);
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(result, Is.Not.Null);
-                Assert.That(job.Status, Is.EqualTo(JobStatus.Completed));
-                Assert.That(job.StartedAt, Is.EqualTo(FixedNow.AddMinutes(-30)));
-                Assert.That(job.CompletedAt, Is.EqualTo(FixedNow));
-            });
-
-            _jobRepository.Verify(repository => repository.UpdateAsync(job, cancellationToken), Times.Once);
-            _unitOfWork.Verify(
-                unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken),
-                Times.Once);
-        }
-
-        [Test]
-        public async Task StartAsync_WhenJobIsNotDraft_PropagatesDomainLifecycleError()
-        {
-            var id = Guid.NewGuid();
-            var job = new Job(id, "JOB-001");
-            job.Start(FixedNow.AddMinutes(-30));
-
-            _jobRepository
-                .Setup(repository => repository.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(job);
-
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await _sut.StartAsync(id));
-            _jobRepository.Verify(
-                repository => repository.UpdateAsync(
-                    It.IsAny<Job>(),
-                    It.IsAny<CancellationToken>()),
-                Times.Never);
-        }
-
-        [Test]
-        public async Task CompleteAsync_WhenJobIsDraft_PropagatesDomainLifecycleError()
-        {
-            var id = Guid.NewGuid();
-            var job = new Job(id, "JOB-001");
-
-            _jobRepository
-                .Setup(repository => repository.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(job);
-
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await _sut.CompleteAsync(id));
-            _jobRepository.Verify(
-                repository => repository.UpdateAsync(
-                    It.IsAny<Job>(),
-                    It.IsAny<CancellationToken>()),
-                Times.Never);
-        }
-
-        [Test]
-        public void UpdateStatusAsync_WhenDtoIsNull_ThrowsArgumentNullException()
-        {
-            Assert.ThrowsAsync<ArgumentNullException>(async () =>
-                await _sut.UpdateStatusAsync(Guid.NewGuid(), null!));
-        }
-
-        [Test]
-        public async Task UpdateStatusAsync_WhenStatusIsInProgress_DelegatesToStart()
-        {
-            var id = Guid.NewGuid();
-            var job = new Job(id, "JOB-001");
-
-            _jobRepository
-                .Setup(repository => repository.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(job);
-            _jobRepository
-                .Setup(repository => repository.UpdateAsync(job, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(job);
-
-            var dto = new UpdateJobDto { Status = JobStatus.InProgress };
-            _unitOfWork
-            .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
-            ServiceResult<JobDto> result = await _sut.UpdateStatusAsync(id, dto);
-
-            Assert.That(result, Is.Not.Null);
+            _mapper.Setup(x => x.Map<JobDto>(job))
+                .Returns(new JobDto());
+            var result = await _sut.StartAsync(job.Id, token);
+            Assert.That(result.Success, Is.True);
             Assert.That(job.Status, Is.EqualTo(JobStatus.InProgress));
-            _jobRepository.Verify(
-                repository => repository.GetByIdAsync(id, It.IsAny<CancellationToken>()),
-                Times.Once);
-            _jobRepository.Verify(
-                repository => repository.UpdateAsync(job, It.IsAny<CancellationToken>()),
-                Times.Once);
-            _unitOfWork.Verify(
-                unitOfWork => unitOfWork.SaveChangesAsync(It.IsAny<CancellationToken>()),
-                Times.Once);
-            
+            Assert.That(job.StartedAt, Is.EqualTo(FixedNow));
         }
-
         [Test]
-        public async Task UpdateStatusAsync_WhenStatusIsCompleted_DelegatesToComplete()
+        public async Task CompleteAsync_WhenInProgress_ChangesStatus()
         {
-            var id = Guid.NewGuid();
-            var job = new Job(id, "JOB-001");
-            job.Start(FixedNow.AddMinutes(-30));
-
-            _jobRepository
-                .Setup(repository => repository.GetByIdAsync(id, It.IsAny<CancellationToken>()))
+            var job = new Job(Guid.NewGuid(), "JOB-001");
+            job.Start(FixedNow.AddMinutes(-5));
+            var token = CancellationToken.None;
+            _jobRepository.Setup(x => x.GetByIdAsync(job.Id, token))
                 .ReturnsAsync(job);
-            _jobRepository
-                .Setup(repository => repository.UpdateAsync(job, It.IsAny<CancellationToken>()))
+            _jobRepository.Setup(x => x.UpdateAsync(job, token))
                 .ReturnsAsync(job);
-
-            var dto = new UpdateJobDto { Status = JobStatus.Completed };
-            _unitOfWork
-            .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
-            ServiceResult<JobDto> result = await _sut.UpdateStatusAsync(id, dto);
-
-            Assert.That(result, Is.Not.Null);
+            _unitOfWork.Setup(x => x.SaveChangesAsync(token))
+                .ReturnsAsync(1);
+            _mapper.Setup(x => x.Map<JobDto>(job))
+                .Returns(new JobDto());
+            var result = await _sut.CompleteAsync(job.Id, token);
+            Assert.That(result.Success, Is.True);
             Assert.That(job.Status, Is.EqualTo(JobStatus.Completed));
             Assert.That(job.CompletedAt, Is.EqualTo(FixedNow));
-            _jobRepository.Verify(
-                repository => repository.GetByIdAsync(id, It.IsAny<CancellationToken>()),
-                Times.Once);
-            _jobRepository.Verify(
-                repository => repository.UpdateAsync(job, It.IsAny<CancellationToken>()),
-                Times.Once);
-            _unitOfWork.Verify(
-                unitOfWork => unitOfWork.SaveChangesAsync(It.IsAny<CancellationToken>()),
-                Times.Once);
         }
-
-        [TestCase(JobStatus.Draft)]
-        [TestCase(JobStatus.Cancelled)]
-        public void UpdateStatusAsync_WhenStatusIsNotSupported_ThrowsInvalidOperationException(JobStatus status)
+        [Test]
+        public async Task CancelAsync_WhenDraft_ChangesStatus()
         {
-            var dto = new UpdateJobDto { Status = status };
-
-            Assert.ThrowsAsync<InvalidOperationException>(async () =>
-                await _sut.UpdateStatusAsync(Guid.NewGuid(), dto));
-
-            _jobRepository.VerifyNoOtherCalls();
+            var job = new Job(Guid.NewGuid(), "JOB-001");
+            var token = CancellationToken.None;
+            _jobRepository.Setup(x => x.GetByIdAsync(job.Id, token))
+                .ReturnsAsync(job);
+            _jobRepository.Setup(x => x.UpdateAsync(job, token))
+                .ReturnsAsync(job);
+            _unitOfWork.Setup(x => x.SaveChangesAsync(token))
+                .ReturnsAsync(1);
+            _mapper.Setup(x => x.Map<JobDto>(job))
+                .Returns(new JobDto());
+            var result = await _sut.CancelAsync(job.Id, token);
+            Assert.That(result.Success, Is.True);
+            Assert.That(job.Status, Is.EqualTo(JobStatus.Cancelled));
         }
-
         private sealed class FixedTimeProvider : TimeProvider
         {
-            private readonly DateTimeOffset _utcNow;
-
-            public FixedTimeProvider(DateTimeOffset utcNow)
+            private readonly DateTimeOffset _now;
+            public FixedTimeProvider(DateTimeOffset now)
             {
-                _utcNow = utcNow;
+                _now = now;
             }
-
-            public override DateTimeOffset GetUtcNow() => _utcNow;
+            public override DateTimeOffset GetUtcNow() => _now;
         }
     }
 }

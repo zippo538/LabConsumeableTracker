@@ -1,355 +1,400 @@
-//
-// using LabConsumableExpiryTracker.API.Controllers;
-// using LabConsumableExpiryTracker.Application.Common.Result;
-// using LabConsumableExpiryTracker.Application.DTOs.JobDTOs;
-// using LabConsumableExpiryTracker.Application.Services.Interfaces;
-// using LabConsumableExpiryTracker.Domain.Enums;
-// using Microsoft.AspNetCore.Mvc;
-// using Moq;
-//
-// namespace LabConsumableExpiryTracker.Tests.Controller
-// {
-//     [TestFixture]
-//     public class JobControllerTests
-//     {
-//         private Mock<IJobService> _jobService = null!;
-//         private JobController _sut = null!;
-//
-//         [SetUp]
-//         public void SetUp()
-//         {
-//             _jobService = new Mock<IJobService>(MockBehavior.Strict);
-//
-//             _sut = new JobController(
-//                 _jobService.Object);
-//         }
-//
-//         [Test]
-//         public async Task GetAll_WhenServiceSucceeds_ReturnsOkWithServiceResult()
-//         {
-//             var expected = ServiceResult<IReadOnlyList<JobDto>>.SuccessResult(
-//                 Array.Empty<JobDto>(), "Jobs retrieved successfully.");
-//
-//             _jobService.Setup(service => service.GetAllAsync(It.IsAny<CancellationToken>()))
-//                 .ReturnsAsync(expected);
-//
-//             var result = await _sut.GetAll(CancellationToken.None);
-//             var ok = result.Result as OkObjectResult;
-//
-//             Assert.Multiple(() =>
-//             {
-//                 Assert.That(ok, Is.Not.Null);
-//                 Assert.That(ok!.Value, Is.SameAs(expected));
-//             });
-//
-//             _jobService.Verify(
-//                 service => service.GetAllAsync(It.IsAny<CancellationToken>()), Times.Once);
-//         }
-//
-//         [Test]
-//         public async Task GetAll_WhenServiceFails_ReturnsNotFoundWithMessage()
-//         {
-//             var expected = ServiceResult<IReadOnlyList<JobDto>>.ErrorResult(
-//                 "Jobs could not be found.");
-//
-//             _jobService.Setup(service => service.GetAllAsync(It.IsAny<CancellationToken>()))
-//                 .ReturnsAsync(expected);
-//
-//             var result = await _sut.GetAll(CancellationToken.None);
-//             var notFound = result.Result as NotFoundObjectResult;
-//
-//             Assert.Multiple(() =>
-//             {
-//                 Assert.That(notFound, Is.Not.Null);
-//                 Assert.That(notFound!.Value, Is.SameAs(expected));
-//             });
-//         }
-//
-//         [Test]
-//         public async Task GetById_WhenServiceSucceeds_ReturnsOkWithMessage()
-//         {
-//             var id = Guid.NewGuid();
-//             var expected = ServiceResult<JobDto>.SuccessResult(
-//                 CreateJobDtoResult(id), "Job retrieved successfully.");
-//
-//             _jobService.Setup(service => service.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-//                 .ReturnsAsync(expected);
-//
-//             var result = await _sut.GetById(id, CancellationToken.None);
-//             var ok = result.Result as OkObjectResult;
-//
-//             Assert.Multiple(() =>
-//             {
-//                 Assert.That(ok, Is.Not.Null);
-//                 Assert.That(ok!.Value, Is.SameAs(expected));
-//             });
-//
-//             _jobService.Verify(
-//                 service => service.GetByIdAsync(id, It.IsAny<CancellationToken>()), Times.Once);
-//         }
-//
-//         [Test]
-//         public async Task GetById_WhenServiceFails_ReturnsNotFoundWithMessage()
-//         {
-//             var id = Guid.NewGuid();
-//             var expected = ServiceResult<JobDto>.ErrorResult("Job not found.");
-//
-//             _jobService.Setup(service => service.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-//                 .ReturnsAsync(expected);
-//
-//             var result = await _sut.GetById(id, CancellationToken.None);
-//             var notFound = result.Result as NotFoundObjectResult;
-//
-//             Assert.Multiple(() =>
-//             {
-//                 Assert.That(notFound, Is.Not.Null);
-//                 Assert.That(notFound!.Value, Is.SameAs(expected));
-//             });
-//         }
-//
-//         [Test]
-//         public async Task Create_WhenRequestIsValid_ReturnsCreatedAtActionWithMessage()
-//         {
-//             var dto = new CreateJobDto { JobNumber = "JOB-001" };
-//             var expected = ServiceResult<JobDto>.SuccessResult(
-//                 CreateJobDtoResult(), "Job created successfully.");
-//
-//             _jobService.Setup(service => service.CreateAsync(dto, It.IsAny<CancellationToken>()))
-//                 .ReturnsAsync(expected);
-//
-//             var result = await _sut.Create(dto, CancellationToken.None);
-//             var created = result.Result as CreatedAtActionResult;
-//
-//             Assert.Multiple(() =>
-//             {
-//                 Assert.That(created, Is.Not.Null);
-//                 Assert.That(created!.ActionName, Is.EqualTo(nameof(JobController.GetById)));
-//                 Assert.That(created.RouteValues!["id"], Is.EqualTo(expected.Data!.Id));
-//                 Assert.That(created.Value, Is.SameAs(expected));
-//             });
-//
-//             _jobService.Verify(
-//                 service => service.CreateAsync(dto, It.IsAny<CancellationToken>()), Times.Once);
-//         }
-//
-//         [Test]
-//         public async Task Create_WhenServiceReturnsError_ReturnsBadRequestWithMessage()
-//         {
-//             var dto = new CreateJobDto { JobNumber = "" };
-//
-//             var serviceResult = ServiceResult<JobDto>.ErrorResult(
-//                 "Validation failed.",
-//                 new List<string> { "JobNumber wajib diisi." });
-//
-//             _jobService
-//                 .Setup(service => service.CreateAsync(dto, It.IsAny<CancellationToken>()))
-//                 .ReturnsAsync(serviceResult);
-//
-//             var result = await _sut.Create(dto, CancellationToken.None);
-//
-//             var badRequest = result.Result as BadRequestObjectResult;
-//             var body = badRequest?.Value as ServiceResult<JobDto>;
-//
-//             Assert.Multiple(() =>
-//             {
-//                 Assert.That(badRequest, Is.Not.Null);
-//                 Assert.That(body, Is.Not.Null);
-//                 Assert.That(body!.Success, Is.False);
-//                 Assert.That(body.Message, Is.EqualTo("Validation failed."));
-//                 Assert.That(body.Errors, Does.Contain("JobNumber wajib diisi."));
-//             });
-//
-//             _jobService.Verify(
-//                 service => service.CreateAsync(dto, It.IsAny<CancellationToken>()),
-//                 Times.Once);
-//         }
-//
-//         [Test]
-//         public async Task Create_WhenServiceFails_ReturnsBadRequestWithMessage()
-//         {
-//             var dto = new CreateJobDto { JobNumber = "JOB-001" };
-//             var expected = ServiceResult<JobDto>.ErrorResult("Job number already exists.");
-//
-//             _jobService.Setup(service => service.CreateAsync(dto, It.IsAny<CancellationToken>()))
-//                 .ReturnsAsync(expected);
-//
-//             var result = await _sut.Create(dto, CancellationToken.None);
-//
-//             var badRequest = result.Result as BadRequestObjectResult;
-//
-//             Assert.Multiple(() =>
-//             {
-//                 Assert.That(badRequest, Is.Not.Null);
-//                 Assert.That(badRequest!.Value, Is.SameAs(expected));
-//             });
-//         }
-//
-//         [Test]
-//         public async Task Update_WhenRequestIsValid_ReturnsOkWithMessage()
-//         {
-//             var id = Guid.NewGuid();
-//             var dto = new UpdateJobDto { Status = JobStatus.InProgress };
-//             var expected = ServiceResult<JobDto>.SuccessResult(
-//                 CreateJobDtoResult(id), "Job updated successfully.");
-//
-//             _jobService.Setup(service => service.UpdateStatusAsync(
-//                     id, dto, It.IsAny<CancellationToken>()))
-//                 .ReturnsAsync(expected);
-//
-//             var result = await _sut.Update(id, dto, CancellationToken.None);
-//             var ok = result.Result as OkObjectResult;
-//
-//             Assert.Multiple(() =>
-//             {
-//                 Assert.That(ok, Is.Not.Null);
-//                 Assert.That(ok!.Value, Is.SameAs(expected));
-//             });
-//
-//             _jobService.Verify(
-//                 service => service.UpdateStatusAsync(id, dto, It.IsAny<CancellationToken>()),
-//                 Times.Once);
-//         }
-//
-//         [Test]
-//         public async Task Update_WhenServiceReturnsValidationError_ReturnsNotFoundWithMessage()
-//         {
-//             var id = Guid.NewGuid();
-//             var dto = new UpdateJobDto { Status = JobStatus.Draft };
-//
-//             var expected = ServiceResult<JobDto>.ErrorResult(
-//                 "Validation failed.",
-//                 new List<string> { "Status hanya boleh InProgress atau Completed." });
-//
-//             _jobService.Setup(service => service.UpdateStatusAsync(
-//                     id, dto, It.IsAny<CancellationToken>()))
-//                 .ReturnsAsync(expected);
-//
-//             var result = await _sut.Update(id, dto, CancellationToken.None);
-//
-//             var notFound = result.Result as NotFoundObjectResult;
-//             var body = notFound?.Value as ServiceResult<JobDto>;
-//
-//             Assert.Multiple(() =>
-//             {
-//                 Assert.That(notFound, Is.Not.Null);
-//                 Assert.That(body, Is.Not.Null);
-//                 Assert.That(body!.Success, Is.False);
-//                 Assert.That(body.Message, Is.EqualTo("Validation failed."));
-//                 Assert.That(body.Errors, Does.Contain(
-//                     "Status hanya boleh InProgress atau Completed."));
-//             });
-//
-//             _jobService.Verify(
-//                 service => service.UpdateStatusAsync(id, dto, It.IsAny<CancellationToken>()),
-//                 Times.Once);
-//         }
-//
-//         [Test]
-//         public async Task Update_WhenServiceFails_ReturnsNotFoundWithMessage()
-//         {
-//             var id = Guid.NewGuid();
-//             var dto = new UpdateJobDto { Status = JobStatus.Completed };
-//             var expected = ServiceResult<JobDto>.ErrorResult("Invalid job state.");
-//
-//             _jobService.Setup(service => service.UpdateStatusAsync(
-//                     id, dto, It.IsAny<CancellationToken>()))
-//                 .ReturnsAsync(expected);
-//
-//             var result = await _sut.Update(id, dto, CancellationToken.None);
-//
-//             var notFound = result.Result as NotFoundObjectResult;
-//
-//             Assert.Multiple(() =>
-//             {
-//                 Assert.That(notFound, Is.Not.Null);
-//                 Assert.That(notFound!.Value, Is.SameAs(expected));
-//             });
-//         }
-//
-//         [Test]
-//         public async Task Start_WhenServiceSucceeds_ReturnsOkWithMessage()
-//         {
-//             var id = Guid.NewGuid();
-//             var expected = ServiceResult<JobDto>.SuccessResult(
-//                 CreateJobDtoResult(id), "Job started successfully.");
-//
-//             _jobService.Setup(service => service.StartAsync(id, It.IsAny<CancellationToken>()))
-//                 .ReturnsAsync(expected);
-//
-//             var result = await _sut.Start(id, CancellationToken.None);
-//             var ok = result.Result as OkObjectResult;
-//
-//             Assert.Multiple(() =>
-//             {
-//                 Assert.That(ok, Is.Not.Null);
-//                 Assert.That(ok!.Value, Is.SameAs(expected));
-//             });
-//         }
-//
-//         [Test]
-//         public async Task Start_WhenServiceFails_ReturnsBadRequestWithMessage()
-//         {
-//             var id = Guid.NewGuid();
-//             var expected = ServiceResult<JobDto>.ErrorResult("Job cannot be started.");
-//
-//             _jobService.Setup(service => service.StartAsync(id, It.IsAny<CancellationToken>()))
-//                 .ReturnsAsync(expected);
-//
-//             var result = await _sut.Start(id, CancellationToken.None);
-//             var badRequest = result.Result as BadRequestObjectResult;
-//
-//             Assert.Multiple(() =>
-//             {
-//                 Assert.That(badRequest, Is.Not.Null);
-//                 Assert.That(badRequest!.Value, Is.SameAs(expected));
-//             });
-//         }
-//
-//         [Test]
-//         public async Task Complete_WhenServiceSucceeds_ReturnsOkWithMessage()
-//         {
-//             var id = Guid.NewGuid();
-//             var expected = ServiceResult<JobDto>.SuccessResult(
-//                 CreateJobDtoResult(id), "Job completed successfully.");
-//
-//             _jobService.Setup(service => service.CompleteAsync(id, It.IsAny<CancellationToken>()))
-//                 .ReturnsAsync(expected);
-//
-//             var result = await _sut.Complete(id, CancellationToken.None);
-//             var ok = result.Result as OkObjectResult;
-//
-//             Assert.Multiple(() =>
-//             {
-//                 Assert.That(ok, Is.Not.Null);
-//                 Assert.That(ok!.Value, Is.SameAs(expected));
-//             });
-//         }
-//
-//         [Test]
-//         public async Task Complete_WhenServiceFails_ReturnsBadRequestWithMessage()
-//         {
-//             var id = Guid.NewGuid();
-//             var expected = ServiceResult<JobDto>.ErrorResult("Job cannot be completed.");
-//
-//             _jobService.Setup(service => service.CompleteAsync(id, It.IsAny<CancellationToken>()))
-//                 .ReturnsAsync(expected);
-//
-//             var result = await _sut.Complete(id, CancellationToken.None);
-//             var badRequest = result.Result as BadRequestObjectResult;
-//
-//             Assert.Multiple(() =>
-//             {
-//                 Assert.That(badRequest, Is.Not.Null);
-//                 Assert.That(badRequest!.Value, Is.SameAs(expected));
-//             });
-//         }
-//
-//         private static JobDto CreateJobDtoResult(Guid? id = null)
-//         {
-//             return new JobDto
-//             {
-//                 Id = id ?? Guid.NewGuid()
-//             };
-//         }
-//     }
-// }
+using System.Security.Claims;
+using LabConsumableExpiryTracker.API.Controllers;
+using LabConsumableExpiryTracker.Application.Common.Result;
+using LabConsumableExpiryTracker.Application.DTOs.ConsumptionDTOs;
+using LabConsumableExpiryTracker.Application.DTOs.FefoDtos;
+using LabConsumableExpiryTracker.Application.DTOs.JobDTOs;
+using LabConsumableExpiryTracker.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Moq;
+using NUnit.Framework;
+namespace LabConsumableExpiryTracker.Tests.Controller;
+
+[TestFixture]
+public class JobControllerTests
+{
+    private Mock<IJobService> _jobServiceMock = null!;
+    private Mock<ILotService> _lotServiceMock = null!;
+    private JobController _controller = null!;
+    [SetUp]
+    public void Setup()
+    {
+        _jobServiceMock =
+            new Mock<IJobService>(
+                MockBehavior.Strict);
+        _lotServiceMock =
+            new Mock<ILotService>(
+                MockBehavior.Strict);
+        _controller =
+            new JobController(
+                _jobServiceMock.Object,
+                _lotServiceMock.Object);
+    }
+    [Test]
+    public async Task GetAll_WhenSuccess_ReturnsOk()
+    {
+        var response =
+            ServiceResult<IReadOnlyList<JobDto>>
+            .SuccessResult(
+                Array.Empty<JobDto>(),
+                "success");
+        _jobServiceMock
+            .Setup(x =>
+                x.GetAllAsync(
+                    CancellationToken.None))
+            .ReturnsAsync(response);
+        var result =
+            await _controller.GetAll(
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<OkObjectResult>());
+    }
+    [Test]
+    public async Task GetAll_WhenFailed_ReturnsNotFound()
+    {
+        var response =
+            ServiceResult<IReadOnlyList<JobDto>>
+            .ErrorResult(
+                "not found");
+        _jobServiceMock
+            .Setup(x =>
+                x.GetAllAsync(
+                    CancellationToken.None))
+            .ReturnsAsync(response);
+        var result =
+            await _controller.GetAll(
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<NotFoundObjectResult>());
+    }
+    [Test]
+    public async Task GetById_WhenSuccess_ReturnsOk()
+    {
+        var id = Guid.NewGuid();
+        var response =
+            ServiceResult<JobDto>
+            .SuccessResult(
+                new JobDto
+                {
+                    Id = id
+                },
+                "success");
+        _jobServiceMock
+            .Setup(x =>
+                x.GetByIdAsync(
+                    id,
+                    CancellationToken.None))
+            .ReturnsAsync(response);
+        var result =
+            await _controller.GetById(
+                id,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<OkObjectResult>());
+    }
+    [Test]
+    public async Task GetById_WhenFailed_ReturnsNotFound()
+    {
+        var id = Guid.NewGuid();
+        var response =
+            ServiceResult<JobDto>
+            .ErrorResult(
+                "not found");
+        _jobServiceMock
+            .Setup(x =>
+                x.GetByIdAsync(
+                    id,
+                    CancellationToken.None))
+            .ReturnsAsync(response);
+        var result =
+            await _controller.GetById(
+                id,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<NotFoundObjectResult>());
+    }
+    [Test]
+    public async Task Create_WhenSuccess_ReturnsCreatedAtAction()
+    {
+        var request =
+            new CreateJobDto
+            {
+                JobNumber = "JOB001"
+            };
+        var response =
+            ServiceResult<JobDto>
+            .SuccessResult(
+                new JobDto
+                {
+                    Id = Guid.NewGuid()
+                },
+                "created");
+        _jobServiceMock
+            .Setup(x =>
+                x.CreateAsync(
+                    request,
+                    CancellationToken.None))
+            .ReturnsAsync(response);
+        var result =
+            await _controller.Create(
+                request,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<CreatedAtActionResult>());
+    }
+    [Test]
+    public async Task Create_WhenFailed_ReturnsBadRequest()
+    {
+        var request =
+            new CreateJobDto();
+        var response =
+            ServiceResult<JobDto>
+            .ErrorResult(
+                "validation failed");
+        _jobServiceMock
+            .Setup(x =>
+                x.CreateAsync(
+                    request,
+                    CancellationToken.None))
+            .ReturnsAsync(response);
+        var result =
+            await _controller.Create(
+                request,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<BadRequestObjectResult>());
+    }
+    [Test]
+    public async Task Update_WhenSuccess_ReturnsOk()
+    {
+        var id = Guid.NewGuid();
+        var request =
+            new UpdateJobDto();
+        var response =
+            ServiceResult<JobDto>
+            .SuccessResult(
+                new JobDto
+                {
+                    Id = id
+                },
+                "updated");
+        _jobServiceMock
+            .Setup(x =>
+                x.UpdateAsync(
+                    id,
+                    request,
+                    CancellationToken.None))
+            .ReturnsAsync(response);
+        var result =
+            await _controller.Update(
+                id,
+                request,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<OkObjectResult>());
+    }
+    [Test]
+    public async Task Update_WhenFailed_ReturnsNotFound()
+    {
+        var id = Guid.NewGuid();
+        var request =
+            new UpdateJobDto();
+        var response =
+            ServiceResult<JobDto>
+            .ErrorResult(
+                "failed");
+        _jobServiceMock
+            .Setup(x =>
+                x.UpdateAsync(
+                    id,
+                    request,
+                    CancellationToken.None))
+            .ReturnsAsync(response);
+        var result =
+            await _controller.Update(
+                id,
+                request,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<NotFoundObjectResult>());
+    }
+    [Test]
+    public async Task Start_WhenSuccess_ReturnsOk()
+    {
+        var id = Guid.NewGuid();
+        var response =
+            ServiceResult<JobDto>
+            .SuccessResult(
+                new JobDto(),
+                "started");
+        _jobServiceMock
+            .Setup(x =>
+                x.StartAsync(
+                    id,
+                    CancellationToken.None))
+            .ReturnsAsync(response);
+        var result =
+            await _controller.Start(
+                id,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<OkObjectResult>());
+    }
+    [Test]
+    public async Task Start_WhenFailed_ReturnsBadRequest()
+    {
+        var id = Guid.NewGuid();
+        var response =
+            ServiceResult<JobDto>
+            .ErrorResult(
+                "cannot start");
+        _jobServiceMock
+            .Setup(x =>
+                x.StartAsync(
+                    id,
+                    CancellationToken.None))
+            .ReturnsAsync(response);
+        var result =
+            await _controller.Start(
+                id,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<BadRequestObjectResult>());
+    }
+    [Test]
+    public async Task Cancel_WhenSuccess_ReturnsOk()
+    {
+        var id = Guid.NewGuid();
+        var response =
+            ServiceResult<JobDto>
+            .SuccessResult(
+                new JobDto(),
+                "cancelled");
+        _jobServiceMock
+            .Setup(x =>
+                x.CancelAsync(
+                    id,
+                    CancellationToken.None))
+            .ReturnsAsync(response);
+        var result =
+            await _controller.Cancel(
+                id,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<OkObjectResult>());
+    }
+    [Test]
+    public async Task Complete_WhenSuccess_ReturnsOk()
+    {
+        var id = Guid.NewGuid();
+        var response =
+            ServiceResult<JobDto>
+            .SuccessResult(
+                new JobDto(),
+                "completed");
+        _jobServiceMock
+            .Setup(x =>
+                x.CompleteAsync(
+                    id,
+                    CancellationToken.None))
+            .ReturnsAsync(response);
+        var result =
+            await _controller.Complete(
+                id,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<OkObjectResult>());
+    }
+    [Test]
+    public async Task PreviewAllocation_WhenSuccess_ReturnsOk()
+    {
+        var jobId =
+            Guid.NewGuid();
+        var request =
+            new RequestFefoAllocationDto();
+        var response =
+            ServiceResult<FefoAllocationPreviewDto>
+            .SuccessResult(
+                new FefoAllocationPreviewDto(),
+                "success");
+        _lotServiceMock
+            .Setup(x =>
+                x.RequestFefoAllocation(
+                    jobId,
+                    request.ItemId,
+                    request.RequestedQuantity,
+                    CancellationToken.None))
+            .ReturnsAsync(response);
+        var result =
+            await _controller.PreviewAllocation(
+                jobId,
+                request,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<OkObjectResult>());
+    }
+    [Test]
+    public async Task ConfirmConsumption_WithValidUser_ReturnsCreated()
+    {
+        var userId =
+            Guid.NewGuid();
+        var jobId =
+            Guid.NewGuid();
+        var request =
+            new ConfirmConsumptionRequestDto();
+        var response =
+            ServiceResult<ConsumptionResponseDto>
+            .SuccessResult(
+                new ConsumptionResponseDto(),
+                "success");
+        _lotServiceMock
+            .Setup(x =>
+                x.ConfirmConsumption(
+                    jobId,
+                    request,
+                    userId,
+                    CancellationToken.None))
+            .ReturnsAsync(response);
+        var claims =
+            new[]
+            {
+                new Claim(
+                    ClaimTypes.NameIdentifier,
+                    userId.ToString())
+            };
+        _controller.ControllerContext =
+            new ControllerContext
+            {
+                HttpContext =
+                    new DefaultHttpContext
+                    {
+                        User =
+                            new ClaimsPrincipal(
+                                new ClaimsIdentity(
+                                    claims))
+                    }
+            };
+        var result =
+            await _controller.ConfirmConsumption(
+                jobId,
+                request,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<CreatedResult>());
+    }
+}
