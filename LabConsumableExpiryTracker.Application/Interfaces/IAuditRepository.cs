@@ -2,7 +2,7 @@ using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 
 namespace LabConsumableExpiryTracker.Application.Interfaces;
 
-public interface IAuditRepository
+public interface IAuditRepository 
 {
     Task<PagedResult<AuditEventDto>> GetAuditEventsAsync(AuditQuery query, CancellationToken ct = default);
     Task<PagedResult<ConsumptionAuditDto>> GetConsumptionsAsync(AuditQuery query, CancellationToken ct = default);

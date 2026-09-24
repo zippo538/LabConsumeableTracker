@@ -1,13 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Domain.Models;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using LabConsumableExpiryTracker.Repositories;
 using Microsoft.EntityFrameworkCore;
-
 namespace LabConsumableExpiryTracker.Infrastructure.Repositories
 {
     public class JobRepository : Repository<Job, Guid>, IJobRepository
@@ -28,7 +23,6 @@ namespace LabConsumableExpiryTracker.Infrastructure.Repositories
                 job => job.JobNumber == normalizedJobNumber,
                 ct);
         }
-
         public Task<Job?> GetByJobNumberAsync(string jobNumber, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(jobNumber))
@@ -42,7 +36,5 @@ namespace LabConsumableExpiryTracker.Infrastructure.Repositories
                 job => job.JobNumber == normalizedJobNumber,
                 ct);
         }
-
-
     }
 }

@@ -6,7 +6,7 @@ public class DisposalExportRowDto
 {
     public Guid Id { get; set; }
     public Guid LotId { get; set; }
-    public string LotNumber { get; set; }
+    public string LotNumber { get; set; } = string.Empty;
     public Guid ItemId { get; set; }
     public string ItemName { get; set; } = default!;
     public decimal Quantity { get; set; }
