@@ -6,8 +6,8 @@ public class Job
 {
     private readonly List<Consumption> _consumptions = [];
     public Guid Id { get; private set; }
-    public string JobNumber { get; private set; } = string.Empty;
-    public string? Description { get; private set; } = string.Empty;
+    public string? JobNumber { get; private set; }
+    public string? Description { get; private set; } 
     public JobStatus Status { get; private set; }
     public DateTimeOffset? StartedAt { get; private set; }
     public DateTimeOffset? CompletedAt { get; private set; }
@@ -77,5 +77,4 @@ public class Job
         Status = JobStatus.Completed;
         CompletedAt = now;
     }
-    public void StartNow(DateTimeOffset now) => Start(now);
 }
