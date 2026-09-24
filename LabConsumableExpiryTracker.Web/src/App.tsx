@@ -17,6 +17,8 @@ import { AuditHistoryPage } from "./pages/AuditPage";
 import ConsumptionHistoryPage from "./pages/ConsumptionHistoryPage";
 import ConsumptionHistoryDetailPage from "./pages/ConsumptionHistoryDetailPage";
 import ScientistProfilePage from "./pages/ScientistProfilePage";
+import ManageUsersPage from "./pages/ManageUsersPage";
+import UserDetailPage from "./pages/UserDetailPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -41,18 +41,32 @@ public class UserController : ControllerBase
         [FromBody] UpdateFullNameRequestDto request,
         CancellationToken ct)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        var userIdClaim = User.FindFirstValue(
+            ClaimTypes.NameIdentifier
+        );
+
+        if (string.IsNullOrEmpty(userIdClaim) ||
+            !Guid.TryParse(userIdClaim, out var userId))
         {
-            return Unauthorized(ServiceResult<UserResponseDto>.ErrorResult("Invalid user token."));
+            return Unauthorized(
+                ServiceResult<UserResponseDto>.ErrorResult(
+                    "Invalid user token."
+                )
+            );
         }
 
-        var result = await _userService.UpdateUserAsync(userId, new UpdateUserRequestDto { FullName = request.FullName });
+        var result = await _userService.UpdateMyProfileAsync(
+            userId,
+            request
+        );
+
         if (!result.Success)
+        {
             return BadRequest(result);
+        }
+
         return Ok(result);
     }
-
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
     [HttpPost]
     public async Task<ActionResult<ServiceResult<UserResponseDto>>> CreateUser(
@@ -66,9 +80,29 @@ public class UserController : ControllerBase
 
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
     [HttpGet]
-    public async Task<ActionResult<ServiceResult<List<UserResponseDto>>>> GetAllUsers()
+    public async Task<ActionResult<ServiceResult<PagedUsersResponseDto>>> GetAllUsers(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? search = null,
+        [FromQuery] string? role = null,
+        [FromQuery] string? status = null)
     {
-        var result = await _userService.GetAllUsersAsync();
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!Guid.TryParse(currentUserId, out var currentUserGuid))
+        {
+            return Unauthorized();
+        }
+
+        var result = await _userService.GetAllUsersAsync(
+            page,
+            pageSize,
+            search,
+            role,
+            status,
+            currentUserGuid
+        );
+
         return Ok(result);
     }
 
@@ -103,6 +137,45 @@ public class UserController : ControllerBase
         var result = await _userService.SetUserActiveStatusAsync(currentAdminId, id, false);
         if (!result.Success)
             return BadRequest(result);
+        return Ok(result);
+    }
+
+    [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
+    [HttpGet("stats")]
+    public async Task<ActionResult<ServiceResult<UserStatisticsResponseDto>>>
+        GetUserStatistics()
+    {
+        var result = await _userService.GetUserStatisticsAsync();
+
+        return Ok(result);
+    }
+
+    [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ServiceResult<UserResponseDto>>> GetUserById(
+        string id)
+    {
+        var result = await _userService.GetUserByIdAsync(id);
+
+        return Ok(result);
+    }
+
+    [HttpPut("{id:guid}/password")]
+    [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
+    public async Task<ActionResult<ServiceResult<bool>>> ChangePassword(
+        Guid id,
+        [FromBody] ChangeUserPasswordRequestDto request)
+    {
+        var result = await _userService.ChangeUserPasswordAsync(
+            id,
+            request
+        );
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
         return Ok(result);
     }
 }
