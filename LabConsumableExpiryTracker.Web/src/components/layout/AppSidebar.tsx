@@ -22,7 +22,7 @@ const adminNav: ReadonlyArray<readonly [string, string, LucideIcon]> = [
   ["Lot", "/app/lots", Layers],
   ["Audit & History", "/app/audit", History],
   ["User Management", "/app/manage-users", Users],
-  ["Profil", "/app/profile", UserCircle],
+  ["Profil", "/app/admin-profile", UserCircle],
 ];
 
 const scientistNav: ReadonlyArray<readonly [string, string, LucideIcon]> = [
@@ -30,7 +30,7 @@ const scientistNav: ReadonlyArray<readonly [string, string, LucideIcon]> = [
     ["Job", "/app/jobs", LayoutDashboard],
     ["Consume", "/app/consumption", ClipboardList],
     ["Consumption History", "/app/consumption-history", History],
-    ["Profile", "/app/profile", UserCircle],
+    ["Profile", "/app/scientist-profile", UserCircle],
 ];
 
 
