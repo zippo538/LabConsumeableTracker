@@ -26,6 +26,7 @@ public class DisposalController : ControllerBase
         [FromQuery] AuditQuery query,
         CancellationToken ct)
     {
+        query = query with { Search = NormalizeSearch(query.Search) };
         var response = await _auditService.GetDisposalsAsync(query, ct);
 
         return response.Success ? Ok(response) : BadRequest(response);
@@ -40,4 +41,6 @@ public class DisposalController : ControllerBase
 
         return response.Success ? Ok(response) : NotFound(response);
     }
+    private static string? NormalizeSearch(string? search) =>
+        string.IsNullOrWhiteSpace(search) ? null : search.Trim();
 }

@@ -15,8 +15,8 @@ export const DashboardPage = () => {
             title="Dashboard"
             description={
                 isWarehouseAdmin
-                    ? "Ringkasan stok gudang laboratorium"
-                    : "Ruang kerja laboratorium Anda"
+                    ? "Summary Item Stock"
+                    : "Your laboratory workspace"
             }
         >
             {isWarehouseAdmin ? (

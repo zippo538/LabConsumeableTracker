@@ -80,4 +80,5 @@ export interface ItemOption {
   code: string;
   name: string;
   baseUnit: string;
+  imagePath?: string | null;
 }

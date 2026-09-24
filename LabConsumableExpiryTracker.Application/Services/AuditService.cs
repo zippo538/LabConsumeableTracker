@@ -27,8 +27,8 @@ public sealed class AuditService : IAuditService
     public async Task<ServiceResult<PagedResult<AuditEventDto>>> GetAuditEventsAsync(AuditQuery query, CancellationToken ct = default)
     {
         _logger.LogDebug(
-            "Processing unified audit events request. EventType: {EventType}, ItemId: {ItemId}, LotId: {LotId}, JobId: {JobId}, Page: {Page}, PageSize: {PageSize}",
-            query.EventType, query.ItemId, query.LotId, query.JobId, query.Page, query.PageSize);
+            "Processing unified audit events request. EventType: {EventType}, ItemId: {ItemId}, LotId: {LotId}, JobId: {JobId}, Search: {Search}, Page: {Page}, PageSize: {PageSize}",
+            query.EventType, query.ItemId, query.LotId, query.JobId, query.Search, query.Page, query.PageSize);
 
         var validation = await _validator.ValidateAsync(query, ct);
         if (!validation.IsValid)
@@ -50,6 +50,7 @@ public sealed class AuditService : IAuditService
                 JobId = query.JobId,
                 From = query.From,
                 To = query.To,
+                Search = query.Search,
                 Page = query.Page,
                 PageSize = query.PageSize
             }
@@ -72,8 +73,8 @@ public sealed class AuditService : IAuditService
     public async Task<ServiceResult<PagedResult<ConsumptionAuditDto>>> GetConsumptionsAsync(AuditQuery query, CancellationToken ct = default)
     {
         _logger.LogDebug(
-           "Processing consumption audit request. ItemId: {ItemId}, LotId: {LotId}, JobId: {JobId}, Page: {Page}, PageSize: {PageSize}",
-           query.ItemId, query.LotId, query.JobId, query.Page, query.PageSize);
+           "Processing consumption audit request. ItemId: {ItemId}, LotId: {LotId}, JobId: {JobId}, Search: {Search}, Page: {Page}, PageSize: {PageSize}",
+           query.ItemId, query.LotId, query.JobId, query.Search, query.Page, query.PageSize);
 
         var validation = await _validator.ValidateAsync(
             query with { EventType = AuditEventType.Consumption }, ct);
@@ -106,8 +107,8 @@ public sealed class AuditService : IAuditService
     public async Task<ServiceResult<PagedResult<DisposalAuditDto>>> GetDisposalsAsync(AuditQuery query, CancellationToken ct = default)
     {
         _logger.LogDebug(
-            "Processing disposal audit request. ItemId: {ItemId}, LotId: {LotId}, Page: {Page}, PageSize: {PageSize}",
-            query.ItemId, query.LotId, query.Page, query.PageSize);
+            "Processing disposal audit request. ItemId: {ItemId},Search: {Search} ,LotId: {LotId}, Page: {Page}, PageSize: {PageSize}",
+            query.ItemId, query.LotId, query.Search, query.Page, query.PageSize);
 
         var validation = await _validator.ValidateAsync(
             query with { EventType = AuditEventType.Disposal }, ct);
