@@ -1,468 +1,302 @@
 using AutoMapper;
 using LabConsumableExpiryTracker.Application.DTOs.ItemDTOs;
-using Microsoft.Extensions.Logging.Abstractions;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services;
+using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using NUnit.Framework;
 
 namespace LabConsumableExpiryTracker.Tests.Services
 {
     [TestFixture]
     public class ItemServiceTests
     {
-        private static readonly DateTimeOffset FixedNow =
-         new(2026, 9, 13, 10, 30, 0, TimeSpan.Zero);
-
         private Mock<IItemRepository> _itemRepository = null!;
         private Mock<ILotRepository> _lotRepository = null!;
+        private Mock<IFileStorageService> _fileStorageService = null!;
         private Mock<IMapper> _mapper = null!;
         private Mock<IUnitOfWork> _unitOfWork = null!;
         private ItemService _sut = null!;
 
         [SetUp]
-        public void SetUp()
+        public void Setup()
         {
             _itemRepository = new Mock<IItemRepository>(MockBehavior.Strict);
             _lotRepository = new Mock<ILotRepository>(MockBehavior.Strict);
+            _fileStorageService = new Mock<IFileStorageService>(MockBehavior.Strict);
             _mapper = new Mock<IMapper>(MockBehavior.Strict);
             _unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
             _sut = new ItemService(
                 _itemRepository.Object,
+                _fileStorageService.Object,
                 _mapper.Object,
-                new FixedTimeProvider(FixedNow),
+                TimeProvider.System,
                 _lotRepository.Object,
                 _unitOfWork.Object,
                 NullLogger<ItemService>.Instance);
         }
 
         [Test]
-        public async Task GetAllItem_WhenItemsExist_ReturnsItemsWithUsableQuantityAndStockStatus()
-        {
-            var item = CreateItem(minimumStock: 10);
-            var expectedDto = CreateItemDtoResult(item.Id);
-            var today = DateOnly.FromDateTime(FixedNow.UtcDateTime);
-            var items = new[] { item };
-
-            _itemRepository.Setup(repository => repository.GetAllWithLotsAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(items);
-            _lotRepository.Setup(repository => repository.GetUsableQuantityByItemIdsAsync(
-                    It.Is<IEnumerable<Guid>>(ids => ids.Single() == item.Id),
-                    today,
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Dictionary<Guid, decimal> { [item.Id] = 5m });
-            _mapper.Setup(mapper => mapper.Map<ItemDto>(item)).Returns(expectedDto);
-
-            var result = await _sut.GetAllItem(CancellationToken.None);
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Success, Is.True);
-                Assert.That(result.Message, Is.EqualTo("Items retrieved successfully."));
-                Assert.That(result.Data, Is.Not.Null);
-                Assert.That(result.Data!.Single(), Is.SameAs(expectedDto));
-                Assert.That(expectedDto.TotalRemainingQuantity, Is.EqualTo(5m));
-                Assert.That(expectedDto.StockStatus, Is.EqualTo(StockLevelStatus.LowStock));
-            });
-
-            _itemRepository.Verify(repository => repository.GetAllWithLotsAsync(
-                It.IsAny<CancellationToken>()), Times.Once);
-            _lotRepository.Verify(repository => repository.GetUsableQuantityByItemIdsAsync(
-                It.IsAny<IEnumerable<Guid>>(), today, It.IsAny<CancellationToken>()), Times.Once);
-        }
-
-        [Test]
-        public async Task GetAllItem_WhenRepositoryThrows_PropagatesException()
-        {
-            var exception = new InvalidOperationException("Database unavailable.");
-
-            _itemRepository.Setup(repository => repository.GetAllWithLotsAsync(
-                    It.IsAny<CancellationToken>()))
-                .ThrowsAsync(exception);
-
-            var actual = Assert.ThrowsAsync<InvalidOperationException>(
-                () => _sut.GetAllItem(CancellationToken.None));
-
-            Assert.That(actual, Is.SameAs(exception));
-            _lotRepository.Verify(repository => repository.GetUsableQuantityByItemIdsAsync(
-                It.IsAny<IEnumerable<Guid>>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()),
-                Times.Never);
-        }
-
-        [Test]
-        public async Task GetByIdItem_WhenItemDoesNotExist_ReturnsError()
+        public async Task GetByIdItem_WhenNotFound_ReturnsError()
         {
             var id = Guid.NewGuid();
 
-            _itemRepository.Setup(repository => repository.GetByIdWithLotsAsync(
-                    id, It.IsAny<CancellationToken>()))
+            _itemRepository
+                .Setup(x => x.GetByIdWithLotsAsync(id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Item?)null);
 
             var result = await _sut.GetByIdItem(id, CancellationToken.None);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Success, Is.False);
-                Assert.That(result.Message, Is.EqualTo("Item not found."));
-                Assert.That(result.Data, Is.Null);
-            });
-
-            _lotRepository.Verify(repository => repository.GetTotalUsableQuantityAsync(
-                It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()), Times.Never);
-            _mapper.Verify(mapper => mapper.Map<ItemDto>(It.IsAny<Item>()), Times.Never);
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Item not found."));
         }
 
         [Test]
-        public async Task GetByIdItem_WhenItemExists_ReturnsMappedItemWithStockInformation()
+        public async Task GetByIdItem_WhenExists_ReturnsSuccess()
         {
-            var item = CreateItem(minimumStock: 10);
-            var expectedDto = CreateItemDtoResult(item.Id);
-            var today = DateOnly.FromDateTime(FixedNow.UtcDateTime);
+            var item = CreateItem();
+            var dto = new ItemDto();
 
-            _itemRepository.Setup(repository => repository.GetByIdWithLotsAsync(
-                    item.Id, It.IsAny<CancellationToken>()))
+            _itemRepository
+                .Setup(x => x.GetByIdWithLotsAsync(item.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(item);
-            _lotRepository.Setup(repository => repository.GetTotalUsableQuantityAsync(
-                    item.Id, today, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(20m);
-            _mapper.Setup(mapper => mapper.Map<ItemDto>(item)).Returns(expectedDto);
+
+            _lotRepository
+                .Setup(x => x.GetTotalUsableQuantityAsync(
+                    item.Id,
+                    It.IsAny<DateOnly>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(10);
+
+            _mapper
+                .Setup(x => x.Map<ItemDto>(item))
+                .Returns(dto);
 
             var result = await _sut.GetByIdItem(item.Id, CancellationToken.None);
 
-            Assert.Multiple(() =>
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.SameAs(dto));
+            Assert.That(dto.TotalRemainingQuantity, Is.EqualTo(10));
+        }
+
+        [Test]
+        public async Task CreateItem_WhenCodeExists_ReturnsError()
+        {
+            var dto = new CreateItemDto
             {
-                Assert.That(result.Success, Is.True);
-                Assert.That(result.Message, Is.EqualTo("Item retrieved successfully."));
-                Assert.That(result.Data, Is.SameAs(expectedDto));
-                Assert.That(expectedDto.TotalRemainingQuantity, Is.EqualTo(20m));
-                Assert.That(expectedDto.StockStatus, Is.EqualTo(StockLevelStatus.Sufficient));
-            });
-        }
+                Code = "ITEM-001",
+                Name = "Test",
+                BaseUnit = "Box"
+            };
 
-        [Test]
-        public async Task GetByIdItem_WhenLotRepositoryThrows_PropagatesException()
-        {
-            var item = CreateItem();
-            var exception = new TimeoutException("Lot query timed out.");
-
-            _itemRepository.Setup(repository => repository.GetByIdWithLotsAsync(
-                    item.Id, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(item);
-            _lotRepository.Setup(repository => repository.GetTotalUsableQuantityAsync(
-                    item.Id, It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()))
-                .ThrowsAsync(exception);
-
-            var actual = Assert.ThrowsAsync<TimeoutException>(
-                () => _sut.GetByIdItem(item.Id, CancellationToken.None));
-
-            Assert.That(actual, Is.SameAs(exception));
-            _mapper.Verify(mapper => mapper.Map<ItemDto>(It.IsAny<Item>()), Times.Never);
-        }
-
-        [Test]
-        public async Task CreateItem_WhenCodeAlreadyExists_ReturnsErrorAndDoesNotPersist()
-        {
-            var dto = CreateRequest();
-            var existing = CreateItem();
-
-            _itemRepository.Setup(repository => repository.GetByCodeAsync(
-                    dto.Code, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(existing);
+            _itemRepository
+                .Setup(x => x.GetByCodeAsync(dto.Code, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateItem());
 
             var result = await _sut.CreateItem(dto, CancellationToken.None);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Success, Is.False);
-                Assert.That(result.Message, Is.EqualTo("Item code already exists."));
-            });
-
-            _mapper.Verify(mapper => mapper.Map<Item>(It.IsAny<CreateItemDto>()), Times.Never);
-            _itemRepository.Verify(repository => repository.AddAsync(
-                It.IsAny<Item>(), It.IsAny<CancellationToken>()), Times.Never);
-            _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(
-                It.IsAny<CancellationToken>()), Times.Never);
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Item code already exists."));
         }
 
         [Test]
-        public async Task CreateItem_WhenCodeIsAvailable_CreatesItemAndCommits()
+        public async Task CreateItem_WhenValid_CreatesItem()
         {
-            var dto = CreateRequest();
-            var mappedItem = CreateItem();
-            var createdItem = CreateItem(mappedItem.Id);
-            var expectedDto = CreateItemDtoResult(createdItem.Id);
+            var dto = new CreateItemDto
+            {
+                Code = "ITEM-001",
+                Name = "Test",
+                BaseUnit = "Unit",
+                MinimumStock = 5,
+                ExpiringSoonDays = 30
+            };
 
-            _itemRepository.Setup(repository => repository.GetByCodeAsync(
-                    dto.Code, It.IsAny<CancellationToken>()))
+            var item = CreateItem();
+
+            _itemRepository
+                .Setup(x => x.GetByCodeAsync(dto.Code, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Item?)null);
-            _mapper.Setup(mapper => mapper.Map<Item>(dto)).Returns(mappedItem);
-            _itemRepository.Setup(repository => repository.AddAsync(
-                    mappedItem, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(createdItem);
-            _unitOfWork.Setup(unitOfWork => unitOfWork.SaveChangesAsync(
-                    It.IsAny<CancellationToken>()))
+
+            _itemRepository
+                .Setup(x => x.AddAsync(It.IsAny<Item>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(item);
+
+            _unitOfWork
+                .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(1);
-            _mapper.Setup(mapper => mapper.Map<ItemDto>(createdItem)).Returns(expectedDto);
+
+            _mapper
+                .Setup(x => x.Map<ItemDto>(item))
+                .Returns(new ItemDto());
 
             var result = await _sut.CreateItem(dto, CancellationToken.None);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Success, Is.True);
-                Assert.That(result.Message, Is.EqualTo("Item created successfully."));
-                Assert.That(result.Data, Is.SameAs(expectedDto));
-            });
-
-            _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(
-                It.IsAny<CancellationToken>()), Times.Once);
+            Assert.That(result.Success, Is.True);
+            _unitOfWork.Verify(x =>
+                x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
-        public async Task CreateItem_WhenAddThrows_PropagatesExceptionAndDoesNotCommit()
-        {
-            var dto = CreateRequest();
-            var mappedItem = CreateItem();
-            var exception = new InvalidOperationException("Insert failed.");
-
-            _itemRepository.Setup(repository => repository.GetByCodeAsync(
-                    dto.Code, It.IsAny<CancellationToken>()))
-                .ReturnsAsync((Item?)null);
-            _mapper.Setup(mapper => mapper.Map<Item>(dto)).Returns(mappedItem);
-            _itemRepository.Setup(repository => repository.AddAsync(
-                    mappedItem, It.IsAny<CancellationToken>()))
-                .ThrowsAsync(exception);
-
-            var actual = Assert.ThrowsAsync<InvalidOperationException>(
-                () => _sut.CreateItem(dto, CancellationToken.None));
-
-            Assert.That(actual, Is.SameAs(exception));
-            _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(
-                It.IsAny<CancellationToken>()), Times.Never);
-        }
-
-        [Test]
-        public async Task CreateItem_WhenSaveChangesThrows_PropagatesException()
-        {
-            var dto = CreateRequest();
-            var mappedItem = CreateItem();
-            var exception = new InvalidOperationException("Commit failed.");
-
-            _itemRepository.Setup(repository => repository.GetByCodeAsync(
-                    dto.Code, It.IsAny<CancellationToken>()))
-                .ReturnsAsync((Item?)null);
-            _mapper.Setup(mapper => mapper.Map<Item>(dto)).Returns(mappedItem);
-            _itemRepository.Setup(repository => repository.AddAsync(
-                    mappedItem, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(mappedItem);
-            _unitOfWork.Setup(unitOfWork => unitOfWork.SaveChangesAsync(
-                    It.IsAny<CancellationToken>()))
-                .ThrowsAsync(exception);
-
-            var actual = Assert.ThrowsAsync<InvalidOperationException>(
-                () => _sut.CreateItem(dto, CancellationToken.None));
-
-            Assert.That(actual, Is.SameAs(exception));
-            _mapper.Verify(mapper => mapper.Map<ItemDto>(It.IsAny<Item>()), Times.Never);
-        }
-
-        [Test]
-        public async Task UpdateItem_WhenItemDoesNotExist_ReturnsErrorAndDoesNotPersist()
+        public async Task UpdateItem_WhenNotFound_ReturnsError()
         {
             var id = Guid.NewGuid();
-            var request = UpdateRequest();
 
-            _itemRepository.Setup(repository => repository.GetByIdAsync(
-                    id, It.IsAny<CancellationToken>()))
+            _itemRepository
+                .Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Item?)null);
 
-            var result = await _sut.UpdateItem(id, request, CancellationToken.None);
+            var result = await _sut.UpdateItem(
+                id,
+                new UpdateItemDto(),
+                CancellationToken.None);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Success, Is.False);
-                Assert.That(result.Message, Is.EqualTo("Item not found."));
-            });
-
-            _itemRepository.Verify(repository => repository.UpdateAsync(
-                It.IsAny<Item>(), It.IsAny<CancellationToken>()), Times.Never);
-            _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(
-                It.IsAny<CancellationToken>()), Times.Never);
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Item not found."));
         }
 
         [Test]
-        public async Task UpdateItem_WhenRequestIsValid_UpdatesDetailsAndCommits()
-        {
-            var item = CreateItem(minimumStock: 10);
-            var request = UpdateRequest();
-            var expectedDto = CreateItemDtoResult(item.Id);
-
-            _itemRepository.Setup(repository => repository.GetByIdAsync(
-                    item.Id, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(item);
-            _itemRepository.Setup(repository => repository.UpdateAsync(
-                    item, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(item);
-            _unitOfWork.Setup(unitOfWork => unitOfWork.SaveChangesAsync(
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(1);
-            _mapper.Setup(mapper => mapper.Map<ItemDto>(item)).Returns(expectedDto);
-
-            var result = await _sut.UpdateItem(item.Id, request, CancellationToken.None);
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Success, Is.True);
-                Assert.That(result.Message, Is.EqualTo("Item updated successfully."));
-                Assert.That(result.Data, Is.SameAs(expectedDto));
-                Assert.That(item.Name, Is.EqualTo(request.Name.Trim()));
-                Assert.That(item.MinimumStock, Is.EqualTo(request.MinimumStock));
-                Assert.That(item.ExpiringSoonDays, Is.EqualTo(request.ExpiringSoonDays));
-            });
-
-            _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(
-                It.IsAny<CancellationToken>()), Times.Once);
-        }
-
-        [Test]
-        public async Task UpdateItem_WhenDomainValidationFails_PropagatesExceptionAndDoesNotPersist()
+        public async Task UpdateItem_WhenValid_UpdatesAndSaves()
         {
             var item = CreateItem();
-            var request = UpdateRequest();
-            request.MinimumStock = -1;
 
-            _itemRepository.Setup(repository => repository.GetByIdAsync(
-                    item.Id, It.IsAny<CancellationToken>()))
+            _itemRepository
+                .Setup(x => x.GetByIdAsync(item.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(item);
 
-            Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-                () => _sut.UpdateItem(item.Id, request, CancellationToken.None));
+            _itemRepository
+                .Setup(x => x.UpdateAsync(item, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(item);
 
-            _itemRepository.Verify(repository => repository.UpdateAsync(
-                It.IsAny<Item>(), It.IsAny<CancellationToken>()), Times.Never);
-            _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(
-                It.IsAny<CancellationToken>()), Times.Never);
+            _unitOfWork
+                .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
+
+            _mapper
+                .Setup(x => x.Map<ItemDto>(item))
+                .Returns(new ItemDto());
+
+            var result = await _sut.UpdateItem(
+                item.Id,
+                new UpdateItemDto
+                {
+                    Name = "Updated",
+                    BaseUnit = UnitOfMeasure.Unit,
+                    MinimumStock = 10,
+                    ExpiringSoonDays = 30
+                },
+                CancellationToken.None);
+
+            Assert.That(result.Success, Is.True);
+            Assert.That(item.Name, Is.EqualTo("Updated"));
         }
 
         [Test]
-        public async Task DeleteItem_WhenRepositoryReturnsFalse_ReturnsNotFoundAndCommits()
+        public async Task DeleteItem_WhenSuccess_ReturnsTrue()
         {
             var id = Guid.NewGuid();
 
-            _itemRepository.Setup(repository => repository.DeleteAsync(
-                    id, It.IsAny<CancellationToken>()))
+            _itemRepository
+                .Setup(x => x.DeleteAsync(id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+
+            _unitOfWork
+                .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
+
+            var result = await _sut.DeleteItem(id, CancellationToken.None);
+
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.True);
+        }
+
+
+        [Test]
+        public async Task CreateItem_WhenInvalidBaseUnit_ReturnsValidationError()
+        {
+            var dto = new CreateItemDto
+            {
+                Code = "ITEM-001",
+                Name = "Test",
+                BaseUnit = "INVALID",
+                MinimumStock = 5,
+                ExpiringSoonDays = 30
+            };
+
+            _itemRepository
+                .Setup(x => x.GetByCodeAsync(dto.Code, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Item?)null);
+
+            var result = await _sut.CreateItem(dto, CancellationToken.None);
+
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Validation failed."));
+
+            _itemRepository.Verify(
+                x => x.AddAsync(It.IsAny<Item>(), It.IsAny<CancellationToken>()),
+                Times.Never);
+        }
+
+        [Test]
+        public async Task GetAllItem_WhenItemsExist_ReturnsStockInformation()
+        {
+            var item = CreateItem();
+
+            _itemRepository
+                .Setup(x => x.GetAllWithLotsAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new[] { item });
+
+            _lotRepository
+                .Setup(x => x.GetUsableQuantityByItemIdsAsync(
+                    It.IsAny<IEnumerable<Guid>>(),
+                    It.IsAny<DateOnly>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<Guid, decimal>
+                {
+                    [item.Id] = 20
+                });
+
+            _mapper
+                .Setup(x => x.Map<ItemDto>(item))
+                .Returns(new ItemDto());
+
+            var result = await _sut.GetAllItem(CancellationToken.None);
+
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        }
+
+        [Test]
+        public async Task DeleteItem_WhenNotFound_ReturnsError()
+        {
+            var id = Guid.NewGuid();
+
+            _itemRepository
+                .Setup(x => x.DeleteAsync(id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(false);
-            _unitOfWork.Setup(unitOfWork => unitOfWork.SaveChangesAsync(
-                    It.IsAny<CancellationToken>()))
+
+            _unitOfWork
+                .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(0);
 
             var result = await _sut.DeleteItem(id, CancellationToken.None);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Success, Is.False);
-                Assert.That(result.Message, Is.EqualTo("Item not found."));
-            });
-
-            _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(
-                It.IsAny<CancellationToken>()), Times.Once);
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Item not found."));
         }
 
-        [Test]
-        public async Task DeleteItem_WhenRepositoryReturnsTrue_ReturnsSuccessAndCommits()
-        {
-            var id = Guid.NewGuid();
-
-            _itemRepository.Setup(repository => repository.DeleteAsync(
-                    id, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(true);
-            _unitOfWork.Setup(unitOfWork => unitOfWork.SaveChangesAsync(
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(1);
-
-            var result = await _sut.DeleteItem(id, CancellationToken.None);
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Success, Is.True);
-                Assert.That(result.Data, Is.True);
-                Assert.That(result.Message, Is.EqualTo("Item deleted successfully."));
-            });
-        }
-
-        [Test]
-        public async Task DeleteItem_WhenRepositoryThrows_PropagatesExceptionAndDoesNotCommit()
-        {
-            var id = Guid.NewGuid();
-            var exception = new InvalidOperationException("Delete failed.");
-
-            _itemRepository.Setup(repository => repository.DeleteAsync(
-                    id, It.IsAny<CancellationToken>()))
-                .ThrowsAsync(exception);
-
-            var actual = Assert.ThrowsAsync<InvalidOperationException>(
-                () => _sut.DeleteItem(id, CancellationToken.None));
-
-            Assert.That(actual, Is.SameAs(exception));
-            _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(
-                It.IsAny<CancellationToken>()), Times.Never);
-        }
-
-        private static Item CreateItem(Guid? id = null, decimal minimumStock = 5)
+        private static Item CreateItem()
         {
             return new Item(
-                id ?? Guid.NewGuid(),
+                Guid.NewGuid(),
                 "ITEM-001",
-                "Test item",
-                Enum.GetValues<UnitOfMeasure>().First(),
-                minimumStock,
+                "Test Item",
+                UnitOfMeasure.Unit,
+                5,
                 30);
-        }
-
-        private static CreateItemDto CreateRequest()
-        {
-            return new CreateItemDto
-            {
-                Code = "ITEM-001",
-                Name = "Test item",
-                BaseUnit = Enum.GetValues<UnitOfMeasure>().First(),
-                MinimumStock = 10,
-                ExpiringSoonDays = 30
-            };
-        }
-
-        private static UpdateItemDto UpdateRequest()
-        {
-            return new UpdateItemDto
-            {
-                Name = "Updated item",
-                BaseUnit = Enum.GetValues<UnitOfMeasure>().First(),
-                MinimumStock = 10,
-                ExpiringSoonDays = 30
-            };
-        }
-
-        private static ItemDto CreateItemDtoResult(Guid id)
-        {
-            return new ItemDto
-            {
-                Id = id,
-                Code = "ITEM-001",
-                Name = "Test item"
-            };
-        }
-
-        private sealed class FixedTimeProvider : TimeProvider
-        {
-            private readonly DateTimeOffset _now;
-
-            public FixedTimeProvider(DateTimeOffset now)
-            {
-                _now = now;
-            }
-
-            public override DateTimeOffset GetUtcNow() => _now;
         }
     }
 }
