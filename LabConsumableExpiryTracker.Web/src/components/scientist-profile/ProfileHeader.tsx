@@ -1,9 +1,9 @@
 import { User } from "lucide-react";
 
-import type { UserProfileDto } from "../../types/user.types";
+import type { UserDto } from "../../types/user.types";
 
 interface ProfileHeaderProps {
-    profile: UserProfileDto;
+    profile: UserDto;
 }
 
 function getInitials(name: string): string {
