@@ -53,7 +53,7 @@ export function ModalShell({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [busy, isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

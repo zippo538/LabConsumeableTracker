@@ -1,9 +1,9 @@
 import { UserRoundCheck } from "lucide-react";
 
-import type { UserProfileDto } from "../../types/user.types";
+import type { UserDto } from "../../types/user.types";
 
 interface ProfileAccessCardProps {
-    profile: UserProfileDto;
+    profile: UserDto;
 }
 
 export default function ProfileAccessCard({

@@ -3,24 +3,34 @@ import {NavLink, useNavigate} from "react-router";
 import FormulatrixLogo from "../../assets/logo_formulatrix.png";
 import {useLogout} from "../../hooks/useLogin";
 import type {UserProfile} from "../../types/api";
-import {Icon, type IconName} from "../ui/Icon";
+import {
+  LayoutDashboard,
+  Package,
+  Layers,
+  History,
+  Users,
+  UserCircle,
+  ClipboardList,
+  LogOut,
+  ChevronLeft,
+  type LucideIcon,
+} from "lucide-react";
 
-
-const adminNav: ReadonlyArray<readonly [string, string, IconName]> = [
-  ["Dashboard", "/app/dashboard", "dashboard"],
-  ["Item", "/app/items", "inventory"],
-  ["Lot", "/app/lots", "status"],
-  ["Audit & History", "/app/audit", "history"],
-  ["User Management", "/app/users", "users"],
-  ["Profil", "/app/profile", "profile"],
+const adminNav: ReadonlyArray<readonly [string, string, LucideIcon]> = [
+  ["Dashboard", "/app/dashboard", LayoutDashboard],
+  ["Item", "/app/items", Package],
+  ["Lot", "/app/lots", Layers],
+  ["Audit & History", "/app/audit", History],
+  ["User Management", "/app/manage-users", Users],
+  ["Profil", "/app/admin-profile", UserCircle],
 ];
 
-const scientistNav: ReadonlyArray<readonly [string, string, IconName]> = [
-    ["Dashboard", "/app/dashboard", "dashboard"],
-    ["Job", "/app/jobs", "dashboard"],
-    ["Consume", "/app/consumption", "clipboard"],
-    ["Consumption History", "/app/consumption-history", "history"],
-    ["Profile", "/app/profile", "profile"],
+const scientistNav: ReadonlyArray<readonly [string, string, LucideIcon]> = [
+    ["Dashboard", "/app/dashboard", LayoutDashboard],
+    ["Job", "/app/jobs", LayoutDashboard],
+    ["Consume", "/app/consumption", ClipboardList],
+    ["Consumption History", "/app/consumption-history", History],
+    ["Profile", "/app/scientist-profile", UserCircle],
 ];
 
 
@@ -100,17 +110,10 @@ export const AppSidebar: FC<AppSidebarProps> = ({
         `}
             >
 
-                <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className={`h-3 w-3 transition-transform duration-300 ${collapsed ? "rotate-0" : "rotate-180"}`}
-                >
-                    <path d="m9 18 6-6-6-6"/>
-                </svg>
+                <ChevronLeft
+                    strokeWidth={2.2}
+                    className={`h-3 w-3 transition-transform duration-300 ${collapsed ? "rotate-180" : "rotate-0"}`}
+                />
             </button>
 
 
@@ -118,7 +121,7 @@ export const AppSidebar: FC<AppSidebarProps> = ({
                 className={`mt-4 flex flex-col gap-0.5 px-2 flex-1 overflow-y-auto overflow-x-hidden`}
                 aria-label="Navigasi utama"
             >
-                {navItems.map(([label, path, icon]) => (
+                {navItems.map(([label, path, IconComp]) => (
                     <NavLink
                         key={label}
                         to={path}
@@ -134,8 +137,7 @@ export const AppSidebar: FC<AppSidebarProps> = ({
                     >
                         {({isActive}) => (
                             <>
-                                <Icon
-                                    name={icon}
+                                <IconComp
                                     className={`h-3.5 w-3.5 shrink-0 transition-colors ${
                                         isActive
                                             ? "text-[#18b4b5]"
@@ -201,20 +203,10 @@ export const AppSidebar: FC<AppSidebarProps> = ({
                             disabled={isPending}
                             className="mt-2 flex items-center gap-1 text-[8px] text-slate-400 hover:text-rose-400 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            {/* logout icon */}
-                            <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
+                            <LogOut
+                                strokeWidth={2}
                                 className="h-2.5 w-2.5"
-                            >
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                                <polyline points="16 17 21 12 16 7"/>
-                                <line x1="21" y1="12" x2="9" y2="12"/>
-                            </svg>
+                            />
                             {isPending ? "Keluar..." : "Keluar"}
                         </button>
                     </div>
@@ -227,19 +219,10 @@ export const AppSidebar: FC<AppSidebarProps> = ({
                             title="Keluar"
                             className="absolute bottom-4 left-1/2 -translate-x-1/2 text-slate-500 hover:text-rose-400 transition-colors disabled:opacity-50"
                         >
-                            <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
+                            <LogOut
+                                strokeWidth={2}
                                 className="h-3.5 w-3.5"
-                            >
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                                <polyline points="16 17 21 12 16 7"/>
-                                <line x1="21" y1="12" x2="9" y2="12"/>
-                            </svg>
+                            />
                         </button>
                     )}
                 </div>

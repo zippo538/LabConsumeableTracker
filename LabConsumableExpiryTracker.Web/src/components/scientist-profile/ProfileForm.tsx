@@ -1,9 +1,9 @@
 import { Mail, User } from "lucide-react";
 
-import type { UserProfileDto } from "../../types/user.types";
+import type { UserDto } from "../../types/user.types";
 
 interface ProfileFormProps {
-    profile: UserProfileDto;
+    profile: UserDto;
     fullName: string;
     isPending: boolean;
     isError: boolean;

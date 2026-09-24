@@ -17,136 +17,168 @@ import { AuditHistoryPage } from "./pages/AuditPage";
 import ConsumptionHistoryPage from "./pages/ConsumptionHistoryPage";
 import ConsumptionHistoryDetailPage from "./pages/ConsumptionHistoryDetailPage";
 import ScientistProfilePage from "./pages/ScientistProfilePage";
+import ManageUsersPage from "./pages/ManageUsersPage";
+import UserDetailPage from "./pages/UserDetailPage";
+import AdminProfilePage from "./pages/AdminProfilePage";
 
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
+    defaultOptions: {
+        queries: {
+            retry: 1,
+            refetchOnWindowFocus: false,
+        },
     },
-  },
 });
 
 export default function App() {
-  return (
-    <JotaiProvider>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route
-              path="/app/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["WarehouseAdmin", "Scientist"]}>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/app/items"
-              element={
-                <ProtectedRoute allowedRoles={["WarehouseAdmin"]}>
-                  <ItemListPage />
-                </ProtectedRoute>
-              }
-            />
+    return (
+        <JotaiProvider>
+            <QueryClientProvider client={queryClient}>
+                <BrowserRouter>
+                    <Routes>
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route
+                            path="/app/dashboard"
+                            element={
+                                <ProtectedRoute allowedRoles={["WarehouseAdmin", "Scientist"]}>
+                                    <DashboardPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/app/items"
+                            element={
+                                <ProtectedRoute allowedRoles={["WarehouseAdmin"]}>
+                                    <ItemListPage />
+                                </ProtectedRoute>
+                            }
+                        />
 
-            <Route
-              path="/items/:id"
-              element={
-                <ProtectedRoute allowedRoles={["WarehouseAdmin"]}>
-                  <ItemDetailPage />
-                </ProtectedRoute>
-              }
-            />
+                        <Route
+                            path="/items/:id"
+                            element={
+                                <ProtectedRoute allowedRoles={["WarehouseAdmin"]}>
+                                    <ItemDetailPage />
+                                </ProtectedRoute>
+                            }
+                        />
 
-            <Route
-              path="/app/lots"
-              element={
-                <ProtectedRoute allowedRoles={["WarehouseAdmin"]}>
-                  <LotsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/app/lots/:id"
-              element={
-                <ProtectedRoute allowedRoles={["WarehouseAdmin"]}>
-                  <LotDetailPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/app/audit"
-              element={
-                <ProtectedRoute allowedRoles={["WarehouseAdmin"]}>
-                  <AuditHistoryPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/app/jobs"
-              element={
-                <ProtectedRoute allowedRoles={["Scientist"]}>
-                  <JobPage />
-                </ProtectedRoute>
-              }
-            />
+                        <Route
+                            path="/app/lots"
+                            element={
+                                <ProtectedRoute allowedRoles={["WarehouseAdmin"]}>
+                                    <LotsPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/app/lots/:id"
+                            element={
+                                <ProtectedRoute allowedRoles={["WarehouseAdmin"]}>
+                                    <LotDetailPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/app/audit"
+                            element={
+                                <ProtectedRoute allowedRoles={["WarehouseAdmin"]}>
+                                    <AuditHistoryPage />
+                                </ProtectedRoute>
+                            }
+                        />
 
-            <Route
-              path="/jobs/:id"
-              element={
-                <ProtectedRoute allowedRoles={["Scientist"]}>
-                  <JobDetailPage />
-                </ProtectedRoute>
-              }
-            />
+                        <Route
+                            path="/app/manage-users"
+                            element={
+                                <ProtectedRoute allowedRoles={["WarehouseAdmin"]}>
+                                    <ManageUsersPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
 
-            <Route
-              path="/app/consumption"
-              element={
-                <ProtectedRoute allowedRoles={["Scientist"]}>
-                  <ConsumptionPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/app/consumption-history"
-              element={
-                <ProtectedRoute allowedRoles={["Scientist"]}>
-                  <ConsumptionHistoryPage />
-                </ProtectedRoute>
-              }
-            />
+                            path="/app/manage-users/:id"
+                            element={
+                                <ProtectedRoute allowedRoles={["WarehouseAdmin"]}>
+                                    <UserDetailPage />
+                                </ProtectedRoute>
+                            }
+                        />
 
-            <Route
-              path="/app/consumptions-history/:id"
-              element={
-                <ProtectedRoute allowedRoles={["Scientist"]}>
-                  <ConsumptionHistoryDetailPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/app/profile"
-              element={
-                <ProtectedRoute allowedRoles={["Scientist"]}>
-                  <ScientistProfilePage />
-                </ProtectedRoute>
-              }
-            />
+                        <Route
 
-            <Route
-              path="/"
-              element={<Navigate to="/app/dashboard" replace />}
-            />
-            <Route
-              path="*"
-              element={<Navigate to="/app/dashboard" replace />}
-            />
-          </Routes>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </JotaiProvider>
-  );
+                            path="/app/admin-profile"
+                            element={
+                                <ProtectedRoute allowedRoles={["WarehouseAdmin"]}>
+                                    <AdminProfilePage />
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/app/jobs"
+                            element={
+                                <ProtectedRoute allowedRoles={["Scientist"]}>
+                                    <JobPage />
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/jobs/:id"
+                            element={
+                                <ProtectedRoute allowedRoles={["Scientist"]}>
+                                    <JobDetailPage />
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/app/consumption"
+                            element={
+                                <ProtectedRoute allowedRoles={["Scientist"]}>
+                                    <ConsumptionPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/app/consumption-history"
+                            element={
+                                <ProtectedRoute allowedRoles={["Scientist"]}>
+                                    <ConsumptionHistoryPage />
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/app/consumptions-history/:id"
+                            element={
+                                <ProtectedRoute allowedRoles={["Scientist"]}>
+                                    <ConsumptionHistoryDetailPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/app/scientist-profile"
+                            element={
+                                <ProtectedRoute allowedRoles={["Scientist"]}>
+                                    <ScientistProfilePage />
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/"
+                            element={<Navigate to="/app/dashboard" replace />}
+                        />
+                        <Route
+                            path="*"
+                            element={<Navigate to="/app/dashboard" replace />}
+                        />
+                    </Routes>
+                </BrowserRouter>
+            </QueryClientProvider>
+        </JotaiProvider>
+    );
 }

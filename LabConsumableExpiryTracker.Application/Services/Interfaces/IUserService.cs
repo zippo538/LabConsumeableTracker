@@ -7,8 +7,22 @@ public interface IUserService
 {
     Task<ServiceResult<UserResponseDto>> CreateUserAsync(CreateUserRequestDto request);
     Task<ServiceResult<UserResponseDto>> GetUserProfileAsync(Guid userId);
-    Task<ServiceResult<List<UserResponseDto>>> GetAllUsersAsync();
+
+    Task<ServiceResult<PagedUsersResponseDto>> GetAllUsersAsync(
+        int page,
+        int pageSize,
+        string? search,
+        string? role,
+        string? status,
+       Guid currentUserGuid);
+
     Task<ServiceResult<UserResponseDto>> UpdateUserAsync(Guid id, UpdateUserRequestDto request);
     Task<ServiceResult<bool>> SetUserActiveStatusAsync(Guid currentAdminId, Guid targetUserId, bool isActive);
+    Task<ServiceResult<UserStatisticsResponseDto>> GetUserStatisticsAsync();
+    Task<ServiceResult<UserResponseDto>> GetUserByIdAsync(string id);
 
+    Task<ServiceResult<bool>> ChangeUserPasswordAsync(Guid id,ChangeUserPasswordRequestDto request);
+    Task<ServiceResult<UserResponseDto>> UpdateMyProfileAsync(
+        Guid id,
+        UpdateFullNameRequestDto request);
 }
