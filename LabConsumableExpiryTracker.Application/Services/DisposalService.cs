@@ -96,8 +96,8 @@ public class DisposalService : IDisposalService
         {
             _logger.LogWarning("Concurrency conflict during disposal for lot {LotId}", lotId);
             return ServiceResult<CreateDisposalResponseDto>.ErrorResult(
-                "Concurrency conflict. The lot was modified by another user.", 
-                new List<string> { "CONCURRENCY_CONFLICT" }
+                "Concurrency conflict. The lot was modified by another user.",
+                ["CONCURRENCY_CONFLICT"]
             );
         }
         catch (InvalidOperationException ex)

@@ -2,17 +2,17 @@ using AutoMapper;
 using LabConsumableExpiryTracker.Application.DTOs.JobDTOs;
 using LabConsumableExpiryTracker.Domain.Models;
 
-namespace LabConsumableExpiryTracker.Application.Mappings
+namespace LabConsumableExpiryTracker.Application.Mappings;
+
+public class JobMappingProfile : Profile
 {
-    public class JobMappingProfile : Profile
+    public JobMappingProfile()
     {
-        public JobMappingProfile()
-        {
-            CreateMap<Job, JobDto>()
+        CreateMap<Job, JobDto>()
             .ForMember(
                 destination => destination.JobNumber,
                 option => option.MapFrom(
-                source => source.JobNumber
+                    source => source.JobNumber
                 )
             ) .ForMember(
                 destination => destination.Description,
@@ -23,24 +23,23 @@ namespace LabConsumableExpiryTracker.Application.Mappings
             .ForMember(
                 destination => destination.Status,
                 option => option.MapFrom(
-                source => source.Status
+                    source => source.Status
                 )
             )
             .ForMember(
                 destination => destination.StartedAt,
                 option => option.MapFrom(
-                source => source.StartedAt
+                    source => source.StartedAt
                 )
             )
             .ForMember(
                 destination => destination.CompletedAt,
                 option => option.MapFrom(
-                source => source.CompletedAt
+                    source => source.CompletedAt
                 )
             )
             ;
-            CreateMap<CreateJobDto, Job>();
-            CreateMap<UpdateJobDto, Job>();
-        }
+        CreateMap<CreateJobDto, Job>();
+        CreateMap<UpdateJobDto, Job>();
     }
 }

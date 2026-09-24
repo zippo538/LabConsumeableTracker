@@ -41,19 +41,8 @@ public sealed class AuditService : IAuditService
                 "Validation failed.",
                 validation.Errors.Select(x => x.ErrorMessage).ToList());
         }
-        var normalized = query.JobId.HasValue && !query.EventType.HasValue
-            ? new AuditQuery
-            {
-                EventType = AuditEventType.Consumption,
-                ItemId = query.ItemId,
-                LotId = query.LotId,
-                JobId = query.JobId,
-                From = query.From,
-                To = query.To,
-                Search = query.Search,
-                Page = query.Page,
-                PageSize = query.PageSize
-            }
+        var normalized = query is { JobId: not null, EventType: null }
+            ? query with { EventType = AuditEventType.Consumption }
             : query;
 
         if (normalized != query)

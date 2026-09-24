@@ -65,7 +65,7 @@ public class UserService : IUserService
         _logger.LogInformation("User {Username} created successfully with role {Role}.", user.UserName, roleName);
 
         var response = _mapper.Map<UserResponseDto>(user);
-        response.Roles = new List<string> { roleName };
+        response.Roles = [roleName];
 
         return ServiceResult<UserResponseDto>.SuccessResult(response, "User created successfully.");
     }
@@ -114,8 +114,7 @@ public async Task<ServiceResult<PagedUsersResponseDto>> GetAllUsersAsync(
             (u.Email != null &&
              u.Email.Contains(keyword)) ||
 
-            (u.FullName != null &&
-             u.FullName.Contains(keyword))
+            u.FullName.Contains(keyword)
         );
     }
 
@@ -366,22 +365,20 @@ public async Task<ServiceResult<UserResponseDto>> UpdateUserAsync(
             request.NewPassword
         );
 
-        if (!result.Succeeded)
-        {
-            var errors = result.Errors
-                .Select(e => e.Description)
-                .ToList();
-
-            return ServiceResult<bool>.ErrorResult(
-                "Failed to change user password.",
-                errors
+        if (result.Succeeded)
+            return ServiceResult<bool>.SuccessResult(
+                true,
+                "User password changed successfully."
             );
-        }
+        var errors = result.Errors
+            .Select(e => e.Description)
+            .ToList();
 
-        return ServiceResult<bool>.SuccessResult(
-            true,
-            "User password changed successfully."
+        return ServiceResult<bool>.ErrorResult(
+            "Failed to change user password.",
+            errors
         );
+
     }
     
     public async Task<ServiceResult<UserResponseDto>> UpdateMyProfileAsync(

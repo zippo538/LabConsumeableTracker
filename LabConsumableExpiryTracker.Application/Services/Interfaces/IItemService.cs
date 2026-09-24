@@ -1,7 +1,6 @@
 using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.ItemDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
-using LabConsumableExpiryTracker.Domain.Models;
 
 namespace LabConsumableExpiryTracker.Application.Services.Interfaces
 {

@@ -10,12 +10,9 @@ namespace LabConsumableExpiryTracker.API.Controllers;
 [ApiController]
 [Route("api")]
 [Authorize(Roles = AllowedRoles)]
-public class AuditReadController : ControllerBase
+public class AuditReadController(IAuditService auditService) : ControllerBase
 {
     public const string AllowedRoles = nameof(UserRole.Scientist) + "," + nameof(UserRole.WarehouseAdmin);
-    private readonly IAuditService _auditService;
-
-    public AuditReadController(IAuditService auditService) => _auditService = auditService;
 
     [HttpGet("audit-events")]
     public async Task<ActionResult<ServiceResult<PagedResult<AuditEventDto>>>> GetAuditEvents(
@@ -23,7 +20,7 @@ public class AuditReadController : ControllerBase
        CancellationToken ct)
     {
         query = query with { Search = NormalizeSearch(query.Search) };
-        var response = await _auditService.GetAuditEventsAsync(query, ct);
+        var response = await auditService.GetAuditEventsAsync(query, ct);
 
         return response.Success ? Ok(response) : BadRequest(response);
     }
@@ -34,7 +31,7 @@ public class AuditReadController : ControllerBase
         CancellationToken ct)
     {
         query = query with { Search = NormalizeSearch(query.Search) };
-        var response = await _auditService.GetConsumptionsAsync(query, ct);
+        var response = await auditService.GetConsumptionsAsync(query, ct);
 
         return response.Success ? Ok(response) : BadRequest(response);
     }
@@ -45,7 +42,7 @@ public class AuditReadController : ControllerBase
         CancellationToken ct)
     {
         
-        var response = await _auditService.GetConsumptionByIdAsync(id, ct);
+        var response = await auditService.GetConsumptionByIdAsync(id, ct);
 
         return response.Success ? Ok(response) : NotFound(response);
     }

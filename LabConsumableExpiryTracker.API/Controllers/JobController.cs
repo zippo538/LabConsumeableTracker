@@ -8,27 +8,18 @@ using LabConsumableExpiryTracker.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace LabConsumableExpiryTracker.API.Controllers
-{
+namespace LabConsumableExpiryTracker.API.Controllers ;
     [ApiController]
     [Route("api/jobs")]
     [Authorize(Roles = nameof(UserRole.Scientist))]
-    public class JobController : ControllerBase
+    public class JobController(
+        IJobService jobService, ILotService lotService) : ControllerBase
     {
-        private readonly IJobService _jobService;
-        private readonly ILotService _lotService;
-        public JobController(
-            IJobService jobService, ILotService lotService)
-        {
-            _jobService = jobService;
-            _lotService = lotService;
-        }
-
         [HttpGet]
         [Authorize(Roles = nameof(UserRole.Scientist))]
         public async Task<ActionResult<ServiceResult<IReadOnlyList<JobDto>>>> GetAll(CancellationToken ct)
         {
-            var response = await _jobService.GetAllAsync(ct);
+            var response = await jobService.GetAllAsync(ct);
             return response.Success
                 ? Ok(response)
                 : NotFound(response);
@@ -39,7 +30,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
         [Authorize(Roles = nameof(UserRole.Scientist))]
         public async Task<ActionResult<ServiceResult<JobDto>>> GetById(Guid id, CancellationToken ct)
         {
-            var response = await _jobService.GetByIdAsync(id, ct);
+            var response = await jobService.GetByIdAsync(id, ct);
             return response.Success
                 ? Ok(response)
                 : NotFound(response);
@@ -47,9 +38,9 @@ namespace LabConsumableExpiryTracker.API.Controllers
 
         [HttpPost]
         [Authorize(Roles = nameof(UserRole.Scientist))]
-        public async Task<ActionResult<ServiceResult<JobDto>>> Create(CreateJobDto dto, CancellationToken ct)
+        public async Task<ActionResult<ServiceResult<JobDto>>> Create(CreateJobDto? dto, CancellationToken ct)
         {
-            var response = await _jobService.CreateAsync(dto, ct);
+            var response = await jobService.CreateAsync(dto, ct);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -63,7 +54,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
         [Authorize(Roles = nameof(UserRole.Scientist))]
         public async Task<ActionResult<ServiceResult<JobDto>>> Update(Guid id, UpdateJobDto dto, CancellationToken ct)
         {
-            var response = await _jobService.UpdateAsync(id, dto, ct);
+            var response = await jobService.UpdateAsync(id, dto, ct);
             if (!response.Success)
             {
                 return NotFound(response);
@@ -78,7 +69,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
         [Authorize(Roles = nameof(UserRole.Scientist))]
         public async Task<ActionResult<ServiceResult<JobDto>>> Start(Guid id, CancellationToken ct)
         {
-            var response = await _jobService.StartAsync(id, ct);
+            var response = await jobService.StartAsync(id, ct);
             return response.Success
                 ? Ok(response)
                 : BadRequest(response);
@@ -88,7 +79,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
         [Authorize(Roles = nameof(UserRole.Scientist))]
         public async Task<ActionResult<ServiceResult<JobDto>>> Cancel(Guid id, CancellationToken ct)
         {
-            var response = await _jobService.CancelAsync(id, ct);
+            var response = await jobService.CancelAsync(id, ct);
             return response.Success
                 ? Ok(response)
                 : BadRequest(response);
@@ -98,7 +89,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
         [Authorize(Roles = nameof(UserRole.Scientist))]
         public async Task<ActionResult<ServiceResult<JobDto>>> Complete(Guid id, CancellationToken ct)
         {
-            var response = await _jobService.CompleteAsync(id, ct);
+            var response = await jobService.CompleteAsync(id, ct);
             return response.Success
                 ? Ok(response)
                 : BadRequest(response);
@@ -111,7 +102,7 @@ namespace LabConsumableExpiryTracker.API.Controllers
             [FromBody] RequestFefoAllocationDto request,
             CancellationToken ct)
         {
-            var response = await _lotService.RequestFefoAllocation(
+            var response = await lotService.RequestFefoAllocation(
                 jobId, request.ItemId, request.RequestedQuantity, ct);
 
             return response.Success ? Ok(response) : BadRequest(response);
@@ -130,13 +121,12 @@ namespace LabConsumableExpiryTracker.API.Controllers
                 return Unauthorized(ServiceResult<ConsumptionResponseDto>.ErrorResult("Invalid user token."));
             }
  
-            var response = await _lotService.ConfirmConsumption(jobId, request, consumedBy, ct);
+            var response = await lotService.ConfirmConsumption(jobId, request, consumedBy, ct);
  
             return response.Success
-                ? Created($"/api/consumptions", response)
+                ? Created("/api/consumptions", response)
                 : Conflict(response);
         }
 
 
     }
-}

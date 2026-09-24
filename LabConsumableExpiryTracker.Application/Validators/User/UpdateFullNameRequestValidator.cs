@@ -1,8 +1,6 @@
 using FluentValidation;
 using LabConsumableExpiryTracker.Application.DTOs.UserDTOs;
-
-namespace LabConsumableExpiryTracker.Application.Validators.Users;
-
+namespace LabConsumableExpiryTracker.Application.Validators.User;
 public class UpdateFullNameRequestValidator : AbstractValidator<UpdateFullNameRequestDto>
 {
     public UpdateFullNameRequestValidator()

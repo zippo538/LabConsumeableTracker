@@ -49,6 +49,16 @@ public class ImageStorageRepositoryTests
         await resultStream!.DisposeAsync();
     }
     [Test]
+    public async Task GetImageAsync_ResolvesNonJpgExtension_WithMatchingContentType()
+    {
+        using var stream = new MemoryStream([1, 2, 3, 4]);
+        var imageId = await _repository.SaveImageAsync(stream, ".png", CancellationToken.None);
+        var (resultStream, contentType) = await _repository.GetImageAsync(imageId, CancellationToken.None);
+        Assert.That(resultStream, Is.Not.Null);
+        Assert.That(contentType, Is.EqualTo("image/png"));
+        await resultStream!.DisposeAsync();
+    }
+    [Test]
     public async Task GetImageAsync_ReturnsNull_WhenNotExists()
     {
         var (resultStream, contentType) = await _repository.GetImageAsync(Guid.NewGuid(), CancellationToken.None);

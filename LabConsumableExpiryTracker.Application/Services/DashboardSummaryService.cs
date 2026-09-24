@@ -6,111 +6,99 @@ using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.Extensions.Logging;
 
-namespace LabConsumableExpiryTracker.Application.Services
+namespace LabConsumableExpiryTracker.Application.Services;
+
+public class DashboardSummaryService(
+    IItemRepository itemRepository,
+    TimeProvider timeProvider,
+    ILogger<DashboardAlertDto> logger)
+    : IDashboardSummaryService
 {
-    public class DashboardSummaryService : IDashboardSummaryService
+    public async Task<ServiceResult<DashboardSummaryDto>> GetSummaryAsync(Guid? itemId, CancellationToken ct = default)
     {
-        private readonly IItemRepository _itemRepository;
-        private readonly TimeProvider _timeProvider;
-        private readonly ILogger<DashboardAlertDto> _logger;
-        public DashboardSummaryService(
-            IItemRepository itemRepository,
-            TimeProvider timeProvider,
-            ILogger<DashboardAlertDto> logger)
-        {
-            _itemRepository = itemRepository;
-            _timeProvider = timeProvider;
-            _logger = logger;
-        }
-        public async Task<ServiceResult<DashboardSummaryDto>> GetSummaryAsync(Guid? itemId, CancellationToken ct = default)
-        {
-            _logger.LogDebug("Calculating dashboard summary. ItemId filter: {ItemId}", itemId ?? (object)"Global");
+        logger.LogDebug("Calculating dashboard summary. ItemId filter: {ItemId}", itemId ?? (object)"Global");
 
-            var now = _timeProvider.GetUtcNow();
-            int lowStockItemCount = 0;
-            int validLotCount = 0;
-            int expiringSoonLotCount = 0;
-            int expiredLotCount = 0;
-            int blockedLotCount = 0;
+        var now = timeProvider.GetUtcNow();
+        var lowStockItemCount = 0;
+        var validLotCount = 0;
+        var expiringSoonLotCount = 0;
+        var expiredLotCount = 0;
+        var blockedLotCount = 0;
 
-            if (itemId.HasValue)
+        if (itemId.HasValue)
+        {
+            var item = await itemRepository.GetByIdWithLotsAsync(itemId.Value, ct);
+            if (item is null)
             {
-                var item = await _itemRepository.GetByIdWithLotsAsync(itemId.Value, ct);
-                if (item is null)
-                {
-                    _logger.LogWarning("Dashboard summary rejected because item {ItemId} was not found", itemId.Value);
-                    return ServiceResult<DashboardSummaryDto>.ErrorResult("Item tidak ditemukan.");
-                }
+                logger.LogWarning("Dashboard summary rejected because item {ItemId} was not found", itemId.Value);
+                return ServiceResult<DashboardSummaryDto>.ErrorResult("Item tidak ditemukan.");
+            }
 
+            EvaluateItemMetrics(item, now, ref lowStockItemCount, ref validLotCount, ref expiringSoonLotCount, ref expiredLotCount, ref blockedLotCount);
+        }
+        else
+        {
+            var items = await itemRepository.GetAllWithLotsAsync(ct);
+
+            foreach (var item in items)
+            {
                 EvaluateItemMetrics(item, now, ref lowStockItemCount, ref validLotCount, ref expiringSoonLotCount, ref expiredLotCount, ref blockedLotCount);
             }
-            else
-            {
-                var items = await _itemRepository.GetAllWithLotsAsync(ct);
-
-                foreach (var item in items)
-                {
-                    EvaluateItemMetrics(item, now, ref lowStockItemCount, ref validLotCount, ref expiringSoonLotCount, ref expiredLotCount, ref blockedLotCount);
-                }
-            }
-
-            var response = new DashboardSummaryDto
-            {
-                LowStockItemCount = lowStockItemCount,
-                ValidLotCount = validLotCount,
-                ExpiringSoonLotCount = expiringSoonLotCount,
-                ExpiredLotCount = expiredLotCount,
-                BlockedLotCount = blockedLotCount,
-                EvaluatedAt = now
-            };
-
-            _logger.LogInformation("Dashboard summary calculated successfully at {EvaluatedAt}", now);
-            return ServiceResult<DashboardSummaryDto>.SuccessResult(response, "Dashboard summary retrieved successfully.");
         }
-        private void EvaluateItemMetrics(
-       Item item,
-       DateTimeOffset now,
-       ref int lowStock,
-       ref int validLot,
-       ref int expiringSoon,
-       ref int expired,
-       ref int blocked)
+
+        var response = new DashboardSummaryDto
         {
-            decimal usableStock = 0;
+            LowStockItemCount = lowStockItemCount,
+            ValidLotCount = validLotCount,
+            ExpiringSoonLotCount = expiringSoonLotCount,
+            ExpiredLotCount = expiredLotCount,
+            BlockedLotCount = blockedLotCount,
+            EvaluatedAt = now
+        };
 
-            foreach (var lot in item.Lots)
-            {
-                if (lot.AdministrativeStatus == LotAdministrativeStatus.Quarantined ||
-                    lot.AdministrativeStatus == LotAdministrativeStatus.ManuallyBlocked)
-                {
-                    blocked++;
-                    continue; 
-                }
-                if (lot.AdministrativeStatus == LotAdministrativeStatus.Active && lot.RemainingQuantity > 0)
-                {
-                    var condition = lot.GetExpiryCondition(now, item.ExpiringSoonDays);
+        logger.LogInformation("Dashboard summary calculated successfully at {EvaluatedAt}", now);
+        return ServiceResult<DashboardSummaryDto>.SuccessResult(response, "Dashboard summary retrieved successfully.");
+    }
+    private static void EvaluateItemMetrics(
+        Item item,
+        DateTimeOffset now,
+        ref int lowStock,
+        ref int validLot,
+        ref int expiringSoon,
+        ref int expired,
+        ref int blocked)
+    {
+        decimal usableStock = 0;
 
-                    if (condition == ExpiryCondition.ExpiringSoon)
-                    {
-                        expiringSoon++;
-                        usableStock += lot.RemainingQuantity; 
-                    }
-                    else if (condition == ExpiryCondition.Expired)
-                    {
-                        expired++;
-                    }
-                    else 
-                    {
-                        validLot++;
-                        usableStock += lot.RemainingQuantity;
-                    }
-                }
-            }
-            if (usableStock < item.MinimumStock)
+        foreach (var lot in item.Lots)
+        {
+            if (lot.AdministrativeStatus is LotAdministrativeStatus.Quarantined or LotAdministrativeStatus.ManuallyBlocked)
             {
-                lowStock++;
+                blocked++;
+                continue; 
             }
+
+            if (lot.AdministrativeStatus != LotAdministrativeStatus.Active || lot.RemainingQuantity <= 0) continue;
+            var condition = lot.GetExpiryCondition(now, item.ExpiringSoonDays);
+
+            switch (condition)
+            {
+                case ExpiryCondition.ExpiringSoon:
+                    expiringSoon++;
+                    usableStock += lot.RemainingQuantity;
+                    break;
+                case ExpiryCondition.Expired:
+                    expired++;
+                    break;
+                default:
+                    validLot++;
+                    usableStock += lot.RemainingQuantity;
+                    break;
+            }
+        }
+        if (usableStock < item.MinimumStock)
+        {
+            lowStock++;
         }
     }
-
 }

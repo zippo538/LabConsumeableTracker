@@ -43,9 +43,9 @@ public class ExportService : IExportService
         var now = _timeProvider.GetUtcNow();
 
         var items = filter.ItemId is { } itemId
-            ? (await _itemRepository.GetByIdWithLotsAsync(itemId, ct)) is { } single
-                ? new[] { single }
-                : Array.Empty<Item>()
+            ? await _itemRepository.GetByIdWithLotsAsync(itemId, ct) is { } single
+                ? [single]
+                : []
             : (await _itemRepository.GetAllWithLotsAsync(ct)).ToArray();
 
         var itemIds = items.Select(i => i.Id).ToArray();

@@ -17,15 +17,11 @@ public class HttpContextCurrentUserContext : ICurrentUserContext
             if (user == null) return Guid.Empty;
             var userIdClaim = user.FindFirstValue(ClaimTypes.NameIdentifier);
             userIdClaim ??= user.FindFirstValue("sub");
-            if (Guid.TryParse(userIdClaim, out var userId))
-            {
-                return userId;
-            }
-            return Guid.Empty; 
+            return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
         }
     }
     public bool IsAuthenticated =>
-        _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true;
+        _httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true;
     public bool IsInRole(string role) =>
         _httpContextAccessor.HttpContext?.User.IsInRole(role) == true;
 }

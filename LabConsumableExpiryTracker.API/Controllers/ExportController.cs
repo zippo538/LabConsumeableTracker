@@ -13,18 +13,14 @@ namespace LabConsumableExpiryTracker.API.Controllers;
 [ApiController]
 [Route("api/exports")]
 [Authorize(Roles = $"{nameof(UserRole.WarehouseAdmin)}")]
-public class ExportsController : ControllerBase
+public class ExportsController(IExportService exportService) : ControllerBase
 {
-    private readonly IExportService _exportService;
-
-    public ExportsController(IExportService exportService) => _exportService = exportService;
-
     [HttpGet("stock")]
     public async Task<IActionResult> ExportStock(
         [FromQuery] StockExportFilterDto filter,
         CancellationToken ct)
     {
-        var result = await _exportService.GetStockExport(
+        var result = await exportService.GetStockExport(
          filter, ct);
 
         return result.Success
@@ -37,7 +33,7 @@ public class ExportsController : ControllerBase
         [FromQuery] ConsumptionExportFilterDto filter,
         CancellationToken ct)
     {
-        var result = await _exportService.GetConsumptionExport(filter, ct);
+        var result = await exportService.GetConsumptionExport(filter, ct);
 
         return result.Success
             ? ToCsvFile(result.Data!, "consumptions-export")
@@ -49,7 +45,7 @@ public class ExportsController : ControllerBase
        [FromQuery] DisposalExportFilterDto filter,
         CancellationToken ct)
     {
-        var result = await _exportService.GetDisposalExport(
+        var result = await exportService.GetDisposalExport(
            filter, ct);
 
         return result.Success

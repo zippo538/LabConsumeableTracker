@@ -1,5 +1,4 @@
 using LabConsumableExpiryTracker.Application.Common.Result;
-using LabConsumableExpiryTracker.Application.DTOs.DisposalDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
@@ -11,23 +10,15 @@ namespace LabConsumableExpiryTracker.API.Controllers;
 [ApiController]
 [Route("api/disposals")]
 [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
-public class DisposalController : ControllerBase
+public class DisposalController(IAuditService auditService) : ControllerBase
 {
-    public const string AllowedRoles = nameof(UserRole.Scientist) + "," + nameof(UserRole.WarehouseAdmin);
-    private readonly IAuditService _auditService;
-
-    public DisposalController(IAuditService auditService)
-    {
-        _auditService = auditService;
-    }
-
     [HttpGet]
     public async Task<ActionResult<ServiceResult<PagedResult<DisposalAuditDto>>>> GetDisposals(
         [FromQuery] AuditQuery query,
         CancellationToken ct)
     {
         query = query with { Search = NormalizeSearch(query.Search) };
-        var response = await _auditService.GetDisposalsAsync(query, ct);
+        var response = await auditService.GetDisposalsAsync(query, ct);
 
         return response.Success ? Ok(response) : BadRequest(response);
     }
@@ -37,7 +28,7 @@ public class DisposalController : ControllerBase
         Guid id,
         CancellationToken ct)
     {
-        var response = await _auditService.GetDisposalByIdAsync(id, ct);
+        var response = await auditService.GetDisposalByIdAsync(id, ct);
 
         return response.Success ? Ok(response) : NotFound(response);
     }

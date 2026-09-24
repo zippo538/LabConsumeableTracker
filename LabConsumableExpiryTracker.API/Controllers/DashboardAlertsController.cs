@@ -11,19 +11,16 @@ namespace LabConsumableExpiryTracker.API.Controllers;
 [ApiController]
 [Route("api/dashboard/alerts")]
 [Authorize(Roles = AllowedRoles)]
-public class DashboardAlertsController : ControllerBase
+public class DashboardAlertsController(IDashboardAlertService service) : ControllerBase
 {
-    public const string AllowedRoles = nameof(UserRole.Scientist) + "," + nameof(UserRole.WarehouseAdmin);
-    private readonly IDashboardAlertService _service;
-
-    public DashboardAlertsController(IDashboardAlertService service) => _service = service;
+    private const string AllowedRoles = nameof(UserRole.Scientist) + "," + nameof(UserRole.WarehouseAdmin);
 
     [HttpGet]
     public async Task<ActionResult<ServiceResult<PagedResult<DashboardAlertDto>>>> GetAlerts(
         [FromQuery] DashboardAlertQuery query,
         CancellationToken ct = default)
     {
-        var response = await _service.GetAlertsAsync(query, ct);
+        var response = await service.GetAlertsAsync(query, ct);
         return response.Success ? Ok(response) : BadRequest(response);
     }
 }
