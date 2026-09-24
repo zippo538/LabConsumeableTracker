@@ -86,21 +86,23 @@ public class UserService : IUserService
     }
 
 
-   public async Task<ServiceResult<PagedUsersResponseDto>> GetAllUsersAsync(
+public async Task<ServiceResult<PagedUsersResponseDto>> GetAllUsersAsync(
     int page,
     int pageSize,
     string? search,
     string? role,
-    string? status)
+    string? status,
+    Guid currentUserId)
 {
     page = page < 1 ? 1 : page;
     pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
 
     var query = _userManager.Users
         .AsNoTracking()
+        .Where(u => u.Id != currentUserId)
         .AsQueryable();
 
-
+    // filter search
     if (!string.IsNullOrWhiteSpace(search))
     {
         var keyword = search.Trim();
@@ -116,8 +118,8 @@ public class UserService : IUserService
              u.FullName.Contains(keyword))
         );
     }
-    
 
+    // filter status
     if (!string.IsNullOrWhiteSpace(status))
     {
         if (status.Equals(
@@ -133,8 +135,8 @@ public class UserService : IUserService
             query = query.Where(u => !u.IsActive);
         }
     }
-    
 
+    // filter role
     if (!string.IsNullOrWhiteSpace(role))
     {
         var usersInRole =
@@ -147,9 +149,9 @@ public class UserService : IUserService
         query = query.Where(u =>
             userIds.Contains(u.Id));
     }
-    
+
     var totalCount = await query.CountAsync();
-    
+
     var adminUsers =
         await _userManager.GetUsersInRoleAsync(
             nameof(UserRole.WarehouseAdmin));
@@ -157,14 +159,14 @@ public class UserService : IUserService
     var adminIds = adminUsers
         .Select(u => u.Id)
         .ToHashSet();
-    
+
     var users = await query
         .OrderByDescending(u => adminIds.Contains(u.Id))
         .ThenBy(u => u.UserName)
         .Skip((page - 1) * pageSize)
         .Take(pageSize)
         .ToListAsync();
-    
+
     var resultList = new List<UserResponseDto>();
 
     foreach (var user in users)
@@ -172,12 +174,11 @@ public class UserService : IUserService
         var roles = await _userManager.GetRolesAsync(user);
 
         var dto = _mapper.Map<UserResponseDto>(user);
-
         dto.Roles = roles.ToList();
 
         resultList.Add(dto);
     }
-    
+
     var response = new PagedUsersResponseDto
     {
         Items = resultList,
@@ -189,30 +190,79 @@ public class UserService : IUserService
     return ServiceResult<PagedUsersResponseDto>
         .SuccessResult(response);
 }
+public async Task<ServiceResult<UserResponseDto>> UpdateUserAsync(
+    Guid id,
+    UpdateUserRequestDto request)
+{
+    var user = await _userManager.FindByIdAsync(id.ToString());
 
-    public async Task<ServiceResult<UserResponseDto>> UpdateUserAsync(Guid id, UpdateUserRequestDto request)
+    if (user is null)
     {
-        var user = await _userManager.FindByIdAsync(id.ToString());
-        if (user is null)
-        {
-            return ServiceResult<UserResponseDto>.ErrorResult("User not found.");
-        }
-
-        user.FullName = request.FullName;
-
-        var result = await _userManager.UpdateAsync(user);
-        if (!result.Succeeded)
-        {
-            var errors = result.Errors.Select(e => e.Description).ToList();
-            return ServiceResult<UserResponseDto>.ErrorResult("Failed to update user.", errors);
-        }
-
-        var roles = await _userManager.GetRolesAsync(user);
-        var response = _mapper.Map<UserResponseDto>(user);
-        response.Roles = roles.ToList();
-
-        return ServiceResult<UserResponseDto>.SuccessResult(response, "User updated successfully.");
+        return ServiceResult<UserResponseDto>.ErrorResult(
+            "User not found."
+        );
     }
+
+    user.FullName = request.FullName;
+
+    var usernameResult = await _userManager.SetUserNameAsync(
+        user,
+        request.Username
+    );
+
+    if (!usernameResult.Succeeded)
+    {
+        var errors = usernameResult.Errors
+            .Select(e => e.Description)
+            .ToList();
+
+        return ServiceResult<UserResponseDto>.ErrorResult(
+            "Failed to update username.",
+            errors
+        );
+    }
+
+    var emailResult = await _userManager.SetEmailAsync(
+        user,
+        request.Email
+    );
+
+    if (!emailResult.Succeeded)
+    {
+        var errors = emailResult.Errors
+            .Select(e => e.Description)
+            .ToList();
+
+        return ServiceResult<UserResponseDto>.ErrorResult(
+            "Failed to update email.",
+            errors
+        );
+    }
+
+    var updateResult = await _userManager.UpdateAsync(user);
+
+    if (!updateResult.Succeeded)
+    {
+        var errors = updateResult.Errors
+            .Select(e => e.Description)
+            .ToList();
+
+        return ServiceResult<UserResponseDto>.ErrorResult(
+            "Failed to update user.",
+            errors
+        );
+    }
+
+    var roles = await _userManager.GetRolesAsync(user);
+
+    var response = _mapper.Map<UserResponseDto>(user);
+    response.Roles = roles.ToList();
+
+    return ServiceResult<UserResponseDto>.SuccessResult(
+        response,
+        "User updated successfully."
+    );
+}
 
     public async Task<ServiceResult<bool>> SetUserActiveStatusAsync(Guid currentAdminId, Guid targetUserId,
         bool isActive)
@@ -275,5 +325,62 @@ public class UserService : IUserService
 
         return ServiceResult<UserStatisticsResponseDto>
             .SuccessResult(response);
+    }
+    public async Task<ServiceResult<UserResponseDto>> GetUserByIdAsync(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+
+        if (user == null)
+        {
+            return ServiceResult<UserResponseDto>.ErrorResult(
+                "User not found."
+            );
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+
+        var dto = _mapper.Map<UserResponseDto>(user);
+        dto.Roles = roles.ToList();
+
+        return ServiceResult<UserResponseDto>.SuccessResult(dto);
+    }
+    
+    public async Task<ServiceResult<bool>> ChangeUserPasswordAsync(
+        Guid id,
+        ChangeUserPasswordRequestDto request)
+    {
+        var user = await _userManager.FindByIdAsync(id.ToString());
+
+        if (user is null)
+        {
+            return ServiceResult<bool>.ErrorResult(
+                "User not found."
+            );
+        }
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+        var result = await _userManager.ResetPasswordAsync(
+            user,
+            token,
+            request.NewPassword
+        );
+
+        if (!result.Succeeded)
+        {
+            var errors = result.Errors
+                .Select(e => e.Description)
+                .ToList();
+
+            return ServiceResult<bool>.ErrorResult(
+                "Failed to change user password.",
+                errors
+            );
+        }
+
+        return ServiceResult<bool>.SuccessResult(
+            true,
+            "User password changed successfully."
+        );
     }
 }

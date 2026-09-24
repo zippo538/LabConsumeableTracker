@@ -73,12 +73,20 @@ public class UserController : ControllerBase
         [FromQuery] string? role = null,
         [FromQuery] string? status = null)
     {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!Guid.TryParse(currentUserId, out var currentUserGuid))
+        {
+            return Unauthorized();
+        }
+
         var result = await _userService.GetAllUsersAsync(
             page,
             pageSize,
             search,
             role,
-            status
+            status,
+            currentUserGuid
         );
 
         return Ok(result);
@@ -124,6 +132,35 @@ public class UserController : ControllerBase
         GetUserStatistics()
     {
         var result = await _userService.GetUserStatisticsAsync();
+
+        return Ok(result);
+    }
+    
+    [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ServiceResult<UserResponseDto>>> GetUserById(
+        string id)
+    {
+        var result = await _userService.GetUserByIdAsync(id);
+
+        return Ok(result);
+    }
+    
+    [HttpPut("{id:guid}/password")]
+    [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
+    public async Task<ActionResult<ServiceResult<bool>>> ChangePassword(
+        Guid id,
+        [FromBody] ChangeUserPasswordRequestDto request)
+    {
+        var result = await _userService.ChangeUserPasswordAsync(
+            id,
+            request
+        );
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
 
         return Ok(result);
     }
