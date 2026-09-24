@@ -41,18 +41,32 @@ public class UserController : ControllerBase
         [FromBody] UpdateFullNameRequestDto request,
         CancellationToken ct)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        var userIdClaim = User.FindFirstValue(
+            ClaimTypes.NameIdentifier
+        );
+
+        if (string.IsNullOrEmpty(userIdClaim) ||
+            !Guid.TryParse(userIdClaim, out var userId))
         {
-            return Unauthorized(ServiceResult<UserResponseDto>.ErrorResult("Invalid user token."));
+            return Unauthorized(
+                ServiceResult<UserResponseDto>.ErrorResult(
+                    "Invalid user token."
+                )
+            );
         }
 
-        var result = await _userService.UpdateUserAsync(userId, new UpdateUserRequestDto { FullName = request.FullName });
+        var result = await _userService.UpdateMyProfileAsync(
+            userId,
+            request
+        );
+
         if (!result.Success)
+        {
             return BadRequest(result);
+        }
+
         return Ok(result);
     }
-
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
     [HttpPost]
     public async Task<ActionResult<ServiceResult<UserResponseDto>>> CreateUser(
@@ -125,7 +139,7 @@ public class UserController : ControllerBase
             return BadRequest(result);
         return Ok(result);
     }
-    
+
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
     [HttpGet("stats")]
     public async Task<ActionResult<ServiceResult<UserStatisticsResponseDto>>>
@@ -135,7 +149,7 @@ public class UserController : ControllerBase
 
         return Ok(result);
     }
-    
+
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
     [HttpGet("{id}")]
     public async Task<ActionResult<ServiceResult<UserResponseDto>>> GetUserById(
@@ -145,7 +159,7 @@ public class UserController : ControllerBase
 
         return Ok(result);
     }
-    
+
     [HttpPut("{id:guid}/password")]
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
     public async Task<ActionResult<ServiceResult<bool>>> ChangePassword(

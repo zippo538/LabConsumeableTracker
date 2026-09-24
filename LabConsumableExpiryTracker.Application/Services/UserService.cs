@@ -383,4 +383,46 @@ public async Task<ServiceResult<UserResponseDto>> UpdateUserAsync(
             "User password changed successfully."
         );
     }
+    
+    public async Task<ServiceResult<UserResponseDto>> UpdateMyProfileAsync(
+        Guid id,
+        UpdateFullNameRequestDto request)
+    {
+        var user = await _userManager.FindByIdAsync(
+            id.ToString()
+        );
+
+        if (user is null)
+        {
+            return ServiceResult<UserResponseDto>.ErrorResult(
+                "User not found."
+            );
+        }
+
+        user.FullName = request.FullName;
+
+        var result = await _userManager.UpdateAsync(user);
+
+        if (!result.Succeeded)
+        {
+            var errors = result.Errors
+                .Select(e => e.Description)
+                .ToList();
+
+            return ServiceResult<UserResponseDto>.ErrorResult(
+                "Failed to update profile.",
+                errors
+            );
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+
+        var response = _mapper.Map<UserResponseDto>(user);
+        response.Roles = roles.ToList();
+
+        return ServiceResult<UserResponseDto>.SuccessResult(
+            response,
+            "Profile updated successfully."
+        );
+    }
 }

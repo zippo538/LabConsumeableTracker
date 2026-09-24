@@ -22,4 +22,7 @@ public interface IUserService
     Task<ServiceResult<UserResponseDto>> GetUserByIdAsync(string id);
 
     Task<ServiceResult<bool>> ChangeUserPasswordAsync(Guid id,ChangeUserPasswordRequestDto request);
+    Task<ServiceResult<UserResponseDto>> UpdateMyProfileAsync(
+        Guid id,
+        UpdateFullNameRequestDto request);
 }
