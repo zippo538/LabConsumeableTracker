@@ -2,6 +2,7 @@ using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 namespace LabConsumableExpiryTracker.Tests.Repository;
+
 [TestFixture]
 public class ImageStorageRepositoryTests
 {
@@ -46,6 +47,16 @@ public class ImageStorageRepositoryTests
         var (resultStream, contentType) = await _repository.GetImageAsync(imageId, CancellationToken.None);
         Assert.That(resultStream, Is.Not.Null);
         Assert.That(contentType, Is.EqualTo("image/jpeg"));
+        await resultStream!.DisposeAsync();
+    }
+    [Test]
+    public async Task GetImageAsync_ResolvesNonJpgExtension_WithMatchingContentType()
+    {
+        using var stream = new MemoryStream([1, 2, 3, 4]);
+        var imageId = await _repository.SaveImageAsync(stream, ".png", CancellationToken.None);
+        var (resultStream, contentType) = await _repository.GetImageAsync(imageId, CancellationToken.None);
+        Assert.That(resultStream, Is.Not.Null);
+        Assert.That(contentType, Is.EqualTo("image/png"));
         await resultStream!.DisposeAsync();
     }
     [Test]

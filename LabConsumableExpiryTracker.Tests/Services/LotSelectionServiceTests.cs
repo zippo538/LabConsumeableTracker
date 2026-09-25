@@ -1,10 +1,8 @@
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services;
-using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 using Moq;
-using NUnit.Framework;
 
 namespace LabConsumableExpiryTracker.Tests.Services;
 

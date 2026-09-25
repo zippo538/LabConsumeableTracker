@@ -4,6 +4,7 @@ using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using LabConsumableExpiryTracker.Tests.Helpers;
 using Microsoft.EntityFrameworkCore;
 namespace LabConsumableExpiryTracker.Tests.Repository;
+
 [TestFixture]
 public class RefreshTokenRepositoryTests
 {
@@ -93,31 +94,31 @@ public class RefreshTokenRepositoryTests
     [Test]
     public async Task RevokeAllByUserIdAsync_RevokesActiveTokensForUser()
     {
-    var user = await SeedUserAsync();
-    var t1 = await SeedTokenAsync(user.Id, $"RT-ACTIVE-1-{Guid.NewGuid():N}");
-    var t2 = await SeedTokenAsync(user.Id, $"RT-ACTIVE-2-{Guid.NewGuid():N}");
-    await _repository.RevokeAllByUserIdAsync(user.Id);
-    var fetched1 = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == t1.Token);
-    var fetched2 = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == t2.Token);
-    Assert.That(fetched1, Is.Not.Null);
-    Assert.That(fetched1!.IsRevoked, Is.True);
-    Assert.That(fetched1.RevokedOnUtc, Is.Not.Null);
-    Assert.That(fetched2, Is.Not.Null);
-    Assert.That(fetched2!.IsRevoked, Is.True);
+        var user = await SeedUserAsync();
+        var t1 = await SeedTokenAsync(user.Id, $"RT-ACTIVE-1-{Guid.NewGuid():N}");
+        var t2 = await SeedTokenAsync(user.Id, $"RT-ACTIVE-2-{Guid.NewGuid():N}");
+        await _repository.RevokeAllByUserIdAsync(user.Id);
+        var fetched1 = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == t1.Token);
+        var fetched2 = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == t2.Token);
+        Assert.That(fetched1, Is.Not.Null);
+        Assert.That(fetched1!.IsRevoked, Is.True);
+        Assert.That(fetched1.RevokedOnUtc, Is.Not.Null);
+        Assert.That(fetched2, Is.Not.Null);
+        Assert.That(fetched2!.IsRevoked, Is.True);
     }
     [Test]
     public async Task RevokeAllByUserIdAsync_DoesNotAffectOtherUsersTokens()
     {
-    var user1 = await SeedUserAsync();
-    var user2 = await SeedUserAsync();
-    var t1 = await SeedTokenAsync(user1.Id, $"RT-U1-{Guid.NewGuid():N}");
-    var t2 = await SeedTokenAsync(user2.Id, $"RT-U2-{Guid.NewGuid():N}");
-    await _repository.RevokeAllByUserIdAsync(user1.Id);
-    var fetched1 = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == t1.Token);
-    var fetched2 = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == t2.Token);
-    Assert.That(fetched1, Is.Not.Null);
-    Assert.That(fetched1!.IsRevoked, Is.True);
-    Assert.That(fetched2, Is.Not.Null);
-    Assert.That(fetched2!.IsRevoked, Is.False); 
+        var user1 = await SeedUserAsync();
+        var user2 = await SeedUserAsync();
+        var t1 = await SeedTokenAsync(user1.Id, $"RT-U1-{Guid.NewGuid():N}");
+        var t2 = await SeedTokenAsync(user2.Id, $"RT-U2-{Guid.NewGuid():N}");
+        await _repository.RevokeAllByUserIdAsync(user1.Id);
+        var fetched1 = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == t1.Token);
+        var fetched2 = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == t2.Token);
+        Assert.That(fetched1, Is.Not.Null);
+        Assert.That(fetched1!.IsRevoked, Is.True);
+        Assert.That(fetched2, Is.Not.Null);
+        Assert.That(fetched2!.IsRevoked, Is.False);
     }
 }

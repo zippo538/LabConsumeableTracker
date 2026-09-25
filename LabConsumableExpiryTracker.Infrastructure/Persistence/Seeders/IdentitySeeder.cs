@@ -2,35 +2,26 @@ using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace LabConsumableExpiryTracker.Infrastructure.Persistence;
+namespace LabConsumableExpiryTracker.Infrastructure.Persistence.Seeders;
 
-public class IdentitySeeder
+public class IdentitySeeder(
+    RoleManager<IdentityRole<Guid>> roleManager,
+    UserManager<ApplicationUser> userManager)
 {
-    private readonly RoleManager<IdentityRole<Guid>> _roleManager;
-    private readonly UserManager<ApplicationUser> _userManager;
-
-    public IdentitySeeder(
-        RoleManager<IdentityRole<Guid>> roleManager,
-        UserManager<ApplicationUser> userManager)
-    {
-        _roleManager = roleManager;
-        _userManager = userManager;
-    }
-
     public async Task SeedAsync()
     {
         foreach (var role in Enum.GetValues<UserRole>())
         {
             var roleName = role.ToString();
 
-            if (!await _roleManager.RoleExistsAsync(roleName))
+            if (!await roleManager.RoleExistsAsync(roleName))
             {
-                await _roleManager.CreateAsync(
+                await roleManager.CreateAsync(
                     new IdentityRole<Guid>(roleName));
             }
         }
 
-        var admin = await _userManager.FindByNameAsync("warehouseadmin");
+        var admin = await userManager.FindByNameAsync("warehouseadmin");
 
         if (admin is null)
         {
@@ -43,7 +34,7 @@ public class IdentitySeeder
                 EmailConfirmed = true
             };
 
-            var result = await _userManager.CreateAsync(
+            var result = await userManager.CreateAsync(
                 admin,
                 "Admin@123");
 
@@ -56,11 +47,11 @@ public class IdentitySeeder
             }
         }
 
-        if (!await _userManager.IsInRoleAsync(
+        if (!await userManager.IsInRoleAsync(
                 admin,
                 UserRole.WarehouseAdmin.ToString()))
         {
-            await _userManager.AddToRoleAsync(
+            await userManager.AddToRoleAsync(
                 admin,
                 UserRole.WarehouseAdmin.ToString());
         }

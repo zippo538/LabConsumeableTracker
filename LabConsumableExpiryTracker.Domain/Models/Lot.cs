@@ -115,66 +115,68 @@ public class Lot
 
         return new Consumption(Guid.NewGuid(), jobId, Id, quantity, now, consumedBy);
     }
-    public void UpdateLotNumber(string lotNumber)
+    public bool UpdateLotNumber(string lotNumber)
     {
         if (string.IsNullOrWhiteSpace(lotNumber))
             throw new ArgumentException("Lot number is required.", nameof(lotNumber));
 
         var trimmed = lotNumber.Trim();
-        if (LotNumber == trimmed) return;
+        if (LotNumber == trimmed) return false;
 
         LotNumber = trimmed;
+        return true;
     }
 
-    public void UpdateSupplierLotNumber(string? supplierLotNumber)
+    public bool UpdateSupplierLotNumber(string? supplierLotNumber)
     {
         var trimmed = supplierLotNumber?.Trim();
-        if (SupplierLotNumber == trimmed) return; 
+        if (SupplierLotNumber == trimmed) return false;
 
         SupplierLotNumber = trimmed;
+        return true;
     }
 
-    public void UpdateSupplierName(string? supplierName)
+    public bool UpdateSupplierName(string? supplierName)
     {
         var trimmed = supplierName?.Trim();
-        if (SupplierName == trimmed) return; 
+        if (SupplierName == trimmed) return false;
 
         SupplierName = trimmed;
+        return true;
     }
 
-    public void UpdateStorageLocation(string storageLocation)
+    public bool UpdateStorageLocation(string storageLocation)
     {
         if (string.IsNullOrWhiteSpace(storageLocation))
         {
             throw new ArgumentException("Storage location is required.", nameof(storageLocation));
         }
         var trimmed = storageLocation.Trim();
-        if (StorageLocation == trimmed) return; 
+        if (StorageLocation == trimmed) return false;
 
         StorageLocation = trimmed;
+        return true;
     }
-    public void UpdateExpiryDate(DateOnly expiryDate)
+    public bool UpdateExpiryDate(DateOnly expiryDate)
     {
-        if (ExpiryDate == expiryDate) return; 
+        if (ExpiryDate == expiryDate) return false;
         ExpiryDate = expiryDate;
+        return true;
     }
-    public void UpdateAdministrativeStatus(LotAdministrativeStatus status)
+    public bool UpdateAdministrativeStatus(LotAdministrativeStatus status)
     {
         if (AdministrativeStatus == status)
-            return;
+            return false;
 
         var isValidTransition =
             (AdministrativeStatus == LotAdministrativeStatus.Active &&
-             (status == LotAdministrativeStatus.ManuallyBlocked ||
-              status == LotAdministrativeStatus.Quarantined))
+             status is LotAdministrativeStatus.ManuallyBlocked or LotAdministrativeStatus.Quarantined)
             ||
             (AdministrativeStatus == LotAdministrativeStatus.ManuallyBlocked &&
-             (status == LotAdministrativeStatus.Active ||
-              status == LotAdministrativeStatus.Quarantined))
+             status is LotAdministrativeStatus.Active or LotAdministrativeStatus.Quarantined)
             ||
             (AdministrativeStatus == LotAdministrativeStatus.Quarantined &&
-             (status == LotAdministrativeStatus.Active ||
-              status == LotAdministrativeStatus.ManuallyBlocked));
+             status is LotAdministrativeStatus.Active or LotAdministrativeStatus.ManuallyBlocked);
 
         if (!isValidTransition)
         {
@@ -183,6 +185,7 @@ public class Lot
         }
 
         AdministrativeStatus = status;
+        return true;
     }
     public bool IsEligible(DateTimeOffset now)
     {

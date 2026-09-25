@@ -5,7 +5,6 @@ using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
 
 namespace LabConsumableExpiryTracker.Tests.Services;
 
@@ -112,7 +111,7 @@ public class DashboardSummaryServiceTests
         Assert.That(result.Success, Is.True);
         Assert.That(result.Data, Is.Not.Null);
 
-       
+
         Assert.That(result.Data.ValidLotCount, Is.EqualTo(1));
         Assert.That(result.Data.ExpiringSoonLotCount, Is.EqualTo(1));
         Assert.That(result.Data.ExpiredLotCount, Is.EqualTo(1));
@@ -144,7 +143,7 @@ public class DashboardSummaryServiceTests
         var result = await _service.GetSummaryAsync(itemId);
 
         Assert.That(result.Success, Is.True);
-        Assert.That(result?.Data?.ExpiringSoonLotCount, Is.EqualTo(0));
+        Assert.That(result.Data?.ExpiringSoonLotCount, Is.EqualTo(0));
         Assert.That(result.Data.ExpiredLotCount, Is.EqualTo(0));
         Assert.That(result.Data.LowStockItemCount, Is.EqualTo(0));
     }
@@ -173,7 +172,7 @@ public class DashboardSummaryServiceTests
         var result = await _service.GetSummaryAsync(itemId);
 
         Assert.That(result.Success, Is.True);
-        Assert.That(result?.Data?.ExpiredLotCount, Is.EqualTo(0));
+        Assert.That(result.Data?.ExpiredLotCount, Is.EqualTo(0));
         Assert.That(result.Data.BlockedLotCount, Is.EqualTo(0));
     }
 
@@ -312,22 +311,10 @@ public class DashboardSummaryServiceTests
         var result = await _service.GetSummaryAsync(itemId);
 
         Assert.That(result.Success, Is.True);
-       
+
     }
 
-    private static Item CreateItem(
-        Guid itemId,
-        decimal minimumStock,
-        int expiringSoonDays)
-    {
-        return new Item(
-            itemId,
-            $"ITEM-{itemId.ToString()[..8]}",
-            "Test Item",
-            UnitOfMeasure.Unit,
-            minimumStock,
-            expiringSoonDays);
-    }
+
 
     private static Lot CreateLot(
         Guid itemId,

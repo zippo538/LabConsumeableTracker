@@ -1,31 +1,22 @@
-using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
-using LabConsumableExpiryTracker.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Repositories;
 
-public class LotRepository : Repository<Lot, Guid>, ILotRepository
+public class LotRepository(
+    AppDbContext context,
+    ILogger<LotRepository> logger) : Repository<Lot, Guid>(context), ILotRepository
 {
-    private readonly AppDbContext _context;
-    private readonly ILogger<LotRepository> _logger;
-
-    public LotRepository(
-        AppDbContext context,
-        ILogger<LotRepository> logger) : base(context)
-    {
-        _context = context;
-        _logger = logger;
-    }
+    private readonly AppDbContext _context = context;
 
     public async Task<bool> ExistsAsync(Guid itemId, string lotNumber, DateOnly expiryDate, CancellationToken ct)
     {
-        _logger.LogDebug(
+        logger.LogDebug(
             "Checking whether a lot exists for item {ItemId} with expiry date {ExpiryDate}",
             itemId,
             expiryDate);
@@ -40,7 +31,7 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
                     lot.ExpiryDate == expiryDate,
                 ct);
 
-        _logger.LogDebug(
+        logger.LogDebug(
             "Lot existence check completed for item {ItemId} with result {Exists}",
             itemId,
             exists);
@@ -51,14 +42,14 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
     public async Task<IReadOnlyList<Lot>> GetAllWithItemAsync(
         CancellationToken ct = default)
     {
-        _logger.LogDebug("Retrieving all lots with item navigation included");
+        logger.LogDebug("Retrieving all lots with item navigation included");
 
         var lots = await _context.Lots
             .AsNoTracking()
             .Include(lot => lot.Item)
             .ToListAsync(ct);
 
-        _logger.LogDebug("Retrieved {LotCount} lots", lots.Count);
+        logger.LogDebug("Retrieved {LotCount} lots", lots.Count);
 
         return lots;
     }
@@ -145,7 +136,7 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
         Guid id,
         CancellationToken ct = default)
     {
-        _logger.LogDebug("Retrieving lot {LotId}", id);
+        logger.LogDebug("Retrieving lot {LotId}", id);
 
         return await _context.Lots
             .AsNoTracking()
@@ -156,7 +147,7 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
         Guid itemId,
         CancellationToken ct = default)
     {
-        _logger.LogDebug("Retrieving lots for item {ItemId}", itemId);
+        logger.LogDebug("Retrieving lots for item {ItemId}", itemId);
 
         var lots = await _context.Lots
             .AsNoTracking()
@@ -166,7 +157,7 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
             .ThenBy(lot => lot.ReceivedAt)
             .ToListAsync(ct);
 
-        _logger.LogDebug(
+        logger.LogDebug(
             "Retrieved {LotCount} lots for item {ItemId}",
             lots.Count,
             itemId);
@@ -179,7 +170,7 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
         DateOnly today,
         CancellationToken ct = default)
     {
-        _logger.LogDebug(
+        logger.LogDebug(
             "Calculating usable quantity for item {ItemId} on {EvaluationDate}",
             itemId,
             today);
@@ -197,7 +188,7 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
 
         var usableQuantity = total ?? 0m;
 
-        _logger.LogDebug(
+        logger.LogDebug(
             "Usable quantity calculated for item {ItemId}: {UsableQuantity}",
             itemId,
             usableQuantity);
@@ -215,11 +206,11 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
 
         if (ids.Length == 0)
         {
-            _logger.LogDebug("Usable quantity query skipped because no valid item IDs were supplied");
+            logger.LogDebug("Usable quantity query skipped because no valid item IDs were supplied");
             return new Dictionary<Guid, decimal>();
         }
 
-        _logger.LogDebug(
+        logger.LogDebug(
             "Calculating usable quantities for {ItemCount} items on {EvaluationDate}",
             ids.Length,
             today);
@@ -237,7 +228,7 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
                 group => group.Sum(lot => lot.RemainingQuantity),
                 ct);
 
-        _logger.LogDebug(
+        logger.LogDebug(
             "Usable quantities calculated for {ResultItemCount} of {RequestedItemCount} items",
             usableQuantities.Count,
             ids.Length);
@@ -257,7 +248,7 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
             throw new ArgumentOutOfRangeException(nameof(expiryCondition));
         }
 
-        _logger.LogDebug(
+        logger.LogDebug(
             "Retrieving lots with expiry condition {ExpiryCondition} evaluated on {EvaluationDate}",
             expiryCondition,
             evaluationDate);
@@ -286,7 +277,7 @@ public class LotRepository : Repository<Lot, Guid>, ILotRepository
             .ThenBy(lot => lot.LotNumber)
             .ToListAsync(ct);
 
-        _logger.LogDebug(
+        logger.LogDebug(
             "Retrieved {LotCount} lots with expiry condition {ExpiryCondition}",
             lots.Count,
             expiryCondition);

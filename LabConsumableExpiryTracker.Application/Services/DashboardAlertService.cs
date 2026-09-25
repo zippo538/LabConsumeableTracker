@@ -9,77 +9,63 @@ using Microsoft.Extensions.Logging;
 
 namespace LabConsumableExpiryTracker.Application.Services;
 
-public class DashboardAlertService : IDashboardAlertService
+public class DashboardAlertService(
+    IDashboardAlertRepository repository,
+    IValidator<DashboardAlertQuery> validator,
+    ICurrentUserContext currentUser,
+    TimeProvider timeProvider,
+    ILogger<DashboardAlertService> logger) : IDashboardAlertService
 {
     private const string ScientistRole = nameof(UserRole.Scientist);
     private const string WarehouseAdminRole = nameof(UserRole.WarehouseAdmin);
 
-    private readonly IDashboardAlertRepository _repository; 
-    private readonly IValidator<DashboardAlertQuery> _validator;
-    private readonly ICurrentUserContext _currentUser;
-    private readonly TimeProvider _timeProvider;
-    private readonly ILogger<DashboardAlertService> _logger; 
-
-    public DashboardAlertService(
-        IDashboardAlertRepository repository,
-        IValidator<DashboardAlertQuery> validator,
-        ICurrentUserContext currentUser,
-        TimeProvider timeProvider,
-        ILogger<DashboardAlertService> logger) 
-    {
-        _repository = repository;
-        _validator = validator;
-        _currentUser = currentUser;
-        _timeProvider = timeProvider;
-        _logger = logger;
-    }
 
     public async Task<ServiceResult<PagedResult<DashboardAlertDto>>> GetAlertsAsync(
         DashboardAlertQuery query,
         CancellationToken ct = default)
     {
-        _logger.LogDebug("Processing dashboard alert request. Type: {AlertType}, Page: {Page}, PageSize: {PageSize}",
+        logger.LogDebug("Processing dashboard alert request. Type: {AlertType}, Page: {Page}, PageSize: {PageSize}",
             query.Type, query.Page, query.PageSize);
 
-        var validation = await _validator.ValidateAsync(query, ct);
+        var validation = await validator.ValidateAsync(query, ct);
         if (!validation.IsValid)
         {
-            _logger.LogWarning("Dashboard alert query validation failed: {ValidationErrors}",
+            logger.LogWarning("Dashboard alert query validation failed: {ValidationErrors}",
                 string.Join("; ", validation.Errors.Select(x => x.ErrorMessage)));
 
             return ServiceResult<PagedResult<DashboardAlertDto>>.ErrorResult(
                 "Validation failed.",
-                validation.Errors.Select(x => x.ErrorMessage).ToList());
+                [.. validation.Errors.Select(x => x.ErrorMessage)]);
         }
 
-        var isWarehouseAdmin = _currentUser.IsInRole(WarehouseAdminRole);
-        var isScientist = _currentUser.IsInRole(ScientistRole);
+        var isWarehouseAdmin = currentUser.IsInRole(WarehouseAdminRole);
+        var isScientist = currentUser.IsInRole(ScientistRole);
 
         if (!isWarehouseAdmin && !isScientist)
         {
-            _logger.LogWarning("Unauthorized access attempt to dashboard alerts. User lacks 'Scientist' or 'WarehouseAdmin' role.");
+            logger.LogWarning("Unauthorized access attempt to dashboard alerts. User lacks 'Scientist' or 'WarehouseAdmin' role.");
 
             return ServiceResult<PagedResult<DashboardAlertDto>>.ErrorResult(
                 "You are not authorized to view dashboard alerts.");
         }
 
-        var now = _timeProvider.GetUtcNow();
-        _logger.LogDebug("Fetching alerts from repository evaluated at {EvaluatedAtUtc}", now);
+        var now = timeProvider.GetUtcNow();
+        logger.LogDebug("Fetching alerts from repository evaluated at {EvaluatedAtUtc}", now);
 
-        var page = await _repository.GetAlertsAsync(query, now, ct);
+        var page = await repository.GetAlertsAsync(query, now, ct);
 
         var response = new PagedResult<DashboardAlertDto>
         {
             Page = page.Page,
             PageSize = page.PageSize,
             TotalCount = page.TotalCount,
-            Items = page.Items.Select(alert => alert with
+            Items = [.. page.Items.Select(alert => alert with
             {
                 AllowedActions = GetAllowedActions(alert, isWarehouseAdmin)
-            }).ToList()
+            })]
         };
 
-        _logger.LogInformation("Successfully retrieved {ItemCount} dashboard alerts (Page {Page} of {TotalCount} total items)",
+        logger.LogInformation("Successfully retrieved {ItemCount} dashboard alerts (Page {Page} of {TotalCount} total items)",
             response.Items.Count, response.Page, response.TotalCount);
 
         return ServiceResult<PagedResult<DashboardAlertDto>>.SuccessResult(response);
@@ -132,6 +118,9 @@ public class DashboardAlertService : IDashboardAlertService
                     Label = "Manage status",
                     Href = $"/app/lots/{alert.LotId}?action=status"
                 });
+                break;
+            default:
+                // Unknown alert type - return only View action
                 break;
         }
 

@@ -6,6 +6,7 @@ using LabConsumableExpiryTracker.Tests.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 namespace LabConsumableExpiryTracker.Tests.Repository;
+
 [TestFixture]
 public class DisposalRepositoryTests
 {

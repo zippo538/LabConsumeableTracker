@@ -4,12 +4,13 @@ using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using LabConsumableExpiryTracker.Tests.Helpers;
 using Microsoft.EntityFrameworkCore;
 namespace LabConsumableExpiryTracker.Tests.Repository;
+
 [TestFixture]
 public class GenericRepositoryTests
 {
     private static string _connectionString = null!;
     private AppDbContext _context = null!;
-    private JobRepository _repository = null!; 
+    private JobRepository _repository = null!;
     private readonly List<Guid> _seededJobIds = [];
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
@@ -86,7 +87,7 @@ public class GenericRepositoryTests
         await _context.SaveChangesAsync();
         var fetched = await _repository.GetByIdAsync(job.Id);
         Assert.That(fetched, Is.Null);
-        _seededJobIds.Remove(job.Id); 
+        _seededJobIds.Remove(job.Id);
     }
     [Test]
     public async Task DeleteAsync_ReturnsFalse_WhenNotExists()

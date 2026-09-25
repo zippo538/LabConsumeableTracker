@@ -3,9 +3,8 @@ using LabConsumableExpiryTracker.Application.Services;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using Moq;
-using NUnit.Framework;
 
-namespace LabConsumableExpiryTracker.Tests.Application.Services;
+namespace LabConsumableExpiryTracker.Tests.Services;
 
 [TestFixture]
 public class ImageServiceTests
@@ -136,7 +135,7 @@ public class ImageServiceTests
     {
         var imageId = Guid.NewGuid();
         var stream = new MemoryStream(
-            "test image"u8.ToArray());
+            [.. "test image"u8]);
 
         _currentUserContext
             .Setup(x => x.IsAuthenticated)
@@ -179,7 +178,7 @@ public class ImageServiceTests
     {
         var imageId = Guid.NewGuid();
         var stream = new MemoryStream(
-            "test image"u8.ToArray());
+            buffer: [.. "test image"u8]);
 
         _currentUserContext
             .Setup(x => x.IsAuthenticated)

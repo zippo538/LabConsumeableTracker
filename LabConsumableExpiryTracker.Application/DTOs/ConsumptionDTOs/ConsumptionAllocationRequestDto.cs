@@ -2,7 +2,7 @@ namespace LabConsumableExpiryTracker.Application.DTOs.ConsumptionDTOs;
 
 public class ConsumptionAllocationRequestDto
 {
-    public Guid LotId { get; set; }
-    public decimal Quantity { get; set; }
-    public byte[] ExpectedRowVersion { get; set; } = [];
+    public Guid LotId { get; init; }
+    public decimal Quantity { get; init; }
+    public byte[] ExpectedRowVersion { get; init; } = [];
 }

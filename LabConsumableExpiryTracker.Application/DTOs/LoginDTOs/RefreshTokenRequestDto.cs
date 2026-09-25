@@ -2,5 +2,5 @@ namespace LabConsumableExpiryTracker.Application.DTOs.LoginDTOs;
 
 public class RefreshTokenRequestDto
 {
-    public string RefreshToken { get; set; } = string.Empty;
+    public string RefreshToken { get; init; } = string.Empty;
 }

@@ -1,10 +1,9 @@
 using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.DashboardDTOs;
 
-namespace LabConsumableExpiryTracker.Application.Services.Interfaces
+namespace LabConsumableExpiryTracker.Application.Services.Interfaces;
+
+public interface IDashboardSummaryService
 {
-    public interface IDashboardSummaryService
-    {
-        Task<ServiceResult<DashboardSummaryDto>> GetSummaryAsync(Guid? itemId, CancellationToken ct);
-    }
+    Task<ServiceResult<DashboardSummaryDto>> GetSummaryAsync(Guid? itemId, CancellationToken ct);
 }

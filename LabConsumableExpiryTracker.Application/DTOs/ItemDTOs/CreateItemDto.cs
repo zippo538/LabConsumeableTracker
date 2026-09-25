@@ -1,19 +1,17 @@
-using LabConsumableExpiryTracker.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 
-namespace LabConsumableExpiryTracker.Application.DTOs.ItemDTOs
+namespace LabConsumableExpiryTracker.Application.DTOs.ItemDTOs;
+
+public class CreateItemDto
 {
-    public class CreateItemDto
-    {
-        public string Code { get; set; } = string.Empty;
+    public string Code { get; init; } = string.Empty;
 
-        public string Name { get; set; } = string.Empty;
-        public IFormFile? Image { get; set; }
-        public string BaseUnit { get; set; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
+    public IFormFile? Image { get; set; }
+    public string BaseUnit { get; init; } = string.Empty;
 
-        public decimal MinimumStock { get; set; }
+    public decimal MinimumStock { get; init; }
 
-        public int ExpiringSoonDays { get; set; }
+    public int ExpiringSoonDays { get; init; }
 
-    }
 }

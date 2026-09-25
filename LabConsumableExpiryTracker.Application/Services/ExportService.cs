@@ -2,7 +2,6 @@ using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.ExportDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
-using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.Extensions.Logging;
 
 namespace LabConsumableExpiryTracker.Application.Services;
@@ -43,9 +42,9 @@ public class ExportService : IExportService
         var now = _timeProvider.GetUtcNow();
 
         var items = filter.ItemId is { } itemId
-            ? (await _itemRepository.GetByIdWithLotsAsync(itemId, ct)) is { } single
-                ? new[] { single }
-                : Array.Empty<Item>()
+            ? await _itemRepository.GetByIdWithLotsAsync(itemId, ct) is { } single
+                ? [single]
+                : []
             : (await _itemRepository.GetAllWithLotsAsync(ct)).ToArray();
 
         var itemIds = items.Select(i => i.Id).ToArray();

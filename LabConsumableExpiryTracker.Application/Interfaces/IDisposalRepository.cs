@@ -4,7 +4,6 @@ namespace LabConsumableExpiryTracker.Application.Interfaces;
 
 public interface IDisposalRepository : IRepository<Disposal, Guid>
 {
-    Task<IReadOnlyList<Disposal>> GetByLotIdAsync(Guid lotId, CancellationToken ct = default);
     Task<IReadOnlyList<Disposal>> SearchAsync(
         Guid? itemId,
         Guid? lotId,

@@ -1,15 +1,14 @@
 using LabConsumableExpiryTracker.Domain.Enums;
 
-namespace LabConsumableExpiryTracker.Application.DTOs.LotDTOs
+namespace LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
+
+public class UpdateLotDto
 {
-    public class UpdateLotDto
-    {
-        public string? LotNumber { get; set; }
-        public LotAdministrativeStatus? AdministrativeStatus { get; set; }
-        public string? SupplierLotNumber { get; set; }
-        public string? SupplierName { get; set; }
-        public DateOnly? ExpiryDate { get; set; }
-        public string? StorageLocation { get; set; }
-        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
-    }
+    public string? LotNumber { get; init; }
+    public LotAdministrativeStatus? AdministrativeStatus { get; init; }
+    public string? SupplierLotNumber { get; init; }
+    public string? SupplierName { get; init; }
+    public DateOnly? ExpiryDate { get; init; }
+    public string? StorageLocation { get; init; }
+    public byte[] RowVersion { get; init; } = [];
 }

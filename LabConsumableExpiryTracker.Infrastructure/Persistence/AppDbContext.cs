@@ -2,7 +2,6 @@ using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Persistence;
 

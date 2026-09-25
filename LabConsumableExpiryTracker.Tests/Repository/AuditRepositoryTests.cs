@@ -1,3 +1,4 @@
+using LabConsumableExpiryTracker.Application.DTOs.AuditDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
@@ -6,6 +7,7 @@ using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using LabConsumableExpiryTracker.Tests.Helpers;
 using Microsoft.EntityFrameworkCore;
 namespace LabConsumableExpiryTracker.Tests.Repository;
+
 [TestFixture]
 public class AuditRepositoryTests
 {
@@ -116,7 +118,7 @@ public class AuditRepositoryTests
     private async Task<Job> SeedJobAsync(string jobNumber = "JOB-AUDIT")
     {
         var job = new Job(Guid.NewGuid(), jobNumber, "Audit Test Job");
-        job.Start(_baseTime); 
+        job.Start(_baseTime);
         _context.Jobs.Add(job);
         await _context.SaveChangesAsync();
         _seededJobIds.Add(job.Id);
@@ -175,7 +177,7 @@ public class AuditRepositoryTests
         var lot = await SeedLotAsync(item.Id, "LOT-ABC-123");
         var job = await SeedJobAsync();
         await SeedConsumptionAsync(job.Id, lot.Id, user.Id, 5m, _baseTime);
-        var query = new AuditQuery { Page = 1, PageSize = 10, Search = "lot-abc" }; 
+        var query = new AuditQuery { Page = 1, PageSize = 10, Search = "lot-abc" };
         var result = await _repository.GetAuditEventsAsync(query);
         Assert.That(result.TotalCount, Is.EqualTo(1));
         Assert.That(result.Items[0].LotNumber, Is.EqualTo("LOT-ABC-123"));
@@ -190,7 +192,7 @@ public class AuditRepositoryTests
         var job2 = await SeedJobAsync("JOB-2");
         await SeedConsumptionAsync(job1.Id, lot.Id, user.Id, 5m, _baseTime);
         await SeedConsumptionAsync(job2.Id, lot.Id, user.Id, 5m, _baseTime);
-        await SeedDisposalAsync(lot.Id, user.Id, 10m, _baseTime); 
+        await SeedDisposalAsync(lot.Id, user.Id, 10m, _baseTime);
         var query = new AuditQuery { Page = 1, PageSize = 10, JobId = job1.Id };
         var result = await _repository.GetAuditEventsAsync(query);
         Assert.That(result.TotalCount, Is.EqualTo(1));

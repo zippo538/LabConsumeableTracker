@@ -5,6 +5,7 @@ using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using LabConsumableExpiryTracker.Tests.Helpers;
 using Microsoft.EntityFrameworkCore;
 namespace LabConsumableExpiryTracker.Tests.Repository;
+
 [TestFixture]
 public class ConsumptionHistoryRepositoryTests
 {
@@ -158,7 +159,7 @@ public class ConsumptionHistoryRepositoryTests
         var lot = await SeedLotAsync(item.Id, "LOT-5");
         var job = await SeedJobAsync("JOB-5");
         var c = await SeedConsumptionAsync(job.Id, lot.Id, _user1, 7m, DateTimeOffset.UtcNow);
-        var detail = await _repository.GetDetailAsync(c.Id, _user2); 
+        var detail = await _repository.GetDetailAsync(c.Id, _user2);
         Assert.That(detail, Is.Null);
     }
 }

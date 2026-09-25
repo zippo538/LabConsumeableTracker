@@ -1,4 +1,5 @@
 using FluentValidation;
+using LabConsumableExpiryTracker.Application.DTOs.AuditDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Domain.Enums;
 

@@ -10,18 +10,11 @@ namespace LabConsumableExpiryTracker.API.Controllers;
 
 [ApiController]
 [Route("api/users")]
-public class UserController : ControllerBase
+public class UserController(IUserService userService) : ControllerBase
 {
-    private readonly IUserService _userService;
-
-    public UserController(IUserService userService)
-    {
-        _userService = userService;
-    }
-
     [Authorize]
     [HttpGet("me")]
-    public async Task<ActionResult<ServiceResult<UserResponseDto>>> GetMe(CancellationToken ct)
+    public async Task<ActionResult<ServiceResult<UserResponseDto>>> GetMe()
     {
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
@@ -29,7 +22,7 @@ public class UserController : ControllerBase
             return Unauthorized(ServiceResult<UserResponseDto>.ErrorResult("Invalid user token."));
         }
 
-        var result = await _userService.GetUserProfileAsync(userId);
+        var result = await userService.GetUserProfileAsync(userId);
         if (!result.Success)
             return NotFound(result);
         return Ok(result);
@@ -38,8 +31,7 @@ public class UserController : ControllerBase
     [Authorize]
     [HttpPatch("me")]
     public async Task<ActionResult<ServiceResult<UserResponseDto>>> UpdateMe(
-        [FromBody] UpdateFullNameRequestDto request,
-        CancellationToken ct)
+        [FromBody] UpdateFullNameRequestDto request)
     {
         var userIdClaim = User.FindFirstValue(
             ClaimTypes.NameIdentifier
@@ -55,7 +47,7 @@ public class UserController : ControllerBase
             );
         }
 
-        var result = await _userService.UpdateMyProfileAsync(
+        var result = await userService.UpdateMyProfileAsync(
             userId,
             request
         );
@@ -72,10 +64,8 @@ public class UserController : ControllerBase
     public async Task<ActionResult<ServiceResult<UserResponseDto>>> CreateUser(
         [FromBody] CreateUserRequestDto request)
     {
-        var result = await _userService.CreateUserAsync(request);
-        if (!result.Success)
-            return BadRequest(result);
-        return StatusCode(StatusCodes.Status201Created, result);
+        var result = await userService.CreateUserAsync(request);
+        return !result.Success ? BadRequest(result) : StatusCode(StatusCodes.Status201Created, result);
     }
 
     [Authorize(Roles = nameof(UserRole.WarehouseAdmin))]
@@ -94,7 +84,7 @@ public class UserController : ControllerBase
             return Unauthorized();
         }
 
-        var result = await _userService.GetAllUsersAsync(
+        var result = await userService.GetAllUsersAsync(
             page,
             pageSize,
             search,
@@ -112,7 +102,7 @@ public class UserController : ControllerBase
         Guid id,
         [FromBody] UpdateUserRequestDto request)
     {
-        var result = await _userService.UpdateUserAsync(id, request);
+        var result = await userService.UpdateUserAsync(id, request);
         if (!result.Success)
             return BadRequest(result);
         return Ok(result);
@@ -123,7 +113,7 @@ public class UserController : ControllerBase
     public async Task<IActionResult> ActivateUser(Guid id)
     {
         var currentAdminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var result = await _userService.SetUserActiveStatusAsync(currentAdminId, id, true);
+        var result = await userService.SetUserActiveStatusAsync(currentAdminId, id, true);
         if (!result.Success)
             return BadRequest(result);
         return Ok(result);
@@ -134,7 +124,7 @@ public class UserController : ControllerBase
     public async Task<IActionResult> DeactivateUser(Guid id)
     {
         var currentAdminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var result = await _userService.SetUserActiveStatusAsync(currentAdminId, id, false);
+        var result = await userService.SetUserActiveStatusAsync(currentAdminId, id, false);
         if (!result.Success)
             return BadRequest(result);
         return Ok(result);
@@ -145,7 +135,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<ServiceResult<UserStatisticsResponseDto>>>
         GetUserStatistics()
     {
-        var result = await _userService.GetUserStatisticsAsync();
+        var result = await userService.GetUserStatisticsAsync();
 
         return Ok(result);
     }
@@ -155,7 +145,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<ServiceResult<UserResponseDto>>> GetUserById(
         string id)
     {
-        var result = await _userService.GetUserByIdAsync(id);
+        var result = await userService.GetUserByIdAsync(id);
 
         return Ok(result);
     }
@@ -166,7 +156,7 @@ public class UserController : ControllerBase
         Guid id,
         [FromBody] ChangeUserPasswordRequestDto request)
     {
-        var result = await _userService.ChangeUserPasswordAsync(
+        var result = await userService.ChangeUserPasswordAsync(
             id,
             request
         );

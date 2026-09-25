@@ -1,4 +1,5 @@
 using LabConsumableExpiryTracker.Application.Common.Result;
+using LabConsumableExpiryTracker.Application.DTOs.AuditDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 
 namespace LabConsumableExpiryTracker.Application.Services.Interfaces;

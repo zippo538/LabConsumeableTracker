@@ -1,6 +1,6 @@
 using LabConsumableExpiryTracker.Domain.Enums;
 
-namespace LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
+namespace LabConsumableExpiryTracker.Application.DTOs.AuditDTOs;
 
 public sealed class ConsumptionAuditDto
 {

@@ -2,9 +2,8 @@ using System.Security.Claims;
 using LabConsumableExpiryTracker.Application.Services;
 using Microsoft.AspNetCore.Http;
 using Moq;
-using NUnit.Framework;
 
-namespace LabConsumableExpiryTracker.Tests.Application.Services;
+namespace LabConsumableExpiryTracker.Tests.Services;
 
 [TestFixture]
 public class HttpContextCurrentUserContextTests
@@ -37,10 +36,11 @@ public class HttpContextCurrentUserContextTests
     [Test]
     public void UserId_ShouldReturnEmptyGuid_WhenUserIdClaimDoesNotExist()
     {
-        var context = new DefaultHttpContext();
-
-        context.User = new ClaimsPrincipal(
-            new ClaimsIdentity());
+        var context = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(
+                new ClaimsIdentity())
+        };
 
         _httpContextAccessor
             .Setup(x => x.HttpContext)

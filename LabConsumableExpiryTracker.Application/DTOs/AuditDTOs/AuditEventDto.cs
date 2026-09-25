@@ -1,6 +1,6 @@
 using LabConsumableExpiryTracker.Domain.Enums;
 
-namespace LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
+namespace LabConsumableExpiryTracker.Application.DTOs.AuditDTOs;
 
 public sealed class AuditEventDto
 {
@@ -8,7 +8,7 @@ public sealed class AuditEventDto
     public Guid EventId { get; init; }
     public Guid ItemId { get; init; }
     public string ItemName {get;init;} = string.Empty;
-    public string itemCode {get;init;} = string.Empty;
+    public string ItemCode {get;init;} = string.Empty;
     public Guid LotId { get; init; }
     public string LotNumber { get; init; } = string.Empty;
     public decimal Quantity { get; init; }

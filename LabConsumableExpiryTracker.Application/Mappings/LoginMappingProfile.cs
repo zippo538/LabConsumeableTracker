@@ -8,7 +8,7 @@ public class LoginMappingProfile : Profile
 {
     public LoginMappingProfile()
     {
-      
+
         CreateMap<ApplicationUser, LoginResponseDto>()
             .ForMember(dest => dest.Token, opt => opt.Ignore())
             .ForMember(dest => dest.RefreshToken, opt => opt.Ignore())

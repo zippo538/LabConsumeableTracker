@@ -1,3 +1,4 @@
+using LabConsumableExpiryTracker.Application.DTOs.AuditDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
@@ -23,7 +24,7 @@ public sealed class AuditRepository(AppDbContext context) : IAuditRepository
                 EventId = consumption.Id,
                 ItemId = lot.ItemId,
                 ItemName = item.Name,
-                itemCode = item.Code,
+                ItemCode = item.Code,
                 LotId = lot.Id,
                 LotNumber = lot.LotNumber,
                 Quantity = consumption.Quantity,
@@ -46,7 +47,7 @@ public sealed class AuditRepository(AppDbContext context) : IAuditRepository
                 EventId = disposal.Id,
                 ItemId = lot.ItemId,
                 ItemName = item.Name,
-                itemCode = item.Code,
+                ItemCode = item.Code,
                 LotId = lot.Id,
                 LotNumber = lot.LotNumber,
                 Quantity = disposal.Quantity,
@@ -181,12 +182,12 @@ public sealed class AuditRepository(AppDbContext context) : IAuditRepository
         if (query.JobId.HasValue) source = source.Where(x => x.JobId == query.JobId.Value);
         if (query.From.HasValue) source = source.Where(x => x.OccurredAt >= query.From.Value);
         if (query.To.HasValue) source = source.Where(x => x.OccurredAt < query.To.Value);
-        if (!string.IsNullOrWhiteSpace(query.Search))
+        if (string.IsNullOrWhiteSpace(query.Search)) return source;
         {
             var pattern = $"%{query.Search.Trim()}%";
             source = source.Where(x =>
                 EF.Functions.ILike(x.LotNumber, pattern) ||
-                EF.Functions.ILike(x.itemCode, pattern));
+                EF.Functions.ILike(x.ItemCode, pattern));
         }
         return source;
     }
@@ -198,7 +199,7 @@ public sealed class AuditRepository(AppDbContext context) : IAuditRepository
         if (query.JobId.HasValue) source = source.Where(x => x.JobId == query.JobId.Value);
         if (query.From.HasValue) source = source.Where(x => x.ConsumedAt >= query.From.Value);
         if (query.To.HasValue) source = source.Where(x => x.ConsumedAt < query.To.Value);
-        if (!string.IsNullOrWhiteSpace(query.Search))
+        if (string.IsNullOrWhiteSpace(query.Search)) return source;
         {
             var pattern = $"%{query.Search.Trim()}%";
             source = source.Where(x =>
@@ -214,7 +215,7 @@ public sealed class AuditRepository(AppDbContext context) : IAuditRepository
         if (query.LotId.HasValue) source = source.Where(x => x.LotId == query.LotId.Value);
         if (query.From.HasValue) source = source.Where(x => x.DisposedAt >= query.From.Value);
         if (query.To.HasValue) source = source.Where(x => x.DisposedAt < query.To.Value);
-        if (!string.IsNullOrWhiteSpace(query.Search))
+        if (string.IsNullOrWhiteSpace(query.Search)) return source;
         {
             var keyword = query.Search.Trim();
 

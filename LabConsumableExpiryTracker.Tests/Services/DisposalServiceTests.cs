@@ -7,7 +7,6 @@ using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
 
 namespace LabConsumableExpiryTracker.Tests.Services;
 

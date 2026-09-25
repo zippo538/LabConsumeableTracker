@@ -1,6 +1,7 @@
-using NUnit.Framework;
 using LabConsumableExpiryTracker.Domain.Models;
-namespace LabConsumableExpiryTracker.Tests.Unit.Domain;
+
+namespace LabConsumableExpiryTracker.Tests.Domain;
+
 [TestFixture]
 public class ConsumptionTests
 {

@@ -2,7 +2,6 @@ using LabConsumableExpiryTracker.Application.DTOs.ConsumptionHistoryDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services;
 using Moq;
-using NUnit.Framework;
 
 namespace LabConsumableExpiryTracker.Tests.Services;
 
@@ -54,12 +53,18 @@ public class ConsumptionHistoryServiceTests
             query,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data!.Page, Is.EqualTo(1));
-        Assert.That(result.Data.PageSize, Is.EqualTo(20));
-        Assert.That(result.Data.TotalCount, Is.EqualTo(0));
-        Assert.That(result.Data.Items, Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.Page, Is.EqualTo(1));
+            Assert.That(result.Data.PageSize, Is.EqualTo(20));
+            Assert.That(result.Data.TotalCount, Is.EqualTo(0));
+            Assert.That(result.Data.Items, Is.Empty);
+        });
     }
 
     [Test]
@@ -134,12 +139,15 @@ public class ConsumptionHistoryServiceTests
             query,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Consumptions retrieved successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Consumptions retrieved successfully."));
 
-        Assert.That(result.Data, Is.Not.Null);
+            Assert.That(result.Data, Is.Not.Null);
+        });
         Assert.That(result.Data!.Page, Is.EqualTo(3));
         Assert.That(result.Data.PageSize, Is.EqualTo(50));
         Assert.That(result.Data.TotalCount, Is.EqualTo(1));
@@ -241,10 +249,13 @@ public class ConsumptionHistoryServiceTests
             consumedBy,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Consumption not found."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Consumption not found."));
+        });
     }
 
     [Test]

@@ -2,7 +2,7 @@ using AutoMapper;
 using LabConsumableExpiryTracker.Application.DTOs.DisposalDTOs;
 using LabConsumableExpiryTracker.Domain.Models;
 
-namespace LabConsumableExpiryTracker.Application.Common.Mappings;
+namespace LabConsumableExpiryTracker.Application.Mappings;
 
 public class DisposalMappingProfile : Profile
 {

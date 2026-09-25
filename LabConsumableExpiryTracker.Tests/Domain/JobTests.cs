@@ -1,7 +1,8 @@
-using NUnit.Framework;
-using LabConsumableExpiryTracker.Domain.Models;
 using LabConsumableExpiryTracker.Domain.Enums;
-namespace LabConsumableExpiryTracker.Tests.Unit.Domain;
+using LabConsumableExpiryTracker.Domain.Models;
+
+namespace LabConsumableExpiryTracker.Tests.Domain;
+
 [TestFixture]
 public class JobTests
 {

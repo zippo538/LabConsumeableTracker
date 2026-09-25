@@ -1,9 +1,6 @@
 using FluentValidation;
 using LabConsumableExpiryTracker.Application.DTOs.DisposalDTOs;
-using LabConsumableExpiryTracker.Application.Validators.Helpers;
-
 namespace LabConsumableExpiryTracker.Application.Validators.DisposalValidator;
-
 public class CreateDisposalValidator : AbstractValidator<CreateDisposalDto>
 {
     public CreateDisposalValidator()
@@ -13,11 +10,9 @@ public class CreateDisposalValidator : AbstractValidator<CreateDisposalDto>
             .WithMessage("Expected Row Empty.")
             .Must(value => value is { Length: > 0 })
             .WithMessage("RowVersion cannot be empty.");
-
         RuleFor(x => x.Quantity)
             .GreaterThan(0)
             .WithMessage("Quantity harus lebih dari nol.");
-
         RuleFor(x => x.Reason)
             .NotEmpty()
             .WithMessage("Reason wajib diisi.")

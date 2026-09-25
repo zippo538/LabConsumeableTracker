@@ -1,4 +1,3 @@
-using LabConsumableExpiryTracker.Domain.Enums;
 
 namespace LabConsumableExpiryTracker.Application.DTOs.FefoDtos;
 
@@ -10,5 +9,5 @@ public class LotAllocationDto
     public string StorageLocation { get; set; } = string.Empty;
     public decimal RemainingQuantity { get; set; }
     public decimal Quantity { get; set; }
-    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    public byte[] RowVersion { get; set; } = [];
 }

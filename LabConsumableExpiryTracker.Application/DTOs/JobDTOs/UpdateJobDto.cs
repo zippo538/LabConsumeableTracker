@@ -1,10 +1,8 @@
-using LabConsumableExpiryTracker.Domain.Enums;
 
-namespace LabConsumableExpiryTracker.Application.DTOs.JobDTOs
+namespace LabConsumableExpiryTracker.Application.DTOs.JobDTOs;
+
+public class UpdateJobDto
 {
-    public class UpdateJobDto
-    {
-        public string JobNumber { get; init; } = string.Empty;
-        public string Description { get; init; } = string.Empty;
-    }
+    public string JobNumber { get; init; } = string.Empty;
+    public string Description { get; init; } = string.Empty;
 }

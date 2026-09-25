@@ -2,9 +2,9 @@ namespace LabConsumableExpiryTracker.Application.DTOs.DisposalDTOs;
 
 public class DisposalDto
 {
-    public Guid Id { get; set; }
-    public Guid LotId { get; set; }
-    public decimal Quantity { get; set; }
-    public string Reason { get; set; } = string.Empty;
-    public DateTimeOffset DisposedAt { get; set; }
+    public Guid Id { get; init; }
+    public Guid LotId { get; init; }
+    public decimal Quantity { get; init; }
+    public string Reason { get; init; } = string.Empty;
+    public DateTimeOffset DisposedAt { get; init; }
 }

@@ -1,15 +1,14 @@
-
 using FluentValidation;
 using FluentValidation.Results;
+using LabConsumableExpiryTracker.Application.DTOs.AuditDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services;
 using LabConsumableExpiryTracker.Domain.Enums;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
 
-namespace LabConsumableExpiryTracker.Application.Tests.Services;
+namespace LabConsumableExpiryTracker.Tests.Services;
 
 [TestFixture]
 public class AuditServiceTests
@@ -58,12 +57,15 @@ public class AuditServiceTests
         var result =
             await _service.GetAuditEventsAsync(query);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Validation failed."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Validation failed."));
 
-        Assert.That(result.Errors, Is.Not.Null);
+            Assert.That(result.Errors, Is.Not.Null);
+        });
         Assert.That(
             result.Errors,
             Has.One.EqualTo("Page must be greater than zero."));
@@ -93,8 +95,11 @@ public class AuditServiceTests
         var result =
             await _service.GetAuditEventsAsync(query);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.SameAs(pagedResult));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.SameAs(pagedResult));
+        });
 
         _auditRepository.Verify(
             x => x.GetAuditEventsAsync(
@@ -146,8 +151,11 @@ public class AuditServiceTests
         var result =
             await _service.GetAuditEventsAsync(query);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.SameAs(pagedResult));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.SameAs(pagedResult));
+        });
 
         _auditRepository.Verify(
             x => x.GetAuditEventsAsync(
@@ -187,8 +195,11 @@ public class AuditServiceTests
         var result =
             await _service.GetAuditEventsAsync(query);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.SameAs(pagedResult));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.SameAs(pagedResult));
+        });
 
         _auditRepository.Verify(
             x => x.GetAuditEventsAsync(
@@ -219,12 +230,15 @@ public class AuditServiceTests
         var result =
             await _service.GetConsumptionsAsync(query);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Validation failed."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Validation failed."));
 
-        Assert.That(result.Errors, Is.Not.Null);
+            Assert.That(result.Errors, Is.Not.Null);
+        });
         Assert.That(
             result.Errors,
             Has.One.EqualTo("Page size is invalid."));
