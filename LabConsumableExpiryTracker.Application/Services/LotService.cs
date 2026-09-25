@@ -549,7 +549,7 @@ public class LotService : ILotService
             ItemId = request.ItemId,
             BaseUnit = item!.BaseUnit,
             TotalConsumedQuantity = consumptions.Sum(c => c.Quantity),
-            Consumptions = consumptions
+            Consumptions = [.. consumptions
                 .Select(c => new ConsumptionRecordDto
                 {
                     Id = c.Id,
@@ -558,16 +558,14 @@ public class LotService : ILotService
                     Quantity = c.Quantity,
                     ConsumedAt = c.ConsumedAt,
                     ConsumedBy = c.ConsumedBy
-                })
-                .ToList(),
-            UpdatedLots = updatedLots
+                })],
+            UpdatedLots = [.. updatedLots
                 .Select(lot => new UpdatedLotDto
                 {
                     LotId = lot.Id,
                     RemainingQuantity = lot.RemainingQuantity,
                     RowVersion = lot.RowVersion
-                })
-                .ToList()
+                })]
         };
 
         _logger.LogInformation(
