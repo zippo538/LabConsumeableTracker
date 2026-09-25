@@ -8,7 +8,6 @@ using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using NUnit.Framework;
 namespace LabConsumableExpiryTracker.Tests.Controller;
 
 [TestFixture]
@@ -37,7 +36,7 @@ public class JobControllerTests
         var response =
             ServiceResult<IReadOnlyList<JobDto>>
             .SuccessResult(
-                Array.Empty<JobDto>(),
+                [],
                 "success");
         _jobServiceMock
             .Setup(x =>

@@ -120,7 +120,7 @@ public class LotServiceTests
         });
     }
     [Test]
-    public async Task GetAllLot_WhenRepositoryThrows_ExceptionPropagated()
+    public Task GetAllLot_WhenRepositoryThrows_ExceptionPropagated()
     {
         _lotRepository
             .Setup(x =>
@@ -135,6 +135,7 @@ public class LotServiceTests
                 await _service.GetAllLot(
                     CancellationToken.None);
             });
+        return null!;
     }
     [Test]
     public async Task GetByIdLot_WhenLotNotFound_ReturnsError()

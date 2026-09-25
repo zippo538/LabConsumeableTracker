@@ -7,21 +7,14 @@ using Microsoft.Extensions.Logging;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Repositories;
 
-public class DisposalRepository : Repository<Disposal, Guid>, IDisposalRepository
+public class DisposalRepository(AppDbContext context, ILogger<DisposalRepository> logger)
+    : Repository<Disposal, Guid>(context), IDisposalRepository
 {
-    private readonly AppDbContext _context;
-    private readonly ILogger<DisposalRepository> _logger;
-
-    public DisposalRepository(AppDbContext context, ILogger<DisposalRepository> logger)
-        : base(context)
-    {
-        _context = context;
-        _logger = logger;
-    }
+    private readonly AppDbContext _context = context;
 
     public async Task<IReadOnlyList<Disposal>> GetByLotIdAsync(Guid lotId, CancellationToken ct = default)
     {
-        _logger.LogDebug("Retrieving disposals for lot {LotId}", lotId);
+        logger.LogDebug("Retrieving disposals for lot {LotId}", lotId);
 
         return await _context.Disposals
             .AsNoTracking()

@@ -148,9 +148,9 @@ public class ItemControllerTests
                 CancellationToken.None);
         Assert.That(
             result.Result,
-            Is.TypeOf<OkObjectResult>());
+            Is.TypeOf<CreatedAtActionResult>());
         var ok =
-            (OkObjectResult)result.Result!;
+            (CreatedAtActionResult)result.Result!;
         Assert.That(
             ok.Value,
             Is.EqualTo(response));
@@ -176,7 +176,7 @@ public class ItemControllerTests
                 CancellationToken.None);
         Assert.That(
             result.Result,
-            Is.TypeOf<OkObjectResult>());
+            Is.TypeOf<ConflictObjectResult>());
     }
     [Test]
     public async Task Update_WhenSuccess_ReturnsOk()
@@ -354,7 +354,7 @@ public class ItemControllerTests
         {
             Code = "ITEM001",
             Name = "Test Item",
-            BaseUnit = UnitOfMeasure.Unit.ToString(),
+            BaseUnit = nameof(UnitOfMeasure.Unit),
             MinimumStock = 10,
             ExpiringSoonDays = 30
         };

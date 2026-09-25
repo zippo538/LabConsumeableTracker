@@ -1,4 +1,3 @@
-using Bogus;
 using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
@@ -7,20 +6,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Repositories;
 
-public sealed class AuditRepository : IAuditRepository
+public sealed class AuditRepository(AppDbContext context) : IAuditRepository
 {
-    private readonly AppDbContext _context;
-
-    public AuditRepository(AppDbContext context) => _context = context;
-
     public async Task<PagedResult<AuditEventDto>> GetAuditEventsAsync(AuditQuery query, CancellationToken ct = default)
     {
         var consumptions =
-            from consumption in _context.Consumptions.AsNoTracking()
-            join lot in _context.Lots.AsNoTracking() on consumption.LotId equals lot.Id
-            join item in _context.Items.AsNoTracking() on lot.ItemId equals item.Id
-            join user in _context.Users.AsNoTracking() on consumption.ConsumedBy equals user.Id
-            join job in _context.Jobs.AsNoTracking() on consumption.JobId equals job.Id
+            from consumption in context.Consumptions.AsNoTracking()
+            join lot in context.Lots.AsNoTracking() on consumption.LotId equals lot.Id
+            join item in context.Items.AsNoTracking() on lot.ItemId equals item.Id
+            join user in context.Users.AsNoTracking() on consumption.ConsumedBy equals user.Id
+            join job in context.Jobs.AsNoTracking() on consumption.JobId equals job.Id
 
             select new AuditEventDto
             {
@@ -42,9 +37,9 @@ public sealed class AuditRepository : IAuditRepository
             };
 
         var disposals =
-            from disposal in _context.Disposals.AsNoTracking()
-            join lot in _context.Lots.AsNoTracking() on disposal.LotId equals lot.Id
-            join item in _context.Items.AsNoTracking() on lot.ItemId equals item.Id
+            from disposal in context.Disposals.AsNoTracking()
+            join lot in context.Lots.AsNoTracking() on disposal.LotId equals lot.Id
+            join item in context.Items.AsNoTracking() on lot.ItemId equals item.Id
             select new AuditEventDto
             {
                 EventType = AuditEventType.Disposal,
@@ -93,11 +88,11 @@ public sealed class AuditRepository : IAuditRepository
     public async Task<PagedResult<ConsumptionAuditDto>> GetConsumptionsAsync(AuditQuery query, CancellationToken ct = default)
     {
         var source =
-            from consumption in _context.Consumptions.AsNoTracking()
-            join lot in _context.Lots.AsNoTracking() on consumption.LotId equals lot.Id
-            join item in _context.Items.AsNoTracking() on lot.ItemId equals item.Id
-            join user in _context.Users.AsNoTracking() on consumption.ConsumedBy equals user.Id
-            join job in _context.Jobs.AsNoTracking() on consumption.JobId equals job.Id
+            from consumption in context.Consumptions.AsNoTracking()
+            join lot in context.Lots.AsNoTracking() on consumption.LotId equals lot.Id
+            join item in context.Items.AsNoTracking() on lot.ItemId equals item.Id
+            join user in context.Users.AsNoTracking() on consumption.ConsumedBy equals user.Id
+            join job in context.Jobs.AsNoTracking() on consumption.JobId equals job.Id
             select new ConsumptionAuditDto
             {
                 Id = consumption.Id,
@@ -125,11 +120,11 @@ public sealed class AuditRepository : IAuditRepository
     }
 
     public Task<ConsumptionAuditDto?> GetConsumptionByIdAsync(Guid id, CancellationToken ct = default) =>
-        (from consumption in _context.Consumptions.AsNoTracking()
-         join lot in _context.Lots.AsNoTracking() on consumption.LotId equals lot.Id
-         join item in _context.Items.AsNoTracking() on lot.ItemId equals item.Id
-         join user in _context.Users.AsNoTracking() on consumption.ConsumedBy equals user.Id
-         join job in _context.Jobs.AsNoTracking() on consumption.JobId equals job.Id
+        (from consumption in context.Consumptions.AsNoTracking()
+         join lot in context.Lots.AsNoTracking() on consumption.LotId equals lot.Id
+         join item in context.Items.AsNoTracking() on lot.ItemId equals item.Id
+         join user in context.Users.AsNoTracking() on consumption.ConsumedBy equals user.Id
+         join job in context.Jobs.AsNoTracking() on consumption.JobId equals job.Id
          where consumption.Id == id
          select new ConsumptionAuditDto
          {
@@ -163,9 +158,9 @@ public sealed class AuditRepository : IAuditRepository
         DisposalDetails().FirstOrDefaultAsync(x => x.Id == id, ct);
 
     private IQueryable<DisposalAuditDto> DisposalDetails() =>
-        from disposal in _context.Disposals.AsNoTracking()
-        join lot in _context.Lots.AsNoTracking() on disposal.LotId equals lot.Id
-        join item in _context.Items.AsNoTracking() on lot.ItemId equals item.Id
+        from disposal in context.Disposals.AsNoTracking()
+        join lot in context.Lots.AsNoTracking() on disposal.LotId equals lot.Id
+        join item in context.Items.AsNoTracking() on lot.ItemId equals item.Id
         select new DisposalAuditDto
         {
             Id = disposal.Id,

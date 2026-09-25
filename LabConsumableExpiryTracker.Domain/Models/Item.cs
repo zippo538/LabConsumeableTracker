@@ -6,8 +6,8 @@ public class Item
 {
     private readonly List<Lot> _lots = [];
     public Guid Id { get; private set; }
-    public string Code { get; private set; } = string.Empty;
-    public string Name { get; private set; } = string.Empty;
+    public string Code { get; private set; }
+    public string Name { get; private set; }
     public Guid? ImageId { get; private set; }
     public UnitOfMeasure BaseUnit { get; private set; }
     public decimal MinimumStock { get; private set; }
@@ -15,9 +15,7 @@ public class Item
     public IReadOnlyCollection<Lot> Lots => _lots.AsReadOnly();
 
 
-    private Item()
-    {
-    }
+
     public Item(
         Guid id,
         string code,
@@ -33,8 +31,8 @@ public class Item
         MinimumStock = minimumStock;
         ExpiringSoonDays = expiringSoonDays;
     }
-    
-  
+
+
     public void SetImageId(Guid? imageId)
     {
         ImageId = imageId;
@@ -42,31 +40,33 @@ public class Item
 
 
     public void UpdateDetails(
-        string name,
-        UnitOfMeasure baseUnit,
-        decimal minimumStock,
-        int expiringSoonDays)
+    string name,
+    UnitOfMeasure baseUnit,
+    decimal minimumStock,
+    int expiringSoonDays)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
             throw new ArgumentException(
-                "Item name is required.",
+                "Item name cannot be empty or whitespace.",
                 nameof(name));
         }
-
-        if (minimumStock < 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(minimumStock));
-        }
-
         if (expiringSoonDays < 0)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(expiringSoonDays));
         }
 
-        Name = name.Trim();
+
+        if (minimumStock < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(minimumStock),
+                "Minimum stock cannot be negative.");
+        }
+
+        // Terapkan perubahan jika semua valid
+        Name = name;
         BaseUnit = baseUnit;
         MinimumStock = minimumStock;
         ExpiringSoonDays = expiringSoonDays;
@@ -104,7 +104,6 @@ public class Item
         {
             return true;
         }
-
         return false;
     }
 

@@ -4,9 +4,9 @@ namespace LabConsumableExpiryTracker.Domain.Models;
 
 public class Lot
 {
-    public Guid Id { get; private set; }
+    public Guid Id { get; }
     public Guid ItemId { get; private set; }
-    public Item Item { get; private set; }
+    public Item Item { get;}
     public string LotNumber { get; private set; }
     public string? SupplierLotNumber { get; private set; }
     public DateTimeOffset ReceivedAt { get; private set; }

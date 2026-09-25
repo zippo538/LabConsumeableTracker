@@ -112,7 +112,7 @@ public class ConsumptionHistoryRepository : IConsumptionHistoryRepository
 
                 JobId = c.JobId,
                 JobNumber = j.JobNumber,
-                JobDescription = j.Description,
+                JobDescription = j.Description!,
 
                 ItemId = l.ItemId,
                 ItemCode = i.Code,
