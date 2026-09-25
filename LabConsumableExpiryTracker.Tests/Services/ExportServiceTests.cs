@@ -6,6 +6,7 @@ using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.Extensions.Logging;
 using Moq;
 namespace LabConsumableExpiryTracker.Tests.Services;
+
 [TestFixture]
 public class ExportServiceTests
 {
@@ -64,11 +65,14 @@ public class ExportServiceTests
         var result = await _service.GetStockExport(
             filter,
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Invalid format. Only 'csv' is currently supported."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "Invalid format. Only 'csv' is currently supported."));
+        });
         _itemRepository.Verify(
             x => x.GetAllWithLotsAsync(It.IsAny<CancellationToken>()),
             Times.Never);
@@ -199,8 +203,11 @@ public class ExportServiceTests
         var result = await _service.GetStockExport(
             filter,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data!.Single().UsableStock, Is.EqualTo(0m));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data!.Single().UsableStock, Is.EqualTo(0m));
+        });
     }
     [Test]
     public async Task GetStockExport_ShouldReturnOnlyLowStockRows_WhenFilterIsTrue()
@@ -234,13 +241,16 @@ public class ExportServiceTests
         var result = await _service.GetStockExport(
             filter,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(
-            result.Data!.Single().ItemId,
-            Is.EqualTo(lowStockItem.Id));
-        Assert.That(
-            result.Data?.Single().IsLowStock,
-            Is.True);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(
+                result.Data!.Single().ItemId,
+                Is.EqualTo(lowStockItem.Id));
+            Assert.That(
+                result.Data?.Single().IsLowStock,
+                Is.True);
+        });
     }
     [Test]
     public async Task GetStockExport_ShouldReturnOnlyNonLowStockRows_WhenFilterIsFalse()
@@ -274,13 +284,16 @@ public class ExportServiceTests
         var result = await _service.GetStockExport(
             filter,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(
-            result.Data!.Single().ItemId,
-            Is.EqualTo(sufficientItem.Id));
-        Assert.That(
-            result?.Data?.Single().IsLowStock,
-            Is.False);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(
+                result.Data!.Single().ItemId,
+                Is.EqualTo(sufficientItem.Id));
+            Assert.That(
+                result?.Data?.Single().IsLowStock,
+                Is.False);
+        });
     }
     [Test]
     public async Task GetConsumptionExport_ShouldReturnError_WhenFormatIsInvalid()
@@ -292,11 +305,14 @@ public class ExportServiceTests
         var result = await _service.GetConsumptionExport(
             filter,
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Invalid format. Only 'csv' is currently supported."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "Invalid format. Only 'csv' is currently supported."));
+        });
         _consumptionRepository.Verify(
             x => x.SearchAsync(
                 It.IsAny<Guid?>(),
@@ -352,11 +368,14 @@ public class ExportServiceTests
         var result = await _service.GetConsumptionExport(
             filter,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Empty);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Consumption export retrieved."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Empty);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Consumption export retrieved."));
+        });
         _lotRepository.Verify(
             x => x.GetByIdsAsync(
                 It.IsAny<IEnumerable<Guid>>(),

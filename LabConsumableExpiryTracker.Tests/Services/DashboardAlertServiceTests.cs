@@ -81,9 +81,12 @@ public class DashboardAlertServiceTests
 
         var result = await _service.GetAlertsAsync(query);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Validation failed."));
-        Assert.That(result.Errors, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Validation failed."));
+            Assert.That(result.Errors, Has.Count.EqualTo(1));
+        });
         Assert.That(
             result.Errors[0],
             Is.EqualTo("Page must be greater than zero."));
@@ -161,18 +164,24 @@ public class DashboardAlertServiceTests
 
         var result = await _service.GetAlertsAsync(query);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
         Assert.That(result.Data!.Items, Has.Count.EqualTo(1));
 
         var actions = result.Data.Items[0].AllowedActions;
 
         Assert.That(actions, Has.Count.EqualTo(1));
-        Assert.That(actions[0].Code, Is.EqualTo("ViewItem"));
-        Assert.That(actions[0].Label, Is.EqualTo("View item"));
-        Assert.That(
-            actions[0].Href,
-            Is.EqualTo($"/app/items/{alert.ItemId}"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(actions[0].Code, Is.EqualTo("ViewItem"));
+            Assert.That(actions[0].Label, Is.EqualTo("View item"));
+            Assert.That(
+                actions[0].Href,
+                Is.EqualTo($"/app/items/{alert.ItemId}"));
+        });
     }
 
     [Test]
@@ -247,13 +256,16 @@ public class DashboardAlertServiceTests
 
         Assert.That(actions, Has.Count.EqualTo(2));
 
-        Assert.That(actions[0].Code, Is.EqualTo("ViewItem"));
-        Assert.That(actions[1].Code, Is.EqualTo("RegisterLot"));
-        Assert.That(actions[1].Label, Is.EqualTo("Register lot"));
-        Assert.That(
-            actions[1].Href,
-            Is.EqualTo(
-                $"/app/lots?itemId={alert.ItemId}&action=create"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(actions[0].Code, Is.EqualTo("ViewItem"));
+            Assert.That(actions[1].Code, Is.EqualTo("RegisterLot"));
+            Assert.That(actions[1].Label, Is.EqualTo("Register lot"));
+            Assert.That(
+                actions[1].Href,
+                Is.EqualTo(
+                    $"/app/lots?itemId={alert.ItemId}&action=create"));
+        });
     }
 
     [Test]
@@ -323,8 +335,11 @@ public class DashboardAlertServiceTests
         var actions = result.Data!.Items[0].AllowedActions;
 
         Assert.That(actions, Has.Count.EqualTo(2));
-        Assert.That(actions[1].Code, Is.EqualTo("OpenDisposal"));
-        Assert.That(actions[1].Label, Is.EqualTo("Review disposal"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(actions[1].Code, Is.EqualTo("OpenDisposal"));
+            Assert.That(actions[1].Label, Is.EqualTo("Review disposal"));
+        });
     }
 
     [Test]

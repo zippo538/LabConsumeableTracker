@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NUnit.Framework;
 using Moq;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
@@ -102,10 +101,13 @@ public class AuthServiceTests
 
         var result = await _service.LoginAsync(request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Invalid username or password."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Invalid username or password."));
+        });
 
         _userManager.Verify(
             x => x.CheckPasswordAsync(
@@ -132,10 +134,13 @@ public class AuthServiceTests
 
         var result = await _service.LoginAsync(request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Invalid username or password."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Invalid username or password."));
+        });
 
         _userManager.Verify(
             x => x.CheckPasswordAsync(
@@ -167,10 +172,13 @@ public class AuthServiceTests
 
         var result = await _service.LoginAsync(request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Invalid username or password."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Invalid username or password."));
+        });
     }
 
     [Test]
@@ -225,21 +233,27 @@ public class AuthServiceTests
 
         var result = await _service.LoginAsync(request);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data!.Token, Is.EqualTo("access-token"));
-        Assert.That(
-            result.Data.RefreshToken,
-            Is.EqualTo("refresh-token"));
-        Assert.That(
-            result.Data.TokenType,
-            Is.EqualTo("Bearer"));
-        Assert.That(
-            result.Data.Role,
-            Is.EqualTo("Scientist"));
-        Assert.That(
-            result.Data.ExpiresAt,
-            Is.GreaterThan(DateTime.UtcNow));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.Token, Is.EqualTo("access-token"));
+            Assert.That(
+                result.Data.RefreshToken,
+                Is.EqualTo("refresh-token"));
+            Assert.That(
+                result.Data.TokenType,
+                Is.EqualTo("Bearer"));
+            Assert.That(
+                result.Data.Role,
+                Is.EqualTo("Scientist"));
+            Assert.That(
+                result.Data.ExpiresAt,
+                Is.GreaterThan(DateTime.UtcNow));
+        });
 
         _refreshTokenRepository.Verify(
             x => x.AddAsync(
@@ -262,11 +276,14 @@ public class AuthServiceTests
         var result =
             await _service.RefreshTokenAsync("invalid-token");
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Refresh token not valid or has been expired."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "Refresh token not valid or has been expired."));
+        });
 
         _refreshTokenRepository.Verify(
             x => x.UpdateAsync(
@@ -457,11 +474,14 @@ public class AuthServiceTests
         var result =
             await _service.RevokeTokenAsync("invalid-token");
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Token not found or has been revoked."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "Token not found or has been revoked."));
+        });
 
         _refreshTokenRepository.Verify(
             x => x.UpdateAsync(

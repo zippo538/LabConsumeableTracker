@@ -58,8 +58,11 @@ public class ItemServiceTests
             .Setup(x => x.GetByIdWithLotsAsync(id, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Item?)null);
         var result = await _sut.GetByIdItem(id, CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Item not found."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Item not found."));
+        });
     }
     [Test]
     public async Task GetByIdItem_WhenExists_ReturnsSuccess()
@@ -79,9 +82,12 @@ public class ItemServiceTests
             .Setup(x => x.Map<ItemDto>(item))
             .Returns(dto);
         var result = await _sut.GetByIdItem(item.Id, CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.SameAs(dto));
-        Assert.That(dto.TotalRemainingQuantity, Is.EqualTo(10));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.SameAs(dto));
+            Assert.That(dto.TotalRemainingQuantity, Is.EqualTo(10));
+        });
     }
     [Test]
     public async Task CreateItem_WhenCodeExists_ReturnsError()
@@ -96,8 +102,11 @@ public class ItemServiceTests
             .Setup(x => x.GetByCodeAsync(dto.Code, It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateItem());
         var result = await _sut.CreateItem(dto, CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Item code already exists."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Item code already exists."));
+        });
     }
     [Test]
     public async Task CreateItem_WhenValid_CreatesItem()
@@ -168,8 +177,11 @@ public class ItemServiceTests
                 ExpiringSoonDays = 30
             },
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(item.Name, Is.EqualTo("Updated"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(item.Name, Is.EqualTo("Updated"));
+        });
     }
     [Test]
     public async Task DeleteItem_WhenSuccess_ReturnsTrue()
@@ -182,8 +194,11 @@ public class ItemServiceTests
             .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
         var result = await _sut.DeleteItem(id, CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.True);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.True);
+        });
     }
     [Test]
     public async Task CreateItem_WhenInvalidBaseUnit_ReturnsValidationError()
@@ -212,7 +227,7 @@ public class ItemServiceTests
         var item = CreateItem();
         _itemRepository
             .Setup(x => x.GetAllWithLotsAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new[] { item });
+            .ReturnsAsync([item]);
         _lotRepository
             .Setup(x => x.GetUsableQuantityByItemIdsAsync(
                 It.IsAny<IEnumerable<Guid>>(),
@@ -226,8 +241,11 @@ public class ItemServiceTests
             .Setup(x => x.Map<ItemDto>(item))
             .Returns(new ItemDto());
         var result = await _sut.GetAllItem(CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
     }
     [Test]
     public async Task DeleteItem_WhenNotFound_ReturnsError()
@@ -240,8 +258,11 @@ public class ItemServiceTests
             .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(0);
         var result = await _sut.DeleteItem(id, CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Item not found."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Item not found."));
+        });
     }
     private static Item CreateItem()
     {
@@ -258,8 +279,8 @@ public class ItemServiceTests
     public async Task GetAllItemPage_ShouldReturnPagedItemsSuccessfully()
     {
         // Arrange
-        var page = 1;
-        var pageSize = 10;
+        const int page = 1;
+        const int pageSize = 10;
         var ct = CancellationToken.None;
 
         var itemId = Guid.NewGuid();
@@ -287,7 +308,7 @@ public class ItemServiceTests
             TotalCount = 1
         };
 
-        var usableQuantity = 25m;
+        const decimal usableQuantity = 25m;
 
         _itemRepository
             .Setup(x => x.GetAllWithLotsAsyncPaged(page, pageSize, ct))
@@ -315,14 +336,20 @@ public class ItemServiceTests
             pageSize,
             ct);
 
-        // Assert
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            // Assert
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
 
-        Assert.That(result.Data!.Items, Has.Count.EqualTo(1));
-        Assert.That(result.Data.Page, Is.EqualTo(page));
-        Assert.That(result.Data.PageSize, Is.EqualTo(pageSize));
-        Assert.That(result.Data.TotalCount, Is.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.Items, Has.Count.EqualTo(1));
+            Assert.That(result.Data.Page, Is.EqualTo(page));
+            Assert.That(result.Data.PageSize, Is.EqualTo(pageSize));
+            Assert.That(result.Data.TotalCount, Is.EqualTo(1));
+        });
 
         var dto = result.Data.Items.Single();
 
@@ -452,499 +479,499 @@ public class ItemServiceTests
 
         return image.Object;
     }
-    
+
     [Test]
-public async Task UpdateItem_ShouldReturnError_WhenItemNotFound()
-{
-    var id = Guid.NewGuid();
-
-    var request = new UpdateItemDto
+    public async Task UpdateItem_ShouldReturnError_WhenItemNotFound()
     {
-        Name = "Updated Item",
-        BaseUnit = UnitOfMeasure.Unit,
-        MinimumStock = 20m,
-        ExpiringSoonDays = 15
-    };
+        var id = Guid.NewGuid();
 
-    _itemRepository
-        .Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-        .ReturnsAsync((Item?)null);
+        var request = new UpdateItemDto
+        {
+            Name = "Updated Item",
+            BaseUnit = UnitOfMeasure.Unit,
+            MinimumStock = 20m,
+            ExpiringSoonDays = 15
+        };
 
-    var result = await _sut.UpdateItem(
-        id,
-        request,
-        CancellationToken.None);
+        _itemRepository
+            .Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Item?)null);
 
-    Assert.That(result.Success, Is.False);
-    Assert.That(result.Message, Is.EqualTo("Item not found."));
-
-    _itemRepository.Verify(
-        x => x.UpdateAsync(
-            It.IsAny<Item>(),
-            It.IsAny<CancellationToken>()),
-        Times.Never);
-
-    _unitOfWork.Verify(
-        x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
-        Times.Never);
-}
-
-[Test]
-public async Task UpdateItem_ShouldReturnError_WhenImageIsEmpty()
-{
-    var id = Guid.NewGuid();
-
-    var item = new Item(
-        id,
-        "ITEM-001",
-        "Test Item",
-        UnitOfMeasure.Unit,
-        10m,
-        30);
-
-    var request = new UpdateItemDto
-    {
-        Name = "Updated Item",
-        BaseUnit = UnitOfMeasure.Unit,
-        MinimumStock = 20m,
-        ExpiringSoonDays = 15,
-        Image = CreateMockImage(0, "image/jpeg")
-    };
-
-    _itemRepository
-        .Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-        .ReturnsAsync(item);
-
-    var result = await _sut.UpdateItem(
-        id,
-        request,
-        CancellationToken.None);
-
-    Assert.That(result.Success, Is.False);
-    Assert.That(result.Message, Is.EqualTo("Validation failed."));
-    Assert.That(result.Errors, Does.Contain("Image cannot be empty."));
-
-    _itemRepository.Verify(
-        x => x.UpdateAsync(
-            It.IsAny<Item>(),
-            It.IsAny<CancellationToken>()),
-        Times.Never);
-}
-
-[Test]
-public async Task UpdateItem_ShouldReturnError_WhenImageExceeds5MB()
-{
-    var id = Guid.NewGuid();
-
-    var item = new Item(
-        id,
-        "ITEM-001",
-        "Test Item",
-        UnitOfMeasure.Unit,
-        10m,
-        30);
-
-    var request = new UpdateItemDto
-    {
-        Name = "Updated Item",
-        BaseUnit = UnitOfMeasure.Unit,
-        MinimumStock = 20m,
-        ExpiringSoonDays = 15,
-        Image = CreateMockImage(
-            5 * 1024 * 1024 + 1,
-            "image/jpeg")
-    };
-
-    _itemRepository
-        .Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-        .ReturnsAsync(item);
-
-    var result = await _sut.UpdateItem(
-        id,
-        request,
-        CancellationToken.None);
-
-    Assert.That(result.Success, Is.False);
-    Assert.That(result.Message, Is.EqualTo("Validation failed."));
-    Assert.That(result.Errors, Does.Contain("Image cannot exceed 5 MB."));
-
-    _itemRepository.Verify(
-        x => x.UpdateAsync(
-            It.IsAny<Item>(),
-            It.IsAny<CancellationToken>()),
-        Times.Never);
-}
-
-[Test]
-[TestCase("application/pdf")]
-[TestCase("text/plain")]
-[TestCase("application/octet-stream")]
-public async Task UpdateItem_ShouldReturnError_WhenImageTypeIsInvalid(
-    string contentType)
-{
-    var id = Guid.NewGuid();
-
-    var item = new Item(
-        id,
-        "ITEM-001",
-        "Test Item",
-        UnitOfMeasure.Unit,
-        10m,
-        30);
-
-    var request = new UpdateItemDto
-    {
-        Name = "Updated Item",
-        BaseUnit = UnitOfMeasure.Unit,
-        MinimumStock = 20m,
-        ExpiringSoonDays = 15,
-        Image = CreateMockImage(1024, contentType)
-    };
-
-    _itemRepository
-        .Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-        .ReturnsAsync(item);
-
-    var result = await _sut.UpdateItem(
-        id,
-        request,
-        CancellationToken.None);
-
-    Assert.That(result.Success, Is.False);
-    Assert.That(result.Message, Is.EqualTo("Validation failed."));
-    Assert.That(result.Errors, Does.Contain("Invalid image type."));
-
-    _itemRepository.Verify(
-        x => x.UpdateAsync(
-            It.IsAny<Item>(),
-            It.IsAny<CancellationToken>()),
-        Times.Never);
-}
-
-[Test]
-public async Task UpdateItem_ShouldUpdateItem_WhenImageIsNotProvided()
-{
-    var id = Guid.NewGuid();
-
-    var item = new Item(
-        id,
-        "ITEM-001",
-        "Test Item",
-        UnitOfMeasure.Unit,
-        10m,
-        30);
-
-    var request = new UpdateItemDto
-    {
-        Name = "Updated Item",
-        BaseUnit = UnitOfMeasure.Unit,
-        MinimumStock = 20m,
-        ExpiringSoonDays = 15
-    };
-
-    var updatedItem = item;
-
-    var itemDto = new ItemDto
-    {
-        Id = id,
-        Code = "ITEM-001",
-        Name = "Updated Item"
-    };
-
-    _itemRepository
-        .Setup(x => x.GetByIdAsync(
+        var result = await _sut.UpdateItem(
             id,
-            It.IsAny<CancellationToken>()))
-        .ReturnsAsync(item);
+            request,
+            CancellationToken.None);
 
-    _itemRepository
-        .Setup(x => x.UpdateAsync(
-            It.Is<Item>(x =>
-                x.Id == id &&
-                x.Name == request.Name),
-            It.IsAny<CancellationToken>()))
-        .ReturnsAsync(updatedItem);
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.Message, Is.EqualTo("Item not found."));
 
-    _unitOfWork
-        .Setup(x => x.SaveChangesAsync(
-            It.IsAny<CancellationToken>()))
-        .ReturnsAsync(1);
+        _itemRepository.Verify(
+            x => x.UpdateAsync(
+                It.IsAny<Item>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
 
-    _mapper
-        .Setup(x => x.Map<ItemDto>(updatedItem))
-        .Returns(itemDto);
+        _unitOfWork.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
 
-    var result = await _sut.UpdateItem(
-        id,
-        request,
-        CancellationToken.None);
-
-    Assert.That(result.Success, Is.True);
-    Assert.That(result.Data, Is.Not.Null);
-    Assert.That(result.Data!.Id, Is.EqualTo(id));
-    Assert.That(result.Data.Name, Is.EqualTo("Updated Item"));
-    Assert.That(
-        result.Message,
-        Is.EqualTo("Item updated successfully."));
-
-    _itemRepository.Verify(
-        x => x.UpdateAsync(
-            It.IsAny<Item>(),
-            It.IsAny<CancellationToken>()),
-        Times.Once);
-
-    _unitOfWork.Verify(
-        x => x.SaveChangesAsync(
-            It.IsAny<CancellationToken>()),
-        Times.Once);
-
-    _imageStorageRepository.Verify(
-        x => x.SaveImageAsync(
-            It.IsAny<Stream>(),
-            It.IsAny<string>(),
-            It.IsAny<CancellationToken>()),
-        Times.Never);
-
-    _imageStorageRepository.Verify(
-        x => x.DeleteImageAsync(
-            It.IsAny<Guid>(),
-            It.IsAny<CancellationToken>()),
-        Times.Never);
-}
-
-[Test]
-public async Task UpdateItem_ShouldReplaceImage_WhenNewImageIsProvided()
-{
-    var id = Guid.NewGuid();
-    var oldImageId = Guid.NewGuid();
-    var newImageId = Guid.NewGuid();
-
-    var item = new Item(
-        id,
-        "ITEM-001",
-        "Test Item",
-        UnitOfMeasure.Unit,
-        10m,
-        30);
-
-    item.SetImageId(oldImageId);
-
-    var request = new UpdateItemDto
+    [Test]
+    public async Task UpdateItem_ShouldReturnError_WhenImageIsEmpty()
     {
-        Name = "Updated Item",
-        BaseUnit = UnitOfMeasure.Unit,
-        MinimumStock = 20m,
-        ExpiringSoonDays = 15,
-        Image = CreateMockImage(
-            1024,
-            "image/png",
-            "updated.png")
-    };
+        var id = Guid.NewGuid();
 
-    var itemDto = new ItemDto
+        var item = new Item(
+            id,
+            "ITEM-001",
+            "Test Item",
+            UnitOfMeasure.Unit,
+            10m,
+            30);
+
+        var request = new UpdateItemDto
+        {
+            Name = "Updated Item",
+            BaseUnit = UnitOfMeasure.Unit,
+            MinimumStock = 20m,
+            ExpiringSoonDays = 15,
+            Image = CreateMockImage(0, "image/jpeg")
+        };
+
+        _itemRepository
+            .Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(item);
+
+        var result = await _sut.UpdateItem(
+            id,
+            request,
+            CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.Message, Is.EqualTo("Validation failed."));
+        Assert.That(result.Errors, Does.Contain("Image cannot be empty."));
+
+        _itemRepository.Verify(
+            x => x.UpdateAsync(
+                It.IsAny<Item>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task UpdateItem_ShouldReturnError_WhenImageExceeds5MB()
     {
-        Id = id,
-        Code = "ITEM-001",
-        Name = "Updated Item"
-    };
+        var id = Guid.NewGuid();
 
-    _itemRepository
-        .Setup(x => x.GetByIdAsync(
+        var item = new Item(
             id,
-            It.IsAny<CancellationToken>()))
-        .ReturnsAsync(item);
+            "ITEM-001",
+            "Test Item",
+            UnitOfMeasure.Unit,
+            10m,
+            30);
 
-    _imageStorageRepository
-        .Setup(x => x.SaveImageAsync(
-            It.IsAny<Stream>(),
-            ".png",
-            It.IsAny<CancellationToken>()))
-        .ReturnsAsync(newImageId);
+        var request = new UpdateItemDto
+        {
+            Name = "Updated Item",
+            BaseUnit = UnitOfMeasure.Unit,
+            MinimumStock = 20m,
+            ExpiringSoonDays = 15,
+            Image = CreateMockImage(
+                5 * 1024 * 1024 + 1,
+                "image/jpeg")
+        };
 
-    _imageStorageRepository
-        .Setup(x => x.DeleteImageAsync(
-            oldImageId,
-            It.IsAny<CancellationToken>()))
-        .Returns(Task.CompletedTask);
+        _itemRepository
+            .Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(item);
 
-    _itemRepository
-        .Setup(x => x.UpdateAsync(
-            It.IsAny<Item>(),
-            It.IsAny<CancellationToken>()))
-        .ReturnsAsync(item);
+        var result = await _sut.UpdateItem(
+            id,
+            request,
+            CancellationToken.None);
 
-    _unitOfWork
-        .Setup(x => x.SaveChangesAsync(
-            It.IsAny<CancellationToken>()))
-        .ReturnsAsync(1);
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.Message, Is.EqualTo("Validation failed."));
+        Assert.That(result.Errors, Does.Contain("Image cannot exceed 5 MB."));
 
-    _mapper
-        .Setup(x => x.Map<ItemDto>(item))
-        .Returns(itemDto);
+        _itemRepository.Verify(
+            x => x.UpdateAsync(
+                It.IsAny<Item>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
 
-    var result = await _sut.UpdateItem(
-        id,
-        request,
-        CancellationToken.None);
-
-    Assert.That(result.Success, Is.True);
-    Assert.That(result.Data, Is.Not.Null);
-    Assert.That(result.Data!.Id, Is.EqualTo(id));
-    Assert.That(result.Message, Is.EqualTo("Item updated successfully."));
-
-    Assert.That(item.ImageId, Is.EqualTo(newImageId));
-
-    _imageStorageRepository.Verify(
-        x => x.SaveImageAsync(
-            It.IsAny<Stream>(),
-            ".png",
-            It.IsAny<CancellationToken>()),
-        Times.Once);
-
-    _imageStorageRepository.Verify(
-        x => x.DeleteImageAsync(
-            oldImageId,
-            It.IsAny<CancellationToken>()),
-        Times.Once);
-
-    _itemRepository.Verify(
-        x => x.UpdateAsync(
-            It.Is<Item>(x =>
-                x.Id == id &&
-                x.ImageId == newImageId),
-            It.IsAny<CancellationToken>()),
-        Times.Once);
-
-    _unitOfWork.Verify(
-        x => x.SaveChangesAsync(
-            It.IsAny<CancellationToken>()),
-        Times.Once);
-}
-
-[Test]
-public async Task UpdateItem_ShouldNotDeleteOldImage_WhenNewImageIsProvidedAndOldImageDoesNotExist()
-{
-    var id = Guid.NewGuid();
-    var newImageId = Guid.NewGuid();
-
-    var item = new Item(
-        id,
-        "ITEM-001",
-        "Test Item",
-        UnitOfMeasure.Unit,
-        10m,
-        30);
-
-    var request = new UpdateItemDto
+    [Test]
+    [TestCase("application/pdf")]
+    [TestCase("text/plain")]
+    [TestCase("application/octet-stream")]
+    public async Task UpdateItem_ShouldReturnError_WhenImageTypeIsInvalid(
+        string contentType)
     {
-        Name = "Updated Item",
-        BaseUnit = UnitOfMeasure.Unit,
-        MinimumStock = 20m,
-        ExpiringSoonDays = 15,
-        Image = CreateMockImage(
-            1024,
-            "image/jpeg",
-            "updated.jpg")
-    };
+        var id = Guid.NewGuid();
 
-    var itemDto = new ItemDto
+        var item = new Item(
+            id,
+            "ITEM-001",
+            "Test Item",
+            UnitOfMeasure.Unit,
+            10m,
+            30);
+
+        var request = new UpdateItemDto
+        {
+            Name = "Updated Item",
+            BaseUnit = UnitOfMeasure.Unit,
+            MinimumStock = 20m,
+            ExpiringSoonDays = 15,
+            Image = CreateMockImage(1024, contentType)
+        };
+
+        _itemRepository
+            .Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(item);
+
+        var result = await _sut.UpdateItem(
+            id,
+            request,
+            CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.Message, Is.EqualTo("Validation failed."));
+        Assert.That(result.Errors, Does.Contain("Invalid image type."));
+
+        _itemRepository.Verify(
+            x => x.UpdateAsync(
+                It.IsAny<Item>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task UpdateItem_ShouldUpdateItem_WhenImageIsNotProvided()
     {
-        Id = id,
-        Code = "ITEM-001",
-        Name = "Updated Item"
-    };
+        var id = Guid.NewGuid();
 
-    _itemRepository
-        .Setup(x => x.GetByIdAsync(
+        var item = new Item(
             id,
-            It.IsAny<CancellationToken>()))
-        .ReturnsAsync(item);
+            "ITEM-001",
+            "Test Item",
+            UnitOfMeasure.Unit,
+            10m,
+            30);
 
-    _imageStorageRepository
-        .Setup(x => x.SaveImageAsync(
-            It.IsAny<Stream>(),
-            ".jpg",
-            It.IsAny<CancellationToken>()))
-        .ReturnsAsync(newImageId);
+        var request = new UpdateItemDto
+        {
+            Name = "Updated Item",
+            BaseUnit = UnitOfMeasure.Unit,
+            MinimumStock = 20m,
+            ExpiringSoonDays = 15
+        };
 
-    _itemRepository
-        .Setup(x => x.UpdateAsync(
-            It.IsAny<Item>(),
-            It.IsAny<CancellationToken>()))
-        .ReturnsAsync(item);
+        var updatedItem = item;
 
-    _unitOfWork
-        .Setup(x => x.SaveChangesAsync(
-            It.IsAny<CancellationToken>()))
-        .ReturnsAsync(1);
+        var itemDto = new ItemDto
+        {
+            Id = id,
+            Code = "ITEM-001",
+            Name = "Updated Item"
+        };
 
-    _mapper
-        .Setup(x => x.Map<ItemDto>(item))
-        .Returns(itemDto);
+        _itemRepository
+            .Setup(x => x.GetByIdAsync(
+                id,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(item);
 
-    var result = await _sut.UpdateItem(
-        id,
-        request,
-        CancellationToken.None);
+        _itemRepository
+            .Setup(x => x.UpdateAsync(
+                It.Is<Item>(item1 =>
+                    item1.Id == id &&
+                    item1.Name == request.Name),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(updatedItem);
 
-    Assert.That(result.Success, Is.True);
-    Assert.That(item.ImageId, Is.EqualTo(newImageId));
+        _unitOfWork
+            .Setup(x => x.SaveChangesAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
 
-    _imageStorageRepository.Verify(
-        x => x.SaveImageAsync(
-            It.IsAny<Stream>(),
-            ".jpg",
-            It.IsAny<CancellationToken>()),
-        Times.Once);
+        _mapper
+            .Setup(x => x.Map<ItemDto>(updatedItem))
+            .Returns(itemDto);
 
-    _imageStorageRepository.Verify(
-        x => x.DeleteImageAsync(
-            It.IsAny<Guid>(),
-            It.IsAny<CancellationToken>()),
-        Times.Never);
-
-    _unitOfWork.Verify(
-        x => x.SaveChangesAsync(
-            It.IsAny<CancellationToken>()),
-        Times.Once);
-}
-
-[Test]
-public async Task DeleteItem_ShouldReturnError_WhenItemIsReferencedByLots()
-{
-    var id = Guid.NewGuid();
-
-    _itemRepository
-        .Setup(x => x.DeleteAsync(
+        var result = await _sut.UpdateItem(
             id,
-            It.IsAny<CancellationToken>()))
-        .ReturnsAsync(true);
+            request,
+            CancellationToken.None);
 
-    _unitOfWork
-        .Setup(x => x.SaveChangesAsync(
-            It.IsAny<CancellationToken>()))
-        .ThrowsAsync(new DbUpdateException());
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Data, Is.Not.Null);
+        Assert.That(result.Data!.Id, Is.EqualTo(id));
+        Assert.That(result.Data.Name, Is.EqualTo("Updated Item"));
+        Assert.That(
+            result.Message,
+            Is.EqualTo("Item updated successfully."));
 
-    var result = await _sut.DeleteItem(
-        id,
-        CancellationToken.None);
+        _itemRepository.Verify(
+            x => x.UpdateAsync(
+                It.IsAny<Item>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
 
-    Assert.That(result.Success, Is.False);
-    Assert.That(
-        result.Message,
-        Is.EqualTo(
-            "This item cannot be deleted because it is already used by one or more lots."));
+        _unitOfWork.Verify(
+            x => x.SaveChangesAsync(
+                It.IsAny<CancellationToken>()),
+            Times.Once);
 
-    _itemRepository.Verify(
-        x => x.DeleteAsync(
+        _imageStorageRepository.Verify(
+            x => x.SaveImageAsync(
+                It.IsAny<Stream>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _imageStorageRepository.Verify(
+            x => x.DeleteImageAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task UpdateItem_ShouldReplaceImage_WhenNewImageIsProvided()
+    {
+        var id = Guid.NewGuid();
+        var oldImageId = Guid.NewGuid();
+        var newImageId = Guid.NewGuid();
+
+        var item = new Item(
             id,
-            It.IsAny<CancellationToken>()),
-        Times.Once);
+            "ITEM-001",
+            "Test Item",
+            UnitOfMeasure.Unit,
+            10m,
+            30);
 
-    _unitOfWork.Verify(
-        x => x.SaveChangesAsync(
-            It.IsAny<CancellationToken>()),
-        Times.Once);
-}
+        item.SetImageId(oldImageId);
+
+        var request = new UpdateItemDto
+        {
+            Name = "Updated Item",
+            BaseUnit = UnitOfMeasure.Unit,
+            MinimumStock = 20m,
+            ExpiringSoonDays = 15,
+            Image = CreateMockImage(
+                1024,
+                "image/png",
+                "updated.png")
+        };
+
+        var itemDto = new ItemDto
+        {
+            Id = id,
+            Code = "ITEM-001",
+            Name = "Updated Item"
+        };
+
+        _itemRepository
+            .Setup(x => x.GetByIdAsync(
+                id,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(item);
+
+        _imageStorageRepository
+            .Setup(x => x.SaveImageAsync(
+                It.IsAny<Stream>(),
+                ".png",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(newImageId);
+
+        _imageStorageRepository
+            .Setup(x => x.DeleteImageAsync(
+                oldImageId,
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _itemRepository
+            .Setup(x => x.UpdateAsync(
+                It.IsAny<Item>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(item);
+
+        _unitOfWork
+            .Setup(x => x.SaveChangesAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        _mapper
+            .Setup(x => x.Map<ItemDto>(item))
+            .Returns(itemDto);
+
+        var result = await _sut.UpdateItem(
+            id,
+            request,
+            CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Data, Is.Not.Null);
+        Assert.That(result.Data!.Id, Is.EqualTo(id));
+        Assert.That(result.Message, Is.EqualTo("Item updated successfully."));
+
+        Assert.That(item.ImageId, Is.EqualTo(newImageId));
+
+        _imageStorageRepository.Verify(
+            x => x.SaveImageAsync(
+                It.IsAny<Stream>(),
+                ".png",
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _imageStorageRepository.Verify(
+            x => x.DeleteImageAsync(
+                oldImageId,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _itemRepository.Verify(
+            x => x.UpdateAsync(
+                It.Is<Item>(item1 =>
+                    item1.Id == id &&
+                    item1.ImageId == newImageId),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _unitOfWork.Verify(
+            x => x.SaveChangesAsync(
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task UpdateItem_ShouldNotDeleteOldImage_WhenNewImageIsProvidedAndOldImageDoesNotExist()
+    {
+        var id = Guid.NewGuid();
+        var newImageId = Guid.NewGuid();
+
+        var item = new Item(
+            id,
+            "ITEM-001",
+            "Test Item",
+            UnitOfMeasure.Unit,
+            10m,
+            30);
+
+        var request = new UpdateItemDto
+        {
+            Name = "Updated Item",
+            BaseUnit = UnitOfMeasure.Unit,
+            MinimumStock = 20m,
+            ExpiringSoonDays = 15,
+            Image = CreateMockImage(
+                1024,
+                "image/jpeg",
+                "updated.jpg")
+        };
+
+        var itemDto = new ItemDto
+        {
+            Id = id,
+            Code = "ITEM-001",
+            Name = "Updated Item"
+        };
+
+        _itemRepository
+            .Setup(x => x.GetByIdAsync(
+                id,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(item);
+
+        _imageStorageRepository
+            .Setup(x => x.SaveImageAsync(
+                It.IsAny<Stream>(),
+                ".jpg",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(newImageId);
+
+        _itemRepository
+            .Setup(x => x.UpdateAsync(
+                It.IsAny<Item>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(item);
+
+        _unitOfWork
+            .Setup(x => x.SaveChangesAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        _mapper
+            .Setup(x => x.Map<ItemDto>(item))
+            .Returns(itemDto);
+
+        var result = await _sut.UpdateItem(
+            id,
+            request,
+            CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(item.ImageId, Is.EqualTo(newImageId));
+
+        _imageStorageRepository.Verify(
+            x => x.SaveImageAsync(
+                It.IsAny<Stream>(),
+                ".jpg",
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _imageStorageRepository.Verify(
+            x => x.DeleteImageAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _unitOfWork.Verify(
+            x => x.SaveChangesAsync(
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task DeleteItem_ShouldReturnError_WhenItemIsReferencedByLots()
+    {
+        var id = Guid.NewGuid();
+
+        _itemRepository
+            .Setup(x => x.DeleteAsync(
+                id,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        _unitOfWork
+            .Setup(x => x.SaveChangesAsync(
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new DbUpdateException());
+
+        var result = await _sut.DeleteItem(
+            id,
+            CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(
+            result.Message,
+            Is.EqualTo(
+                "This item cannot be deleted because it is already used by one or more lots."));
+
+        _itemRepository.Verify(
+            x => x.DeleteAsync(
+                id,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _unitOfWork.Verify(
+            x => x.SaveChangesAsync(
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
 
 }

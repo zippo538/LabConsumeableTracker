@@ -1,6 +1,7 @@
 using LabConsumableExpiryTracker.Domain.Models;
 
 namespace LabConsumableExpiryTracker.Tests.Domain;
+
 [TestFixture]
 public class ConsumptionTests
 {

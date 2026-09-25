@@ -1,6 +1,7 @@
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 namespace LabConsumableExpiryTracker.Tests.Repository;
+
 [TestFixture]
 public class PostgreSqlTestFixture : IDisposable
 {

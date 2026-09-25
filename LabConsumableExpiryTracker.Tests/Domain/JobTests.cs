@@ -2,6 +2,7 @@ using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 
 namespace LabConsumableExpiryTracker.Tests.Domain;
+
 [TestFixture]
 public class JobTests
 {

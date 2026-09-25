@@ -132,14 +132,20 @@ public class UserServiceTests
 
         var result = await _service.CreateUserAsync(request);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("User created successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("User created successfully."));
 
-        Assert.That(result.Data, Is.SameAs(response));
-        Assert.That(result.Data!.Roles, Is.Not.Null);
-        Assert.That(result.Data.Roles, Has.Count.EqualTo(1));
+            Assert.That(result.Data, Is.SameAs(response));
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.Roles, Is.Not.Null);
+            Assert.That(result.Data.Roles, Has.Count.EqualTo(1));
+        });
         Assert.That(result.Data.Roles[0], Is.EqualTo("Scientist"));
 
         _roleManager.Verify(
@@ -187,8 +193,11 @@ public class UserServiceTests
 
         var result = await _service.CreateUserAsync(request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Role 'Scientist' does not exist."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Role 'Scientist' does not exist."));
+        });
 
         _mapper.Verify(
             x => x.Map<ApplicationUser>(It.IsAny<CreateUserRequestDto>()),
@@ -238,9 +247,12 @@ public class UserServiceTests
 
         var result = await _service.CreateUserAsync(request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Failed to create user."));
-        Assert.That(result.Errors, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Failed to create user."));
+            Assert.That(result.Errors, Is.Not.Null);
+        });
         Assert.That(result.Errors, Does.Contain("Username already exists."));
 
         _userManager.Verify(
@@ -295,9 +307,12 @@ public class UserServiceTests
 
         var result = await _service.CreateUserAsync(request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Failed to assign user role."));
-        Assert.That(result.Errors, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Failed to assign user role."));
+            Assert.That(result.Errors, Is.Not.Null);
+        });
         Assert.That(result.Errors, Does.Contain("Failed to assign role."));
 
         _userManager.Verify(
@@ -320,8 +335,11 @@ public class UserServiceTests
 
         var result = await _service.GetUserProfileAsync(userId);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("User not found or inactive."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("User not found or inactive."));
+        });
 
         _userManager.Verify(
             x => x.GetRolesAsync(It.IsAny<ApplicationUser>()),
@@ -350,8 +368,11 @@ public class UserServiceTests
 
         var result = await _service.GetUserProfileAsync(userId);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("User not found or inactive."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("User not found or inactive."));
+        });
 
         _userManager.Verify(
             x => x.GetRolesAsync(It.IsAny<ApplicationUser>()),
@@ -396,11 +417,17 @@ public class UserServiceTests
 
         var result = await _service.GetUserProfileAsync(userId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Message, Is.EqualTo("User profile retrieved successfully."));
-        Assert.That(result.Data, Is.SameAs(response));
-        Assert.That(result.Data!.Roles, Is.Not.Null);
-        Assert.That(result.Data.Roles, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Message, Is.EqualTo("User profile retrieved successfully."));
+            Assert.That(result.Data, Is.SameAs(response));
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.Roles, Is.Not.Null);
+            Assert.That(result.Data.Roles, Has.Count.EqualTo(1));
+        });
         Assert.That(result.Data.Roles[0], Is.EqualTo("Scientist"));
 
         _userManager.Verify(
@@ -1210,531 +1237,531 @@ public class UserServiceTests
           Times.Never);
     }
 
- [Test]
-public async Task SetUserActiveStatusAsync_ShouldDeactivateUserAndRevokeTokens_WhenSuccessful()
-{
-    var adminId = Guid.NewGuid();
-    var targetUserId = Guid.NewGuid();
-
-    var user = new ApplicationUser
+    [Test]
+    public async Task SetUserActiveStatusAsync_ShouldDeactivateUserAndRevokeTokens_WhenSuccessful()
     {
-        Id = targetUserId,
-        UserName = "scientist1",
-        IsActive = true
-    };
+        var adminId = Guid.NewGuid();
+        var targetUserId = Guid.NewGuid();
 
-    _userManager
-        .Setup(x => x.FindByIdAsync(targetUserId.ToString()))
-        .ReturnsAsync(user);
+        var user = new ApplicationUser
+        {
+            Id = targetUserId,
+            UserName = "scientist1",
+            IsActive = true
+        };
 
-    _userManager
-        .Setup(x => x.UpdateAsync(user))
-        .ReturnsAsync(IdentityResult.Success);
+        _userManager
+            .Setup(x => x.FindByIdAsync(targetUserId.ToString()))
+            .ReturnsAsync(user);
 
-    _refreshTokenRepository
-        .Setup(x => x.RevokeAllByUserIdAsync(
+        _userManager
+            .Setup(x => x.UpdateAsync(user))
+            .ReturnsAsync(IdentityResult.Success);
+
+        _refreshTokenRepository
+            .Setup(x => x.RevokeAllByUserIdAsync(
+                targetUserId,
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await _service.SetUserActiveStatusAsync(
+            adminId,
             targetUserId,
-            It.IsAny<CancellationToken>()))
-        .Returns(Task.CompletedTask);
+            false);
 
-    var result = await _service.SetUserActiveStatusAsync(
-        adminId,
-        targetUserId,
-        false);
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Data, Is.True);
+        Assert.That(
+            result.Message,
+            Is.EqualTo("User deactivated successfully."));
 
-    Assert.That(result.Success, Is.True);
-    Assert.That(result.Data, Is.True);
-    Assert.That(
-        result.Message,
-        Is.EqualTo("User deactivated successfully."));
+        Assert.That(user.IsActive, Is.False);
 
-    Assert.That(user.IsActive, Is.False);
+        _refreshTokenRepository.Verify(
+            x => x.RevokeAllByUserIdAsync(
+                targetUserId,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+    [Test]
+    public async Task SetUserActiveStatusAsync_ShouldActivateUser_WhenSuccessful()
+    {
+        var adminId = Guid.NewGuid();
+        var targetUserId = Guid.NewGuid();
 
-    _refreshTokenRepository.Verify(
-        x => x.RevokeAllByUserIdAsync(
+        var user = new ApplicationUser
+        {
+            Id = targetUserId,
+            UserName = "scientist1",
+            IsActive = false
+        };
+
+        _userManager
+            .Setup(x => x.FindByIdAsync(targetUserId.ToString()))
+            .ReturnsAsync(user);
+
+        _userManager
+            .Setup(x => x.UpdateAsync(user))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var result = await _service.SetUserActiveStatusAsync(
+            adminId,
             targetUserId,
-            It.IsAny<CancellationToken>()),
-        Times.Once);
-}
-[Test]
-public async Task SetUserActiveStatusAsync_ShouldActivateUser_WhenSuccessful()
-{
-    var adminId = Guid.NewGuid();
-    var targetUserId = Guid.NewGuid();
+            true);
 
-    var user = new ApplicationUser
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Data, Is.True);
+        Assert.That(
+            result.Message,
+            Is.EqualTo("User activated successfully."));
+
+        Assert.That(user.IsActive, Is.True);
+
+        _refreshTokenRepository.Verify(
+            x => x.RevokeAllByUserIdAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task GetUserStatisticsAsync_ShouldReturnCorrectStatistics()
     {
-        Id = targetUserId,
-        UserName = "scientist1",
-        IsActive = false
-    };
+        var activeUser = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = "active",
+            IsActive = true
+        };
 
-    _userManager
-        .Setup(x => x.FindByIdAsync(targetUserId.ToString()))
-        .ReturnsAsync(user);
+        var inactiveUser = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = "inactive",
+            IsActive = false
+        };
 
-    _userManager
-        .Setup(x => x.UpdateAsync(user))
-        .ReturnsAsync(IdentityResult.Success);
+        var activeAdmin = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = "admin",
+            IsActive = true
+        };
 
-    var result = await _service.SetUserActiveStatusAsync(
-        adminId,
-        targetUserId,
-        true);
+        var inactiveAdmin = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = "inactiveadmin",
+            IsActive = false
+        };
 
-    Assert.That(result.Success, Is.True);
-    Assert.That(result.Data, Is.True);
-    Assert.That(
-        result.Message,
-        Is.EqualTo("User activated successfully."));
-
-    Assert.That(user.IsActive, Is.True);
-
-      _refreshTokenRepository.Verify(
-          x => x.RevokeAllByUserIdAsync(
-              It.IsAny<Guid>(),
-              It.IsAny<CancellationToken>()),
-          Times.Never);
-}
-
-[Test]
-public async Task GetUserStatisticsAsync_ShouldReturnCorrectStatistics()
-{
-    var activeUser = new ApplicationUser
-    {
-        Id = Guid.NewGuid(),
-        UserName = "active",
-        IsActive = true
-    };
-
-    var inactiveUser = new ApplicationUser
-    {
-        Id = Guid.NewGuid(),
-        UserName = "inactive",
-        IsActive = false
-    };
-
-    var activeAdmin = new ApplicationUser
-    {
-        Id = Guid.NewGuid(),
-        UserName = "admin",
-        IsActive = true
-    };
-
-    var inactiveAdmin = new ApplicationUser
-    {
-        Id = Guid.NewGuid(),
-        UserName = "inactiveadmin",
-        IsActive = false
-    };
-
-    await AddUsersAsync(
-        activeUser,
-        inactiveUser,
-        activeAdmin,
-        inactiveAdmin);
-
-    _userManager
-        .Setup(x => x.GetUsersInRoleAsync(
-            nameof(UserRole.WarehouseAdmin)))
-        .ReturnsAsync([
+        await AddUsersAsync(
+            activeUser,
+            inactiveUser,
             activeAdmin,
+            inactiveAdmin);
+
+        _userManager
+            .Setup(x => x.GetUsersInRoleAsync(
+                nameof(UserRole.WarehouseAdmin)))
+            .ReturnsAsync([
+                activeAdmin,
             inactiveAdmin
-        ]);
+            ]);
 
-    var result = await _service.GetUserStatisticsAsync();
+        var result = await _service.GetUserStatisticsAsync();
 
-    Assert.That(result.Success, Is.True);
-    Assert.That(result.Data, Is.Not.Null);
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Data, Is.Not.Null);
 
-    Assert.That(result.Data!.TotalCount, Is.EqualTo(4));
-    Assert.That(result.Data.ActiveCount, Is.EqualTo(2));
-    Assert.That(result.Data.DeactivatedCount, Is.EqualTo(2));
-    Assert.That(result.Data.ActiveAdminCount, Is.EqualTo(1));
-}
-[Test]
-public async Task GetUserStatisticsAsync_ShouldReturnZero_WhenNoUsersExist()
-{
-    _userManager
-        .Setup(x => x.GetUsersInRoleAsync(
-            nameof(UserRole.WarehouseAdmin)))
-        .ReturnsAsync([]);
-
-    var result = await _service.GetUserStatisticsAsync();
-
-    Assert.That(result.Success, Is.True);
-    Assert.That(result.Data, Is.Not.Null);
-
-    Assert.That(result.Data!.TotalCount, Is.EqualTo(0));
-    Assert.That(result.Data.ActiveCount, Is.EqualTo(0));
-    Assert.That(result.Data.DeactivatedCount, Is.EqualTo(0));
-    Assert.That(result.Data.ActiveAdminCount, Is.EqualTo(0));
-}
-
-[Test]
-public async Task GetUserByIdAsync_ShouldReturnError_WhenUserNotFound()
-{
-    var userId = Guid.NewGuid().ToString();
-
-    _userManager
-        .Setup(x => x.FindByIdAsync(userId))
-        .ReturnsAsync((ApplicationUser?)null);
-
-    var result = await _service.GetUserByIdAsync(userId);
-
-    Assert.That(result.Success, Is.False);
-    Assert.That(result.Message, Is.EqualTo("User not found."));
-
-    _userManager.Verify(
-        x => x.GetRolesAsync(It.IsAny<ApplicationUser>()),
-        Times.Never);
-
-    _mapper.Verify(
-        x => x.Map<UserResponseDto>(It.IsAny<ApplicationUser>()),
-        Times.Never);
-}
-[Test]
-public async Task GetUserByIdAsync_ShouldReturnUser_WhenUserExists()
-{
-    var userId = Guid.NewGuid().ToString();
-
-    var user = new ApplicationUser
+        Assert.That(result.Data!.TotalCount, Is.EqualTo(4));
+        Assert.That(result.Data.ActiveCount, Is.EqualTo(2));
+        Assert.That(result.Data.DeactivatedCount, Is.EqualTo(2));
+        Assert.That(result.Data.ActiveAdminCount, Is.EqualTo(1));
+    }
+    [Test]
+    public async Task GetUserStatisticsAsync_ShouldReturnZero_WhenNoUsersExist()
     {
-        Id = Guid.Parse(userId),
-        UserName = "scientist1",
-        Email = "scientist1@formulatrix.com",
-        FullName = "Scientist One",
-        IsActive = true
-    };
+        _userManager
+            .Setup(x => x.GetUsersInRoleAsync(
+                nameof(UserRole.WarehouseAdmin)))
+            .ReturnsAsync([]);
 
-    var response = new UserResponseDto();
+        var result = await _service.GetUserStatisticsAsync();
 
-    _userManager
-        .Setup(x => x.FindByIdAsync(userId))
-        .ReturnsAsync(user);
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Data, Is.Not.Null);
 
-    _userManager
-        .Setup(x => x.GetRolesAsync(user))
-        .ReturnsAsync(["Scientist"]);
+        Assert.That(result.Data!.TotalCount, Is.EqualTo(0));
+        Assert.That(result.Data.ActiveCount, Is.EqualTo(0));
+        Assert.That(result.Data.DeactivatedCount, Is.EqualTo(0));
+        Assert.That(result.Data.ActiveAdminCount, Is.EqualTo(0));
+    }
 
-    _mapper
-        .Setup(x => x.Map<UserResponseDto>(user))
-        .Returns(response);
-
-    var result = await _service.GetUserByIdAsync(userId);
-
-    Assert.That(result.Success, Is.True);
-    Assert.That(result.Data, Is.EqualTo(response));
-
-}
-
-[Test]
-public async Task ChangeUserPasswordAsync_ShouldReturnError_WhenUserNotFound()
-{
-    var userId = Guid.NewGuid();
-
-    var request = new ChangeUserPasswordRequestDto
+    [Test]
+    public async Task GetUserByIdAsync_ShouldReturnError_WhenUserNotFound()
     {
-        NewPassword = "NewPassword123!"
-    };
+        var userId = Guid.NewGuid().ToString();
 
-    _userManager
-        .Setup(x => x.FindByIdAsync(userId.ToString()))
-        .ReturnsAsync((ApplicationUser?)null);
+        _userManager
+            .Setup(x => x.FindByIdAsync(userId))
+            .ReturnsAsync((ApplicationUser?)null);
 
-    var result = await _service.ChangeUserPasswordAsync(
-        userId,
-        request);
+        var result = await _service.GetUserByIdAsync(userId);
 
-    Assert.That(result.Success, Is.False);
-    Assert.That(result.Message, Is.EqualTo("User not found."));
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.Message, Is.EqualTo("User not found."));
 
-    _userManager.Verify(
-        x => x.GeneratePasswordResetTokenAsync(
-            It.IsAny<ApplicationUser>()),
-        Times.Never);
+        _userManager.Verify(
+            x => x.GetRolesAsync(It.IsAny<ApplicationUser>()),
+            Times.Never);
 
-    _userManager.Verify(
-        x => x.ResetPasswordAsync(
-            It.IsAny<ApplicationUser>(),
-            It.IsAny<string>(),
-            It.IsAny<string>()),
-        Times.Never);
-}
-
-[Test]
-public async Task ChangeUserPasswordAsync_ShouldReturnError_WhenResetPasswordFails()
-{
-    var userId = Guid.NewGuid();
-
-    var user = new ApplicationUser
+        _mapper.Verify(
+            x => x.Map<UserResponseDto>(It.IsAny<ApplicationUser>()),
+            Times.Never);
+    }
+    [Test]
+    public async Task GetUserByIdAsync_ShouldReturnUser_WhenUserExists()
     {
-        Id = userId,
-        UserName = "scientist1",
-        Email = "scientist1@formulatrix.com",
-        FullName = "Scientist One",
-        IsActive = true
-    };
+        var userId = Guid.NewGuid().ToString();
 
-    var request = new ChangeUserPasswordRequestDto
+        var user = new ApplicationUser
+        {
+            Id = Guid.Parse(userId),
+            UserName = "scientist1",
+            Email = "scientist1@formulatrix.com",
+            FullName = "Scientist One",
+            IsActive = true
+        };
+
+        var response = new UserResponseDto();
+
+        _userManager
+            .Setup(x => x.FindByIdAsync(userId))
+            .ReturnsAsync(user);
+
+        _userManager
+            .Setup(x => x.GetRolesAsync(user))
+            .ReturnsAsync(["Scientist"]);
+
+        _mapper
+            .Setup(x => x.Map<UserResponseDto>(user))
+            .Returns(response);
+
+        var result = await _service.GetUserByIdAsync(userId);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Data, Is.EqualTo(response));
+
+    }
+
+    [Test]
+    public async Task ChangeUserPasswordAsync_ShouldReturnError_WhenUserNotFound()
     {
-        NewPassword = "NewPassword123!"
-    };
+        var userId = Guid.NewGuid();
 
-    var identityError = new IdentityError
+        var request = new ChangeUserPasswordRequestDto
+        {
+            NewPassword = "NewPassword123!"
+        };
+
+        _userManager
+            .Setup(x => x.FindByIdAsync(userId.ToString()))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        var result = await _service.ChangeUserPasswordAsync(
+            userId,
+            request);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.Message, Is.EqualTo("User not found."));
+
+        _userManager.Verify(
+            x => x.GeneratePasswordResetTokenAsync(
+                It.IsAny<ApplicationUser>()),
+            Times.Never);
+
+        _userManager.Verify(
+            x => x.ResetPasswordAsync(
+                It.IsAny<ApplicationUser>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task ChangeUserPasswordAsync_ShouldReturnError_WhenResetPasswordFails()
     {
-        Description = "Password does not meet requirements."
-    };
+        var userId = Guid.NewGuid();
 
-    _userManager
-        .Setup(x => x.FindByIdAsync(userId.ToString()))
-        .ReturnsAsync(user);
+        var user = new ApplicationUser
+        {
+            Id = userId,
+            UserName = "scientist1",
+            Email = "scientist1@formulatrix.com",
+            FullName = "Scientist One",
+            IsActive = true
+        };
 
-    _userManager
-        .Setup(x => x.GeneratePasswordResetTokenAsync(user))
-        .ReturnsAsync("reset-token");
+        var request = new ChangeUserPasswordRequestDto
+        {
+            NewPassword = "NewPassword123!"
+        };
 
-    _userManager
-        .Setup(x => x.ResetPasswordAsync(
-            user,
-            "reset-token",
-            request.NewPassword))
-        .ReturnsAsync(IdentityResult.Failed(identityError));
+        var identityError = new IdentityError
+        {
+            Description = "Password does not meet requirements."
+        };
 
-    var result = await _service.ChangeUserPasswordAsync(
-        userId,
-        request);
+        _userManager
+            .Setup(x => x.FindByIdAsync(userId.ToString()))
+            .ReturnsAsync(user);
 
-    Assert.That(result.Success, Is.False);
-    Assert.That(
-        result.Message,
-        Is.EqualTo("Failed to change user password."));
+        _userManager
+            .Setup(x => x.GeneratePasswordResetTokenAsync(user))
+            .ReturnsAsync("reset-token");
 
-    Assert.That(
-        result.Errors,
-        Does.Contain("Password does not meet requirements."));
+        _userManager
+            .Setup(x => x.ResetPasswordAsync(
+                user,
+                "reset-token",
+                request.NewPassword))
+            .ReturnsAsync(IdentityResult.Failed(identityError));
 
-    _userManager.Verify(
-        x => x.GeneratePasswordResetTokenAsync(user),
-        Times.Once);
+        var result = await _service.ChangeUserPasswordAsync(
+            userId,
+            request);
 
-    _userManager.Verify(
-        x => x.ResetPasswordAsync(
-            user,
-            "reset-token",
-            request.NewPassword),
-        Times.Once);
-}
+        Assert.That(result.Success, Is.False);
+        Assert.That(
+            result.Message,
+            Is.EqualTo("Failed to change user password."));
 
-[Test]
-public async Task ChangeUserPasswordAsync_ShouldReturnSuccess_WhenPasswordChanged()
-{
-    var userId = Guid.NewGuid();
+        Assert.That(
+            result.Errors,
+            Does.Contain("Password does not meet requirements."));
 
-    var user = new ApplicationUser
+        _userManager.Verify(
+            x => x.GeneratePasswordResetTokenAsync(user),
+            Times.Once);
+
+        _userManager.Verify(
+            x => x.ResetPasswordAsync(
+                user,
+                "reset-token",
+                request.NewPassword),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task ChangeUserPasswordAsync_ShouldReturnSuccess_WhenPasswordChanged()
     {
-        Id = userId,
-        UserName = "scientist1",
-        Email = "scientist1@formulatrix.com",
-        FullName = "Scientist One",
-        IsActive = true
-    };
+        var userId = Guid.NewGuid();
 
-    var request = new ChangeUserPasswordRequestDto
+        var user = new ApplicationUser
+        {
+            Id = userId,
+            UserName = "scientist1",
+            Email = "scientist1@formulatrix.com",
+            FullName = "Scientist One",
+            IsActive = true
+        };
+
+        var request = new ChangeUserPasswordRequestDto
+        {
+            NewPassword = "NewPassword123!"
+        };
+
+        _userManager
+            .Setup(x => x.FindByIdAsync(userId.ToString()))
+            .ReturnsAsync(user);
+
+        _userManager
+            .Setup(x => x.GeneratePasswordResetTokenAsync(user))
+            .ReturnsAsync("reset-token");
+
+        _userManager
+            .Setup(x => x.ResetPasswordAsync(
+                user,
+                "reset-token",
+                request.NewPassword))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var result = await _service.ChangeUserPasswordAsync(
+            userId,
+            request);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Data, Is.True);
+        Assert.That(
+            result.Message,
+            Is.EqualTo("User password changed successfully."));
+
+        _userManager.Verify(
+            x => x.GeneratePasswordResetTokenAsync(user),
+            Times.Once);
+
+        _userManager.Verify(
+            x => x.ResetPasswordAsync(
+                user,
+                "reset-token",
+                request.NewPassword),
+            Times.Once);
+    }
+    [Test]
+    public async Task UpdateMyProfileAsync_ShouldReturnError_WhenUserNotFound()
     {
-        NewPassword = "NewPassword123!"
-    };
+        var userId = Guid.NewGuid();
 
-    _userManager
-        .Setup(x => x.FindByIdAsync(userId.ToString()))
-        .ReturnsAsync(user);
+        var request = new UpdateFullNameRequestDto
+        {
+            FullName = "Updated Name"
+        };
 
-    _userManager
-        .Setup(x => x.GeneratePasswordResetTokenAsync(user))
-        .ReturnsAsync("reset-token");
+        _userManager
+            .Setup(x => x.FindByIdAsync(userId.ToString()))
+            .ReturnsAsync((ApplicationUser?)null);
 
-    _userManager
-        .Setup(x => x.ResetPasswordAsync(
-            user,
-            "reset-token",
-            request.NewPassword))
-        .ReturnsAsync(IdentityResult.Success);
+        var result = await _service.UpdateMyProfileAsync(
+            userId,
+            request);
 
-    var result = await _service.ChangeUserPasswordAsync(
-        userId,
-        request);
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.Message, Is.EqualTo("User not found."));
 
-    Assert.That(result.Success, Is.True);
-    Assert.That(result.Data, Is.True);
-    Assert.That(
-        result.Message,
-        Is.EqualTo("User password changed successfully."));
+        _userManager.Verify(
+            x => x.UpdateAsync(It.IsAny<ApplicationUser>()),
+            Times.Never);
 
-    _userManager.Verify(
-        x => x.GeneratePasswordResetTokenAsync(user),
-        Times.Once);
+        _userManager.Verify(
+            x => x.GetRolesAsync(It.IsAny<ApplicationUser>()),
+            Times.Never);
 
-    _userManager.Verify(
-        x => x.ResetPasswordAsync(
-            user,
-            "reset-token",
-            request.NewPassword),
-        Times.Once);
-}
-[Test]
-public async Task UpdateMyProfileAsync_ShouldReturnError_WhenUserNotFound()
-{
-    var userId = Guid.NewGuid();
+        _mapper.Verify(
+            x => x.Map<UserResponseDto>(It.IsAny<ApplicationUser>()),
+            Times.Never);
+    }
 
-    var request = new UpdateFullNameRequestDto
+    [Test]
+    public async Task UpdateMyProfileAsync_ShouldReturnError_WhenUpdateFails()
     {
-        FullName = "Updated Name"
-    };
+        var userId = Guid.NewGuid();
 
-    _userManager
-        .Setup(x => x.FindByIdAsync(userId.ToString()))
-        .ReturnsAsync((ApplicationUser?)null);
+        var user = new ApplicationUser
+        {
+            Id = userId,
+            UserName = "scientist1",
+            Email = "scientist1@formulatrix.com",
+            FullName = "Old Name",
+            IsActive = true
+        };
 
-    var result = await _service.UpdateMyProfileAsync(
-        userId,
-        request);
+        var request = new UpdateFullNameRequestDto
+        {
+            FullName = "Updated Name"
+        };
 
-    Assert.That(result.Success, Is.False);
-    Assert.That(result.Message, Is.EqualTo("User not found."));
+        var identityError = new IdentityError
+        {
+            Description = "Failed to update user."
+        };
 
-    _userManager.Verify(
-        x => x.UpdateAsync(It.IsAny<ApplicationUser>()),
-        Times.Never);
+        _userManager
+            .Setup(x => x.FindByIdAsync(userId.ToString()))
+            .ReturnsAsync(user);
 
-    _userManager.Verify(
-        x => x.GetRolesAsync(It.IsAny<ApplicationUser>()),
-        Times.Never);
+        _userManager
+            .Setup(x => x.UpdateAsync(user))
+            .ReturnsAsync(IdentityResult.Failed(identityError));
 
-    _mapper.Verify(
-        x => x.Map<UserResponseDto>(It.IsAny<ApplicationUser>()),
-        Times.Never);
-}
+        var result = await _service.UpdateMyProfileAsync(
+            userId,
+            request);
 
-[Test]
-public async Task UpdateMyProfileAsync_ShouldReturnError_WhenUpdateFails()
-{
-    var userId = Guid.NewGuid();
+        Assert.That(result.Success, Is.False);
+        Assert.That(
+            result.Message,
+            Is.EqualTo("Failed to update profile."));
 
-    var user = new ApplicationUser
+        Assert.That(
+            result.Errors,
+            Does.Contain("Failed to update user."));
+
+        Assert.That(user.FullName, Is.EqualTo("Updated Name"));
+
+        _userManager.Verify(
+            x => x.UpdateAsync(user),
+            Times.Once);
+
+        _userManager.Verify(
+            x => x.GetRolesAsync(It.IsAny<ApplicationUser>()),
+            Times.Never);
+
+        _mapper.Verify(
+            x => x.Map<UserResponseDto>(It.IsAny<ApplicationUser>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task UpdateMyProfileAsync_ShouldReturnSuccess_WhenProfileUpdated()
     {
-        Id = userId,
-        UserName = "scientist1",
-        Email = "scientist1@formulatrix.com",
-        FullName = "Old Name",
-        IsActive = true
-    };
+        var userId = Guid.NewGuid();
 
-    var request = new UpdateFullNameRequestDto
-    {
-        FullName = "Updated Name"
-    };
+        var user = new ApplicationUser
+        {
+            Id = userId,
+            UserName = "scientist1",
+            Email = "scientist1@formulatrix.com",
+            FullName = "Old Name",
+            IsActive = true
+        };
 
-    var identityError = new IdentityError
-    {
-        Description = "Failed to update user."
-    };
+        var request = new UpdateFullNameRequestDto
+        {
+            FullName = "Updated Name"
+        };
 
-    _userManager
-        .Setup(x => x.FindByIdAsync(userId.ToString()))
-        .ReturnsAsync(user);
+        var response = new UserResponseDto();
 
-    _userManager
-        .Setup(x => x.UpdateAsync(user))
-        .ReturnsAsync(IdentityResult.Failed(identityError));
+        _userManager
+            .Setup(x => x.FindByIdAsync(userId.ToString()))
+            .ReturnsAsync(user);
 
-    var result = await _service.UpdateMyProfileAsync(
-        userId,
-        request);
+        _userManager
+            .Setup(x => x.UpdateAsync(user))
+            .ReturnsAsync(IdentityResult.Success);
 
-    Assert.That(result.Success, Is.False);
-    Assert.That(
-        result.Message,
-        Is.EqualTo("Failed to update profile."));
+        _userManager
+            .Setup(x => x.GetRolesAsync(user))
+            .ReturnsAsync(["Scientist"]);
 
-    Assert.That(
-        result.Errors,
-        Does.Contain("Failed to update user."));
+        _mapper
+            .Setup(x => x.Map<UserResponseDto>(user))
+            .Returns(response);
 
-    Assert.That(user.FullName, Is.EqualTo("Updated Name"));
+        var result = await _service.UpdateMyProfileAsync(
+            userId,
+            request);
 
-    _userManager.Verify(
-        x => x.UpdateAsync(user),
-        Times.Once);
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Data, Is.EqualTo(response));
+        Assert.That(
+            result.Message,
+            Is.EqualTo("Profile updated successfully."));
 
-    _userManager.Verify(
-        x => x.GetRolesAsync(It.IsAny<ApplicationUser>()),
-        Times.Never);
+        Assert.That(user.FullName, Is.EqualTo("Updated Name"));
 
-    _mapper.Verify(
-        x => x.Map<UserResponseDto>(It.IsAny<ApplicationUser>()),
-        Times.Never);
-}
+        _userManager.Verify(
+            x => x.UpdateAsync(user),
+            Times.Once);
 
-[Test]
-public async Task UpdateMyProfileAsync_ShouldReturnSuccess_WhenProfileUpdated()
-{
-    var userId = Guid.NewGuid();
+        _userManager.Verify(
+            x => x.GetRolesAsync(user),
+            Times.Once);
 
-    var user = new ApplicationUser
-    {
-        Id = userId,
-        UserName = "scientist1",
-        Email = "scientist1@formulatrix.com",
-        FullName = "Old Name",
-        IsActive = true
-    };
-
-    var request = new UpdateFullNameRequestDto
-    {
-        FullName = "Updated Name"
-    };
-
-    var response = new UserResponseDto();
-
-    _userManager
-        .Setup(x => x.FindByIdAsync(userId.ToString()))
-        .ReturnsAsync(user);
-
-    _userManager
-        .Setup(x => x.UpdateAsync(user))
-        .ReturnsAsync(IdentityResult.Success);
-
-    _userManager
-        .Setup(x => x.GetRolesAsync(user))
-        .ReturnsAsync(["Scientist"]);
-
-    _mapper
-        .Setup(x => x.Map<UserResponseDto>(user))
-        .Returns(response);
-
-    var result = await _service.UpdateMyProfileAsync(
-        userId,
-        request);
-
-    Assert.That(result.Success, Is.True);
-    Assert.That(result.Data, Is.EqualTo(response));
-    Assert.That(
-        result.Message,
-        Is.EqualTo("Profile updated successfully."));
-
-    Assert.That(user.FullName, Is.EqualTo("Updated Name"));
-
-    _userManager.Verify(
-        x => x.UpdateAsync(user),
-        Times.Once);
-
-    _userManager.Verify(
-        x => x.GetRolesAsync(user),
-        Times.Once);
-
-    _mapper.Verify(
-        x => x.Map<UserResponseDto>(user),
-        Times.Once);
-}
+        _mapper.Verify(
+            x => x.Map<UserResponseDto>(user),
+            Times.Once);
+    }
 
 }

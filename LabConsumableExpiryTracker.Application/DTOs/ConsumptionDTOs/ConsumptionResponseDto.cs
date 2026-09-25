@@ -5,7 +5,7 @@ namespace LabConsumableExpiryTracker.Application.DTOs.ConsumptionDTOs;
 public class ConsumptionResponseDto
 {
     public Guid JobId { get; set; }
-    public Guid ItemId { get; set; }
+    public Guid ItemId { get; set; }    
     public UnitOfMeasure BaseUnit { get; set; }
     public decimal TotalConsumedQuantity { get; set; }
     public List<ConsumptionRecordDto> Consumptions { get; set; } = [];

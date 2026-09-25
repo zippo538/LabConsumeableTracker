@@ -1,9 +1,10 @@
 using LabConsumableExpiryTracker.API.Controllers;
-using LabConsumableExpiryTracker.Application.Common.Result; 
+using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 namespace LabConsumableExpiryTracker.Tests.Controller;
+
 [TestFixture]
 public class ImageControllerTests
 {

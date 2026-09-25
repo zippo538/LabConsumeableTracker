@@ -5,6 +5,7 @@ using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 namespace LabConsumableExpiryTracker.Tests.Controller;
+
 [TestFixture]
 public class DashboardSummaryControllerTests
 {
@@ -20,7 +21,7 @@ public class DashboardSummaryControllerTests
     public async Task GetSummary_Success_ReturnsOkWithServiceResult()
     {
         var itemId = Guid.NewGuid();
-        var dto = new DashboardSummaryDto(); 
+        var dto = new DashboardSummaryDto();
         var serviceResult = ServiceResult<DashboardSummaryDto>.SuccessResult(dto);
         _serviceMock.Setup(s => s.GetSummaryAsync(itemId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(serviceResult);

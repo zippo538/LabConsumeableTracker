@@ -11,6 +11,7 @@ using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.ConsumptionDTOs;
 using LabConsumableExpiryTracker.Application.Common.Result;
 namespace LabConsumableExpiryTracker.Tests.Services;
+
 [TestFixture]
 public class LotServiceTests
 {
@@ -117,13 +118,16 @@ public class LotServiceTests
             await _service.CreateLot(
                 request,
                 CancellationToken.None);
-        Assert.That(
-            result.Success,
-            Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Validation failed."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(
+                    result.Success,
+                    Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "Validation failed."));
+        });
     }
     [Test]
     public async Task CreateLot_WhenLotNumberEmpty_ReturnsError()
@@ -175,13 +179,16 @@ public class LotServiceTests
             await _service.CreateLot(
                 request,
                 CancellationToken.None);
-        Assert.That(
-            result.Success,
-            Is.False);
-        Assert.That(
-            result.Message,
-            Does.Contain(
-                "already exists"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(
+                    result.Success,
+                    Is.False);
+            Assert.That(
+                result.Message,
+                Does.Contain(
+                    "already exists"));
+        });
     }
     [Test]
     public async Task UpdateLot_WhenLotNotFound_ReturnsError()
@@ -471,11 +478,17 @@ public class LotServiceTests
             .Setup(x => x.Map<LotDto>(lot))
             .Returns(mappedDto);
         var result = await _service.GetAllLot(CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data!.Count(), Is.EqualTo(1));
-        Assert.That(mappedDto.EvaluatedAt, Is.EqualTo(FixedNow));
-        Assert.That(mappedDto.IsEligible, Is.True);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.Count(), Is.EqualTo(1));
+            Assert.That(mappedDto.EvaluatedAt, Is.EqualTo(FixedNow));
+            Assert.That(mappedDto.IsEligible, Is.True);
+        });
         _lotRepository.Verify(
             x => x.GetAllWithItemAsync(It.IsAny<CancellationToken>()),
             Times.Once);
@@ -715,18 +728,18 @@ public class LotServiceTests
         var lot = CreateTestLot(item);
         var dto = new UpdateLotDto
         {
-            LotNumber = lot.LotNumber, 
+            LotNumber = lot.LotNumber,
             SupplierLotNumber = lot.SupplierLotNumber,
             SupplierName = lot.SupplierName,
             StorageLocation = lot.StorageLocation,
             ExpiryDate = lot.ExpiryDate,
             AdministrativeStatus = lot.AdministrativeStatus,
-            RowVersion = [1, 2, 3] 
+            RowVersion = [1, 2, 3]
         };
         var mappedDto = new LotDto
         {
             Id = lot.Id,
-            LotNumber = lot.LotNumber,
+            LotNumber = lot.LotNumber
         };
         _lotRepository
             .Setup(x => x.GetByIdWithItemAsync(
@@ -1155,12 +1168,18 @@ public class LotServiceTests
         var result = await _service.GetSummaryByItemId(
             itemId,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data, Is.SameAs(summaries));
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Lots retrieved successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data, Is.SameAs(summaries));
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Lots retrieved successfully."));
+        });
         _lotRepository.Verify(
             x => x.GetByItemIdAsync(
                 itemId,
@@ -1233,12 +1252,18 @@ public class LotServiceTests
             .Returns(summaries);
         var result = await _service.GetAllSummary(
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data, Is.SameAs(summaries));
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Lot summaries retrieved successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data, Is.SameAs(summaries));
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Lot summaries retrieved successfully."));
+        });
         _lotRepository.Verify(
             x => x.GetAllAsync(
                 It.IsAny<CancellationToken>()),
@@ -1610,8 +1635,8 @@ public class LotServiceTests
             RequestedQuantity = 10m,
             Allocations =
             [
-                new()
-            {
+                new ConsumptionAllocationRequestDto
+                {
                 LotId = Guid.NewGuid(),
                 Quantity = 0m,
                 ExpectedRowVersion = [1, 2, 3]
@@ -1645,14 +1670,14 @@ public class LotServiceTests
             RequestedQuantity = 20m,
             Allocations =
             [
-                new()
-            {
+                new ConsumptionAllocationRequestDto
+                {
                 LotId = lotId,
                 Quantity = 10m,
                 ExpectedRowVersion = [1, 2, 3]
             },
-            new()
-            {
+            new ConsumptionAllocationRequestDto
+                {
                 LotId = lotId,
                 Quantity = 10m,
                 ExpectedRowVersion = [1, 2, 3]
@@ -1686,8 +1711,8 @@ public class LotServiceTests
             RequestedQuantity = 20m,
             Allocations =
             [
-                new()
-            {
+                new ConsumptionAllocationRequestDto
+                {
                 LotId = Guid.NewGuid(),
                 Quantity = 10m,
                 ExpectedRowVersion = [1, 2, 3]
@@ -1757,8 +1782,8 @@ public class LotServiceTests
             RequestedQuantity = 10m,
             Allocations =
             [
-                new()
-            {
+                new ConsumptionAllocationRequestDto
+                {
                 LotId = Guid.NewGuid(),
                 Quantity = 10m,
                 ExpectedRowVersion = [1, 2, 3]
@@ -1798,8 +1823,8 @@ public class LotServiceTests
             RequestedQuantity = 10m,
             Allocations =
             [
-                new()
-            {
+                new ConsumptionAllocationRequestDto
+                {
                 LotId = lotId,
                 Quantity = 10m,
                 ExpectedRowVersion = [1, 2, 3]
@@ -1858,8 +1883,8 @@ public class LotServiceTests
             RequestedQuantity = 10m,
             Allocations =
             [
-                new()
-            {
+                new ConsumptionAllocationRequestDto
+                {
                 LotId = lot.Id,
                 Quantity = 10m,
                 ExpectedRowVersion = []
@@ -1918,8 +1943,8 @@ public class LotServiceTests
             RequestedQuantity = 10m,
             Allocations =
             [
-                new()
-            {
+                new ConsumptionAllocationRequestDto
+                {
                 LotId = lot.Id,
                 Quantity = 10m,
                 ExpectedRowVersion = [.. "\t\t\t"u8]
@@ -1979,8 +2004,8 @@ public class LotServiceTests
             RequestedQuantity = 10m,
             Allocations =
             [
-                new()
-            {
+                new ConsumptionAllocationRequestDto
+                {
                 LotId = lot.Id,
                 Quantity = 10m,
                 ExpectedRowVersion = []
@@ -2046,8 +2071,8 @@ public class LotServiceTests
             RequestedQuantity = 40m,
             Allocations =
             [
-                new()
-            {
+                new ConsumptionAllocationRequestDto
+                {
                 LotId = lot.Id,
                 Quantity = 40m,
                 ExpectedRowVersion = []
