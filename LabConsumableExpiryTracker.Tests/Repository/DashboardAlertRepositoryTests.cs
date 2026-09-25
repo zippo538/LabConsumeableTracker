@@ -38,6 +38,31 @@ public class DashboardAlertRepositoryTests
         _today = DateOnly.FromDateTime(_evaluatedAt.UtcDateTime);
     }
 
+    [SetUp]
+    public async Task SetUp()
+    {
+        await CleanupTestData();
+        _context.ChangeTracker.Clear();
+    }
+
+    private async Task CleanupTestData()
+    {
+        var allLots = await _context.Lots.ToListAsync();
+        if (allLots.Count > 0)
+        {
+            _context.Lots.RemoveRange(allLots);
+            await _context.SaveChangesAsync();
+        }
+        var allItems = await _context.Items.ToListAsync();
+        if (allItems.Count > 0)
+        {
+            _context.Items.RemoveRange(allItems);
+            await _context.SaveChangesAsync();
+        }
+        _seededLotIds.Clear();
+        _seededItemIds.Clear();
+    }
+
     [TearDown]
     public async Task TearDown()
     {

@@ -186,7 +186,7 @@ public class LotService : ILotService
             return ServiceResult<LotDto>.ErrorResult("Lot not found.");
         }
 
-        if (updateLotDto.RowVersion.Length == 0)
+        if (updateLotDto.RowVersion is not { Length: > 0 })
         {
             return ServiceResult<LotDto>.ErrorResult("RowVersion is required for update.");
         }
@@ -195,38 +195,32 @@ public class LotService : ILotService
 
         if (updateLotDto.LotNumber != null)
         {
-            existing.UpdateLotNumber(updateLotDto.LotNumber);
-            hasChanges = true;
+            hasChanges |= existing.UpdateLotNumber(updateLotDto.LotNumber);
         }
 
         if (updateLotDto.SupplierLotNumber != null)
         {
-            existing.UpdateSupplierLotNumber(updateLotDto.SupplierLotNumber);
-            hasChanges = true;
+            hasChanges |= existing.UpdateSupplierLotNumber(updateLotDto.SupplierLotNumber);
         }
 
         if (updateLotDto.SupplierName != null)
         {
-            existing.UpdateSupplierName(updateLotDto.SupplierName);
-            hasChanges = true;
+            hasChanges |= existing.UpdateSupplierName(updateLotDto.SupplierName);
         }
 
         if (updateLotDto.StorageLocation != null)
         {
-            existing.UpdateStorageLocation(updateLotDto.StorageLocation);
-            hasChanges = true;
+            hasChanges |= existing.UpdateStorageLocation(updateLotDto.StorageLocation);
         }
 
         if (updateLotDto.ExpiryDate.HasValue)
         {
-            existing.UpdateExpiryDate(updateLotDto.ExpiryDate.Value);
-            hasChanges = true;
+            hasChanges |= existing.UpdateExpiryDate(updateLotDto.ExpiryDate.Value);
         }
 
         if (updateLotDto.AdministrativeStatus.HasValue)
         {
-            existing.UpdateAdministrativeStatus(updateLotDto.AdministrativeStatus.Value);
-            hasChanges = true;
+            hasChanges |= existing.UpdateAdministrativeStatus(updateLotDto.AdministrativeStatus.Value);
         }
 
         if (!hasChanges)
