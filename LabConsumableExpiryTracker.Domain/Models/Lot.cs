@@ -165,16 +165,13 @@ public class Lot
 
         var isValidTransition =
             (AdministrativeStatus == LotAdministrativeStatus.Active &&
-             (status == LotAdministrativeStatus.ManuallyBlocked ||
-              status == LotAdministrativeStatus.Quarantined))
+             status is LotAdministrativeStatus.ManuallyBlocked or LotAdministrativeStatus.Quarantined)
             ||
             (AdministrativeStatus == LotAdministrativeStatus.ManuallyBlocked &&
-             (status == LotAdministrativeStatus.Active ||
-              status == LotAdministrativeStatus.Quarantined))
+             status is LotAdministrativeStatus.Active or LotAdministrativeStatus.Quarantined)
             ||
             (AdministrativeStatus == LotAdministrativeStatus.Quarantined &&
-             (status == LotAdministrativeStatus.Active ||
-              status == LotAdministrativeStatus.ManuallyBlocked));
+             status is LotAdministrativeStatus.Active or LotAdministrativeStatus.ManuallyBlocked);
 
         if (!isValidTransition)
         {

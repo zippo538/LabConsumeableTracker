@@ -3,48 +3,47 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-namespace LabConsumableExpiryTracker.Application.Common.ErrorHandling
+namespace LabConsumableExpiryTracker.Application.Common.ErrorHandling;
+
+public class GlobalExceptionHandler : IExceptionHandler
 {
-    public class GlobalExceptionHandler : IExceptionHandler
+    private readonly ILogger<GlobalExceptionHandler> _logger;
+
+    public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
     {
-        private readonly ILogger<GlobalExceptionHandler> _logger;
+        _logger = logger;
+    }
 
-        public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
+    public async ValueTask<bool> TryHandleAsync(
+        HttpContext httpContext,
+        Exception exception,
+        CancellationToken cancellationToken)
+    {
+        var traceId = httpContext.TraceIdentifier;
+
+        _logger.LogError(
+            exception,
+            "Unhandled exception while processing {RequestMethod} {RequestPath}. TraceId: {TraceId}",
+            httpContext.Request.Method,
+            httpContext.Request.Path.Value,
+            traceId);
+
+        if (httpContext.Response.HasStarted)
         {
-            _logger = logger;
+            return false;
         }
 
-        public async ValueTask<bool> TryHandleAsync(
-            HttpContext httpContext,
-            Exception exception,
-            CancellationToken cancellationToken)
-        {
-            var traceId = httpContext.TraceIdentifier;
+        var response = ServiceResult<object>.ErrorResult(
+            $"An unexpected error occurred. TraceId: {traceId}");
 
-            _logger.LogError(
-                exception,
-                "Unhandled exception while processing {RequestMethod} {RequestPath}. TraceId: {TraceId}",
-                httpContext.Request.Method,
-                httpContext.Request.Path.Value,
-                traceId);
+        httpContext.Response.Clear();
+        httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        httpContext.Response.ContentType = "application/json";
 
-            if (httpContext.Response.HasStarted)
-            {
-                return false;
-            }
+        await httpContext.Response.WriteAsJsonAsync(
+            response,
+            cancellationToken);
 
-            var response = ServiceResult<object>.ErrorResult(
-                $"An unexpected error occurred. TraceId: {traceId}");
-
-            httpContext.Response.Clear();
-            httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            httpContext.Response.ContentType = "application/json";
-
-            await httpContext.Response.WriteAsJsonAsync(
-                response,
-                cancellationToken);
-
-            return true;
-        }
+        return true;
     }
 }

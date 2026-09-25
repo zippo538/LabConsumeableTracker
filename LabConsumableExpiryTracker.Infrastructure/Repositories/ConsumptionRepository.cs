@@ -1,7 +1,6 @@
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Domain.Models;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
-using LabConsumableExpiryTracker.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Repositories;
@@ -23,7 +22,11 @@ public class ConsumptionRepository : Repository<Consumption, Guid>, IConsumption
         if (from is not null) query = query.Where(c => c.ConsumedAt >= from);
         if (to is not null) query = query.Where(c => c.ConsumedAt <= to);
 
-        if (itemId is not null)
+        if (itemId is null)
+            return await query
+                .OrderByDescending(c => c.ConsumedAt)
+                .ThenBy(c => c.Id)
+                .ToListAsync(ct);
         {
             var lotIds = await _context.Lots
                 .Where(l => l.ItemId == itemId)

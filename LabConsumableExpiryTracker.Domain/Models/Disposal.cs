@@ -10,9 +10,6 @@ public class Disposal
     public DateTimeOffset DisposedAt { get; private set; }
     public Guid DisposedBy { get; private set; }
     public Lot Lot { get; private set; } = null!;
-    private Disposal()
-    {
-    }
 
     private Disposal(Guid id, Guid lotId, decimal quantity, string reason, DateTimeOffset disposedAt)
     {

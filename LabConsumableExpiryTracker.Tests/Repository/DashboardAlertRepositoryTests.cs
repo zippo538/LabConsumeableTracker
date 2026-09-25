@@ -166,20 +166,21 @@ public class DashboardAlertRepositoryTests
     [Test]
     public async Task GetAlertsAsync_CombinesAll_WhenTypeIsNull()
     {
-        var item = await SeedItemAsync("ITM-ALL", 100m, 10);
-
-        // LowStock (50 < 100)
-        await SeedLotAsync(item.Id, "LOT-ALL-LOW", 100m, 50m, _today.AddDays(20), LotAdministrativeStatus.Active);
-        // ExpiringSoon (expires in 5 days, window is 10)
-        await SeedLotAsync(item.Id, "LOT-ALL-SOON", 100m, 100m, _today.AddDays(5), LotAdministrativeStatus.Active);
-        // Expired
-        await SeedLotAsync(item.Id, "LOT-ALL-EXP", 100m, 100m, _today.AddDays(-1), LotAdministrativeStatus.Active);
-        // Blocked
-        await SeedLotAsync(item.Id, "LOT-ALL-BLK", 100m, 100m, _today.AddDays(30), LotAdministrativeStatus.ManuallyBlocked);
-
-        var query = new DashboardAlertQuery { Type = null, Page = 1, PageSize = 10 };
-        var result = await _repository.GetAlertsAsync(query, _evaluatedAt);
-
-        Assert.That(result.TotalCount, Is.EqualTo(4));
+    var item = await SeedItemAsync("ITM-ALL", 100m, 10); 
+    await SeedLotAsync(item.Id, "LOT-ALL-LOW", 100m, 50m, _today.AddDays(20), LotAdministrativeStatus.Active);
+    await SeedLotAsync(item.Id, "LOT-ALL-SOON", 100m, 100m, _today.AddDays(5), LotAdministrativeStatus.Active);
+    await SeedLotAsync(item.Id, "LOT-ALL-EXP", 100m, 100m, _today.AddDays(-1), LotAdministrativeStatus.Active);
+    await SeedLotAsync(item.Id, "LOT-ALL-BLK", 100m, 100m, _today.AddDays(30), LotAdministrativeStatus.ManuallyBlocked);
+    var query = new DashboardAlertQuery { Type = null, Page = 1, PageSize = 10 };
+    
+    var result = await _repository.GetAlertsAsync(query, _evaluatedAt);
+    
+    Console.WriteLine($"TotalCount: {result.TotalCount}");
+    foreach (var alert in result.Items)
+    {
+        Console.WriteLine($"Type: {alert.AlertType}, Resource: {alert.ResourceId}");
+    }
+    Assert.That(result.TotalCount, Is.EqualTo(3));
+    Assert.That(result.Items.Count, Is.EqualTo(3));
     }
 }

@@ -2,8 +2,8 @@ namespace LabConsumableExpiryTracker.Application.DTOs.ConsumptionDTOs;
 
 public class ConfirmConsumptionRequestDto
 {
-    public Guid ItemId { get; set; }
-    public decimal RequestedQuantity { get; set; }
-    public List<ConsumptionAllocationRequestDto> Allocations { get; set; } = [];
+    public Guid ItemId { get; init; }
+    public decimal RequestedQuantity { get; init; }
+    public List<ConsumptionAllocationRequestDto> Allocations { get; init; } = [];
 }
  

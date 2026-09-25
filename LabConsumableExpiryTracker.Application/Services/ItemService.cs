@@ -353,14 +353,11 @@ public class ItemService : IItemService
             "image/webp"
         };
 
-        switch (image.Length)
+        return image.Length switch
         {
-            case 0:
-                return "Image cannot be empty.";
-            case > maxFileSize:
-                return "Image cannot exceed 5 MB.";
-        }
-
-        return !allowedTypes.Contains(image.ContentType) ? "Invalid image type." : null;
+            0 => "Image cannot be empty.",
+            > maxFileSize => "Image cannot exceed 5 MB.",
+            _ => !allowedTypes.Contains(image.ContentType) ? "Invalid image type." : null
+        };
     }
 }

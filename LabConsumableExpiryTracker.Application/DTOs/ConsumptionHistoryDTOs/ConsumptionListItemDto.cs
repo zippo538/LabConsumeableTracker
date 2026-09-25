@@ -6,7 +6,7 @@ public class ConsumptionListItemDto
 {
     public Guid Id { get; set; }
     public Guid JobId { get; set; }
-    public string JobNumber { get; set; } = default!;
+    public string? JobNumber { get; set; } = default!;
     public Guid LotId { get; set; }
     public string LotNumber { get; set; } = default!;
     public Guid ItemId { get; set; }

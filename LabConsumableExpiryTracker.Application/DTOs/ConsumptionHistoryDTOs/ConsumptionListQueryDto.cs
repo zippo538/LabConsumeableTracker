@@ -2,12 +2,12 @@ namespace LabConsumableExpiryTracker.Application.DTOs.ConsumptionHistoryDTOs;
 
 public class ConsumptionListQueryDto
 {
-    public Guid? JobId { get; set; }
-    public Guid? ItemId { get; set; }
-    public Guid? LotId { get; set; }
-    public string? LotNumber { get; set; }
-    public DateTimeOffset? From { get; set; }
-    public DateTimeOffset? To { get; set; }
-    public int Page { get; set; } = 1;
-    public int PageSize { get; set; } = 20;
+    public Guid? JobId { get; init; }
+    public Guid? ItemId { get; init; }
+    public Guid? LotId { get; init; }
+    public string? LotNumber { get; init; }
+    public DateTimeOffset? From { get; init; }
+    public DateTimeOffset? To { get; init; }
+    public int Page { get; init; } = 1;
+    public int PageSize { get; init; } = 20;
 }

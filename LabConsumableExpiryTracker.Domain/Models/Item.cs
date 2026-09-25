@@ -61,15 +61,13 @@ public class Item(
     public StockLevelStatus GetStockStatus(
         decimal totalUsableQuantity)
     {
-        if (totalUsableQuantity < 0)
+        switch (totalUsableQuantity)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(totalUsableQuantity));
-        }
-
-        if (totalUsableQuantity == 0)
-        {
-            return StockLevelStatus.OutOfStock;
+            case < 0:
+                throw new ArgumentOutOfRangeException(
+                    nameof(totalUsableQuantity));
+            case 0:
+                return StockLevelStatus.OutOfStock;
         }
 
         if (totalUsableQuantity < MinimumStock)
@@ -77,21 +75,12 @@ public class Item(
             return StockLevelStatus.LowStock;
         }
 
-        if (totalUsableQuantity == MinimumStock)
-        {
-            return StockLevelStatus.AtMinimum;
-        }
-
-        return StockLevelStatus.Sufficient;
+        return totalUsableQuantity == MinimumStock ? StockLevelStatus.AtMinimum : StockLevelStatus.Sufficient;
     }
 
     public bool IsLowStock(decimal totalUsableQuantity)
     {
-        if (totalUsableQuantity < MinimumStock)
-        {
-            return true;
-        }
-        return false;
+        return totalUsableQuantity < MinimumStock;
     }
 
 }

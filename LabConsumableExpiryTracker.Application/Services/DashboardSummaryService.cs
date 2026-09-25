@@ -90,6 +90,7 @@ public class DashboardSummaryService(
                 case ExpiryCondition.Expired:
                     expired++;
                     break;
+                case ExpiryCondition.Valid:
                 default:
                     validLot++;
                     usableStock += lot.RemainingQuantity;

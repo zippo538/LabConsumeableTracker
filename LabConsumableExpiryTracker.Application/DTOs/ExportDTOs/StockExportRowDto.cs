@@ -10,6 +10,6 @@ public class StockExportRowDto
     public UnitOfMeasure BaseUnit { get; set; }
     public decimal UsableStock { get; set; }
     public decimal MinimumStock { get; set; }
-    public bool IsLowStock { get; set; }
+    public bool IsLowStock { get; init; }
     public DateTimeOffset EvaluatedAt { get; set; }
 }

@@ -12,7 +12,6 @@ public class LotMappingProfile : Profile
             .ForMember(dest => dest.ItemName, opt => opt.MapFrom(src => src.Item.Name))
             .ForMember(dest => dest.ItemCode, opt => opt.MapFrom(src => src.Item.Code))
             .ForMember(dest => dest.BaseUnit, opt => opt.MapFrom(src => src.Item.BaseUnit.ToString()));
-        ;
 
 
         CreateMap<CreateLotDto, Lot>()

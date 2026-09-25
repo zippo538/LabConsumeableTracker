@@ -10,11 +10,9 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Services;
 
-public class JwtTokenGenerator : IJwtTokenGenerator
+public class JwtTokenGenerator(IOptions<JwtSettings> settings) : IJwtTokenGenerator
 {
-    private readonly JwtSettings _settings;
-
-    public JwtTokenGenerator(IOptions<JwtSettings> settings) => _settings = settings.Value;
+    private readonly JwtSettings _settings = settings.Value;
 
     public string GenerateToken(ApplicationUser user, string role)
     {
@@ -24,7 +22,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.UserName ?? string.Empty),
             new(ClaimTypes.Email, user.Email ?? string.Empty),
-            new(ClaimTypes.Role, role),
+            new(ClaimTypes.Role, role)
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey));

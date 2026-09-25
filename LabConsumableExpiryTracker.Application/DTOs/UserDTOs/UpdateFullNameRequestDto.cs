@@ -1,7 +1,6 @@
-namespace LabConsumableExpiryTracker.Application.DTOs.UserDTOs
+namespace LabConsumableExpiryTracker.Application.DTOs.UserDTOs;
+
+public class UpdateFullNameRequestDto
 {
-    public class UpdateFullNameRequestDto
-    {
-        public string FullName { get; set; } = string.Empty;
-    }
+    public string FullName => string.Empty;
 }

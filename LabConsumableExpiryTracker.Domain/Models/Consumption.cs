@@ -2,10 +2,6 @@ namespace LabConsumableExpiryTracker.Domain.Models;
 
 public class Consumption
 {
-    private Consumption()
-    {
-    }
-
     public Consumption(
         Guid id,
         Guid jobId,

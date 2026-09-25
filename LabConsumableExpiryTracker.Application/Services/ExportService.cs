@@ -2,7 +2,6 @@ using LabConsumableExpiryTracker.Application.Common.Result;
 using LabConsumableExpiryTracker.Application.DTOs.ExportDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
-using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.Extensions.Logging;
 
 namespace LabConsumableExpiryTracker.Application.Services;
