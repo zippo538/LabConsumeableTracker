@@ -1,3 +1,0 @@
-namespace LabConsumableExpiryTracker.Application.Services.Interfaces;
-
-public interface IFileStorageService;
