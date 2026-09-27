@@ -1,5 +1,5 @@
 using LabConsumableExpiryTracker.Domain.Enums;
-using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Persistence.Seeders;

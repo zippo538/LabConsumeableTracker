@@ -3,8 +3,9 @@ using AutoMapper;
 using LabConsumableExpiryTracker.Application.Configurations;
 using LabConsumableExpiryTracker.Application.DTOs.LoginDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
-using LabConsumableExpiryTracker.Application.Services;
-using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Infrastructure.Models;
+using LabConsumableExpiryTracker.Infrastructure.Repositories;
+using LabConsumableExpiryTracker.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -213,8 +214,10 @@ public class AuthServiceTests
 
         _tokenGenerator
             .Setup(x => x.GenerateToken(
-                user,
-                "Scientist"))
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()))
             .Returns("access-token");
 
         _tokenGenerator
@@ -408,8 +411,10 @@ public class AuthServiceTests
 
         _tokenGenerator
             .Setup(x => x.GenerateToken(
-                user,
-                "Scientist"))
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()))
             .Returns("new-access-token");
 
         _tokenGenerator

@@ -1,4 +1,4 @@
-using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Infrastructure.Models;
 
 namespace LabConsumableExpiryTracker.Tests.Domain;
 
@@ -9,7 +9,7 @@ public class RefreshTokenTests
     public void Token_NotExpiredAndNotRevoked_ShouldBeActive()
     {
         var token =
-            new RefreshToken
+            new RefreshToken()
             {
                 ExpiresOnUtc =
                     DateTime.UtcNow.AddDays(1),

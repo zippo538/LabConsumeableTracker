@@ -1,14 +1,13 @@
 using AutoMapper;
 using LabConsumableExpiryTracker.Application.DTOs.LoginDTOs;
-using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Infrastructure.Models;
 
-namespace LabConsumableExpiryTracker.Application.Mappings;
+namespace LabConsumableExpiryTracker.Infrastructure.Mappings;
 
 public class LoginMappingProfile : Profile
 {
     public LoginMappingProfile()
     {
-
         CreateMap<ApplicationUser, LoginResponseDto>()
             .ForMember(dest => dest.Token, opt => opt.Ignore())
             .ForMember(dest => dest.RefreshToken, opt => opt.Ignore())

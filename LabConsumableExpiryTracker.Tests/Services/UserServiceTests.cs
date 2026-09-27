@@ -1,9 +1,10 @@
 using AutoMapper;
 using LabConsumableExpiryTracker.Application.DTOs.UserDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
-using LabConsumableExpiryTracker.Application.Services;
 using LabConsumableExpiryTracker.Domain.Enums;
-using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Infrastructure.Models;
+using LabConsumableExpiryTracker.Infrastructure.Repositories;
+using LabConsumableExpiryTracker.Infrastructure.Services;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;

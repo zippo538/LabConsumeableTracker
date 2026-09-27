@@ -1,9 +1,7 @@
-using LabConsumableExpiryTracker.Domain.Models;
-
 namespace LabConsumableExpiryTracker.Application.Interfaces;
 
 public interface IJwtTokenGenerator
 {
-    string GenerateToken(ApplicationUser user, string role);
+    string GenerateToken(Guid userId, string userName, string email, string role);
     string GenerateRefreshToken();
 }

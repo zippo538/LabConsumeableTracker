@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace LabConsumableExpiryTracker.Domain.Models;
+namespace LabConsumableExpiryTracker.Infrastructure.Models;
 
 public sealed class User : IdentityUser<Guid>
 {
     public bool IsActive { get; private set; } = true;
-    
+
     public User(string username, string email)
     {
         UserName = username;
