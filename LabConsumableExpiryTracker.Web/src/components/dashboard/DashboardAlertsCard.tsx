@@ -105,10 +105,10 @@ export const DashboardAlertsCard: FC<DashboardAlertsCardProps> = ({
               />
             </Link>
             <div className="min-w-0">
-              <p className="truncate text-[13px] font-bold text-slate-800">
+              <p className="truncate text-[13px] font-semibold text-slate-800">
                 {alert.itemName || alert.itemCode || "Item"}
               </p>
-              <p className="truncate text-[11px] text-slate-400 mt-0.5">
+              <p className="truncate text-[11px] font-semibold text-slate-400 mt-0.5">
                 {alert.lotNumber || alert.itemCode || "-"}
               </p>
             </div>
@@ -120,7 +120,7 @@ export const DashboardAlertsCard: FC<DashboardAlertsCardProps> = ({
       id: "sisa",
       header: "Remaining",
       cell: (alert) => (
-        <span className="text-[13px] font-bold text-slate-800">
+        <span className="text-[13px] font-semibold  text-slate-800">
           {formatQuantity(alert.remainingQuantity, alert.baseUnit)}
         </span>
       ),
@@ -131,10 +131,10 @@ export const DashboardAlertsCard: FC<DashboardAlertsCardProps> = ({
       cell: (alert) =>
         alert.expiryDate ? (
           <>
-            <p className="text-[13px] font-bold text-slate-800">
+            <p className="text-[13px] font-semibold  text-slate-800">
               {formatExpiryDate(alert.expiryDate)}
             </p>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="text-[11px]font-semibold text-slate-400 mt-0.5">
               {formatRelativeExpiry(alert.expiryDate)}
             </p>
           </>

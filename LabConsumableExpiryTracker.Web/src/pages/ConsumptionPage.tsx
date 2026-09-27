@@ -10,7 +10,11 @@ import { InlineAlert } from "../components/FeedBackStates";
 import { useJobs } from "../hooks/useJob";
 import { itemApi } from "../api/itemApi";
 import { useQuery } from "@tanstack/react-query";
-import { useFefoPreview, useConfirmConsumption } from "../hooks/useConsumption";
+import {
+  useFefoPreview,
+  useConfirmConsumption,
+} from "../hooks/useConsumption";
+
 import type { FefoAllocationPreviewDto } from "../types/consumption.types";
 import type { ItemDto } from "../types/item.types";
 
@@ -19,21 +23,25 @@ export const ConsumptionPage: React.FC = () => {
   const navigate = useNavigate();
   const jobIdFromQuery = searchParams.get("jobId") || "";
 
-
   const { data: jobs = [], isLoading: isLoadingJobs } = useJobs();
-  const { data: items = [], isLoading: isLoadingItems } = useQuery<ItemDto[]>({
-    queryKey: ["items", "all"],
-    queryFn: itemApi.getAll,
-  });
 
- 
+  const { data: items = [], isLoading: isLoadingItems } =
+    useQuery<ItemDto[]>({
+      queryKey: ["items", "all"],
+      queryFn: itemApi.getAll,
+    });
+
   const [selectedJobId, setSelectedJobId] = useState<string>("");
   const [selectedItemId, setSelectedItemId] = useState<string>("");
   const [requestedQuantity, setRequestedQuantity] = useState<string>("");
-  const [previewData, setPreviewData] = useState<FefoAllocationPreviewDto | null>(null);
+  const [previewData, setPreviewData] =
+    useState<FefoAllocationPreviewDto | null>(null);
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const [fefoSuccess, setFefoSuccess] = useState(true);
+  const [fefoMessage, setFefoMessage] = useState("");
 
   const fefoPreviewMutation = useFefoPreview();
   const confirmConsumptionMutation = useConfirmConsumption();
@@ -43,16 +51,20 @@ export const ConsumptionPage: React.FC = () => {
       const found = jobs.find(
         (j) => j.id === jobIdFromQuery && j.status === "InProgress"
       );
+
       if (found) {
         setSelectedJobId(found.id);
       }
     }
   }, [jobIdFromQuery, jobs]);
 
-
   const handleSelectJobId = (jobId: string) => {
     setSelectedJobId(jobId);
     setPreviewData(null);
+
+    setFefoSuccess(true);
+    setFefoMessage("");
+
     setErrorMessage(null);
     setSuccessMessage(null);
   };
@@ -60,6 +72,10 @@ export const ConsumptionPage: React.FC = () => {
   const handleSelectItemId = (itemId: string) => {
     setSelectedItemId(itemId);
     setPreviewData(null);
+
+    setFefoSuccess(true);
+    setFefoMessage("");
+
     setErrorMessage(null);
     setSuccessMessage(null);
   };
@@ -67,47 +83,72 @@ export const ConsumptionPage: React.FC = () => {
   const handleQuantityChange = (qty: string) => {
     setRequestedQuantity(qty);
     setPreviewData(null);
+
+    setFefoSuccess(true);
+    setFefoMessage("");
+
     setErrorMessage(null);
     setSuccessMessage(null);
   };
 
-  const handlePreview = () => {
-    setErrorMessage(null);
-    setSuccessMessage(null);
+ const handlePreview = () => {
+  setErrorMessage(null);
+  setSuccessMessage(null);
 
-    const qty = parseFloat(requestedQuantity);
-    if (!selectedJobId || !selectedItemId || isNaN(qty) || qty <= 0) {
-      setErrorMessage("Please select a valid job, item, and positive quantity.");
-      return;
-    }
+  setFefoSuccess(true);
+  setFefoMessage("");
+  setPreviewData(null);
 
-    fefoPreviewMutation.mutate(
-      {
-        jobId: selectedJobId,
-        payload: {
-          itemId: selectedItemId,
-          requestedQuantity: qty,
-        },
-      },
-      {
-        onSuccess: (data) => {
-          setPreviewData(data);
-          setErrorMessage(null);
-        },
-        onError: (err: any) => {
-          const msg =
-            err.response?.data?.message ||
-            err.message ||
-            "Failed to allocate stock according to FEFO.";
-          setErrorMessage(msg);
-          setPreviewData(null);
-        },
-      }
+  const qty = parseFloat(requestedQuantity);
+
+  if (
+    !selectedJobId ||
+    !selectedItemId ||
+    isNaN(qty) ||
+    qty <= 0
+  ) {
+    setErrorMessage(
+      "Please select a valid job, item, and positive quantity."
     );
-  };
+    return;
+  }
+
+  fefoPreviewMutation.mutate(
+    {
+      jobId: selectedJobId,
+      payload: {
+        itemId: selectedItemId,
+        requestedQuantity: qty,
+      },
+    },
+    {
+      onSuccess: (data) => {
+        setFefoSuccess(true);
+        setFefoMessage("FEFO allocation calculated successfully.");
+        setPreviewData(data);
+        setErrorMessage(null);
+      },
+
+      onError: (err: any) => {
+        const msg =
+          err.response?.data?.message ||
+          err.message ||
+          "Failed to allocate stock according to FEFO.";
+
+        setFefoSuccess(false);
+        setFefoMessage(msg);
+        setPreviewData(null);
+        setErrorMessage(null);
+      },
+    }
+  );
+};
 
   const handleConfirm = () => {
-    if (!previewData || previewData.allocations.length === 0) {
+    if (
+      !previewData ||
+      previewData.allocations.length === 0
+    ) {
       setErrorMessage("No valid FEFO preview to confirm.");
       return;
     }
@@ -119,7 +160,10 @@ export const ConsumptionPage: React.FC = () => {
         jobId: previewData.jobId || selectedJobId,
         payload: {
           itemId: previewData.itemId || selectedItemId,
-          requestedQuantity: previewData.requestedQuantity || parseFloat(requestedQuantity),
+          requestedQuantity:
+            previewData.requestedQuantity ||
+            parseFloat(requestedQuantity),
+
           allocations: previewData.allocations.map((a) => ({
             lotId: a.lotId,
             quantity: a.quantity,
@@ -130,23 +174,33 @@ export const ConsumptionPage: React.FC = () => {
       {
         onSuccess: (res) => {
           setSuccessMessage(
-            `Successfully consumed ${res.totalConsumedQuantity} ${res.baseUnit || ""}. Lot stock has been atomically updated.`
+            `Successfully consumed ${res.totalConsumedQuantity} ${
+              res.baseUnit || ""
+            }. Lot stock has been atomically updated.`
           );
+
           setPreviewData(null);
           setRequestedQuantity("");
+
+          setFefoSuccess(true);
+          setFefoMessage("");
         },
+
         onError: (err: any) => {
           const msg =
             err.response?.data?.message ||
             err.message ||
             "Failed to confirm consumption. Stock may have changed.";
+
           setErrorMessage(msg);
         },
       }
     );
   };
 
-  const selectedItem = items.find((i) => i.id === selectedItemId);
+  const selectedItem = items.find(
+    (i) => i.id === selectedItemId
+  );
 
   return (
     <AppLayout
@@ -158,6 +212,7 @@ export const ConsumptionPage: React.FC = () => {
           <h1 className="text-[26px] font-bold tracking-tight text-slate-900">
             Confirm stock consumption
           </h1>
+
           <p className="mt-1 text-[13px] text-slate-500">
             Active jobs use lot allocation based on FEFO.
           </p>
@@ -165,6 +220,7 @@ export const ConsumptionPage: React.FC = () => {
 
         <div className="flex items-center gap-3 rounded-xl border border-[#b9e8eb] bg-[#eafafd] px-4 py-3 text-[12px] text-[#14546a]">
           <Info className="h-4 w-4 shrink-0 text-[#11a9ae]" />
+
           <span>
             FEFO preview does not reserve stock. Stock and lot order will be
             checked again at confirmation.
@@ -181,7 +237,6 @@ export const ConsumptionPage: React.FC = () => {
           </InlineAlert>
         )}
 
-
         {successMessage && (
           <InlineAlert
             tone="success"
@@ -190,6 +245,7 @@ export const ConsumptionPage: React.FC = () => {
           >
             <div className="flex flex-col gap-2">
               <p>{successMessage}</p>
+
               <div>
                 <button
                   type="button"
@@ -223,6 +279,8 @@ export const ConsumptionPage: React.FC = () => {
             preview={previewData}
             isLoading={fefoPreviewMutation.isPending}
             selectedItem={selectedItem}
+            success={fefoSuccess}
+            message={fefoMessage}
           />
         </div>
 

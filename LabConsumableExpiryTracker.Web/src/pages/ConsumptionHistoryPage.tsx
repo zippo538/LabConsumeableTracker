@@ -31,6 +31,8 @@ const UNIT_LABELS: Record<string, string> = {
   Box: "box",
 };
 
+
+
 const formatUnit = (baseUnit: string) =>
   UNIT_LABELS[baseUnit] ?? baseUnit.toLowerCase();
 
@@ -44,10 +46,10 @@ const formatConsumedAt = (isoDate: string) => {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: "UTC",
+    timeZone: "Asia/Jakarta",
   }).format(date);
 
-  return `${formatted} UTC`;
+  return `${formatted} WIB`;
 };
 
 const formatQuantity = (quantity: number) =>

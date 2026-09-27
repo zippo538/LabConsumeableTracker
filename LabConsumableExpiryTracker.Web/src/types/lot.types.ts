@@ -2,7 +2,8 @@ export type LotAdministrativeStatus =
   | "Active"
   | "Quarantined"
   | "ManuallyBlocked"
-  | "Disposed";
+  | "Disposed"
+  | "Depleted";
 
 export type ExpiryCondition = "Valid" | "ExpiringSoon" | "Expired";
 
@@ -40,9 +41,9 @@ export interface CreateLotRequest {
   initialQuantity: number;
   expiryDate: string;
   storageLocation: string;
-  receivedAt: string; 
-  suppliername: string; 
-  supplierLotNumber: string; 
+  receivedAt: string;
+  suppliername: string;
+  supplierLotNumber: string;
 }
 
 export interface UpdateLotRequest {
@@ -50,7 +51,7 @@ export interface UpdateLotRequest {
   administrativeStatus: LotAdministrativeStatus;
   rowVersion: string;
   suppliername: string;
-  supplierLotNumber:  string;
+  supplierLotNumber: string;
   lotNumber: string;
   expiryDate: string;
 }

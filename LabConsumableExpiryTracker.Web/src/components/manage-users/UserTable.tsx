@@ -82,19 +82,19 @@ export function UserTable({
                 <table className="w-full min-w-[700px] text-left text-sm">
                     <thead>
                         <tr className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500">
-                            <th className="px-6 py-3 font-medium">
+                            <th className="px-6 py-3 font-semibold">
                                 User
                             </th>
 
-                            <th className="px-6 py-3 font-medium">
+                            <th className="px-6 py-3 font-semibold">
                                 Role
                             </th>
 
-                            <th className="px-6 py-3 font-medium">
+                            <th className="px-6 py-3 font-semibold">
                                 Status
                             </th>
 
-                            <th className="px-6 py-3 font-medium">
+                            <th className="px-6 py-3 font-semibold">
                                 Action
                             </th>
                         </tr>
@@ -142,7 +142,7 @@ export function UserTable({
                                     key={user.id}
                                     className="border-b border-gray-100 last:border-0"
                                 >
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 ">
                                         <div className="flex items-center gap-3">
                                             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-100 text-xs font-semibold text-teal-700">
                                                 {initials(
@@ -151,7 +151,7 @@ export function UserTable({
                                             </div>
 
                                             <div>
-                                                <div className="font-medium text-gray-900">
+                                                <div className=" text-gray-900 font-semibold">
                                                     {
                                                         user.fullName
                                                     }
