@@ -9,8 +9,6 @@ namespace LabConsumableExpiryTracker.Infrastructure.Repositories;
 
 public class DashboardAlertRepository(AppDbContext context) : IDashboardAlertRepository
 {
-    private readonly AppDbContext _context = context;
-
     public async Task<PagedResult<DashboardAlertDto>> GetAlertsAsync(
         DashboardAlertQuery query,
         DateTimeOffset evaluatedAt,
@@ -18,17 +16,17 @@ public class DashboardAlertRepository(AppDbContext context) : IDashboardAlertRep
     {
         var today = DateOnly.FromDateTime(evaluatedAt.UtcDateTime);
 
-        var lowStock = _context.Items.AsNoTracking()
+        var lowStock = context.Items.AsNoTracking()
             .Select(item => new
             {
                 Item = item,
-                UsableStock = _context.Lots
+                UsableStock = context.Lots
                     .Where(lot => lot.ItemId == item.Id
                         && lot.AdministrativeStatus == LotAdministrativeStatus.Active
                         && lot.RemainingQuantity > 0
                         && lot.ExpiryDate >= today)
                     .Sum(lot => (decimal?)lot.RemainingQuantity) ?? 0m,
-                LotId = _context.Lots
+                LotId = context.Lots
                     .Where(lot => lot.ItemId == item.Id
                         && lot.AdministrativeStatus == LotAdministrativeStatus.Active
                         && lot.RemainingQuantity > 0
@@ -36,7 +34,7 @@ public class DashboardAlertRepository(AppDbContext context) : IDashboardAlertRep
                     .OrderBy(lot => lot.ExpiryDate)
                     .Select(lot => (Guid?)lot.Id)
                     .FirstOrDefault(),
-                LotNumber = _context.Lots
+                LotNumber = context.Lots
                     .Where(lot => lot.ItemId == item.Id
                         && lot.AdministrativeStatus == LotAdministrativeStatus.Active
                         && lot.RemainingQuantity > 0
@@ -44,7 +42,7 @@ public class DashboardAlertRepository(AppDbContext context) : IDashboardAlertRep
                     .OrderBy(lot => lot.ExpiryDate)
                     .Select(lot => lot.LotNumber)
                     .FirstOrDefault(),
-                ExpiryDate = _context.Lots
+                ExpiryDate = context.Lots
                     .Where(lot => lot.ItemId == item.Id
                         && lot.AdministrativeStatus == LotAdministrativeStatus.Active
                         && lot.RemainingQuantity > 0
@@ -52,7 +50,7 @@ public class DashboardAlertRepository(AppDbContext context) : IDashboardAlertRep
                     .OrderBy(lot => lot.ExpiryDate)
                     .Select(lot => (DateOnly?)lot.ExpiryDate)
                     .FirstOrDefault(),
-                LotRemainingQuantity = _context.Lots
+                LotRemainingQuantity = context.Lots
                     .Where(lot => lot.ItemId == item.Id
                         && lot.AdministrativeStatus == LotAdministrativeStatus.Active
                         && lot.RemainingQuantity > 0
@@ -80,8 +78,8 @@ public class DashboardAlertRepository(AppDbContext context) : IDashboardAlertRep
             });
 
         var expiringSoon =
-            from lot in _context.Lots.AsNoTracking()
-            join item in _context.Items.AsNoTracking() on lot.ItemId equals item.Id
+            from lot in context.Lots.AsNoTracking()
+            join item in context.Items.AsNoTracking() on lot.ItemId equals item.Id
             where lot.RemainingQuantity > 0
                 && lot.AdministrativeStatus == LotAdministrativeStatus.Active
                 && lot.ExpiryDate >= today
@@ -104,8 +102,8 @@ public class DashboardAlertRepository(AppDbContext context) : IDashboardAlertRep
             };
 
         var expired =
-            from lot in _context.Lots.AsNoTracking()
-            join item in _context.Items.AsNoTracking() on lot.ItemId equals item.Id
+            from lot in context.Lots.AsNoTracking()
+            join item in context.Items.AsNoTracking() on lot.ItemId equals item.Id
             where lot.RemainingQuantity > 0 && lot.ExpiryDate < today
             select new DashboardAlertDto
             {
@@ -125,8 +123,8 @@ public class DashboardAlertRepository(AppDbContext context) : IDashboardAlertRep
             };
 
         var blocked =
-            from lot in _context.Lots.AsNoTracking()
-            join item in _context.Items.AsNoTracking() on lot.ItemId equals item.Id
+            from lot in context.Lots.AsNoTracking()
+            join item in context.Items.AsNoTracking() on lot.ItemId equals item.Id
             where lot.AdministrativeStatus == LotAdministrativeStatus.ManuallyBlocked
                 || lot.AdministrativeStatus == LotAdministrativeStatus.Quarantined
             select new DashboardAlertDto
