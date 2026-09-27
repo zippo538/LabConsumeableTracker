@@ -6,7 +6,7 @@ using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using NUnit.Framework;
+
 namespace LabConsumableExpiryTracker.Tests.Controller;
 
 [TestFixture]

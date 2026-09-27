@@ -1,0 +1,8 @@
+root = true
+
+[*.cs]
+# Mengaktifkan analisis kualitas & keamanan kode .NET
+dotnet_analyzer_diagnostics.category-Security.severity = warning
+
+# Khusus aturan CA3001: Deteksi SQL Injection (Ubah jadi error agar sangat terlihat)
+dotnet_diagnostic.CA3001.severity = error

@@ -120,11 +120,14 @@ public class DashboardAlertServiceTests
 
         var result = await _service.GetAlertsAsync(query);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "You are not authorized to view dashboard alerts."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "You are not authorized to view dashboard alerts."));
+        });
 
         _repository.Verify(
             x => x.GetAlertsAsync(
@@ -219,11 +222,14 @@ public class DashboardAlertServiceTests
         var actions = result.Data!.Items[0].AllowedActions;
 
         Assert.That(actions, Has.Count.EqualTo(1));
-        Assert.That(actions[0].Code, Is.EqualTo("ViewLot"));
-        Assert.That(actions[0].Label, Is.EqualTo("View lot"));
-        Assert.That(
-            actions[0].Href,
-            Is.EqualTo($"/app/lots/{alert.LotId}"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(actions[0].Code, Is.EqualTo("ViewLot"));
+            Assert.That(actions[0].Label, Is.EqualTo("View lot"));
+            Assert.That(
+                actions[0].Href,
+                Is.EqualTo($"/app/lots/{alert.LotId}"));
+        });
     }
 
     [Test]
@@ -297,13 +303,16 @@ public class DashboardAlertServiceTests
         var actions = result.Data!.Items[0].AllowedActions;
 
         Assert.That(actions, Has.Count.EqualTo(2));
-        Assert.That(actions[0].Code, Is.EqualTo("ViewLot"));
-        Assert.That(actions[1].Code, Is.EqualTo("OpenDisposal"));
-        Assert.That(actions[1].Label, Is.EqualTo("Review disposal"));
-        Assert.That(
-            actions[1].Href,
-            Is.EqualTo(
-                $"/app/lots/{alert.LotId}?action=dispose"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(actions[0].Code, Is.EqualTo("ViewLot"));
+            Assert.That(actions[1].Code, Is.EqualTo("OpenDisposal"));
+            Assert.That(actions[1].Label, Is.EqualTo("Review disposal"));
+            Assert.That(
+                actions[1].Href,
+                Is.EqualTo(
+                    $"/app/lots/{alert.LotId}?action=dispose"));
+        });
     }
 
     [Test]
@@ -371,13 +380,16 @@ public class DashboardAlertServiceTests
         var actions = result.Data!.Items[0].AllowedActions;
 
         Assert.That(actions, Has.Count.EqualTo(2));
-        Assert.That(actions[0].Code, Is.EqualTo("ViewLot"));
-        Assert.That(actions[1].Code, Is.EqualTo("ManageLotStatus"));
-        Assert.That(actions[1].Label, Is.EqualTo("Manage status"));
-        Assert.That(
-            actions[1].Href,
-            Is.EqualTo(
-                $"/app/lots/{alert.LotId}?action=status"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(actions[0].Code, Is.EqualTo("ViewLot"));
+            Assert.That(actions[1].Code, Is.EqualTo("ManageLotStatus"));
+            Assert.That(actions[1].Label, Is.EqualTo("Manage status"));
+            Assert.That(
+                actions[1].Href,
+                Is.EqualTo(
+                    $"/app/lots/{alert.LotId}?action=status"));
+        });
     }
 
     [Test]
@@ -444,12 +456,18 @@ public class DashboardAlertServiceTests
 
         var result = await _service.GetAlertsAsync(query);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data!.Page, Is.EqualTo(2));
-        Assert.That(result.Data.PageSize, Is.EqualTo(20));
-        Assert.That(result.Data.TotalCount, Is.EqualTo(0));
-        Assert.That(result.Data.Items, Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.Page, Is.EqualTo(2));
+            Assert.That(result.Data.PageSize, Is.EqualTo(20));
+            Assert.That(result.Data.TotalCount, Is.EqualTo(0));
+            Assert.That(result.Data.Items, Is.Empty);
+        });
     }
 
     private void SetupValidValidation()

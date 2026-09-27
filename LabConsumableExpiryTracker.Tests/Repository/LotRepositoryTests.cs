@@ -146,7 +146,7 @@ public class LotRepositoryTests
 
         var existing = await _context.Lots.SingleAsync(x => x.Id == lot.Id, _ct);
         existing.UpdateStorageLocation("RACK-B-02");
-        var result = await _repository.UpdateAsync(existing, _ct);
+        var result = await _repository.UpdateAsync(existing);
         await _context.SaveChangesAsync(_ct);
 
         _context.ChangeTracker.Clear();

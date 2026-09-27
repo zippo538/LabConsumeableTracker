@@ -12,5 +12,5 @@ public class ConsumptionExportRowDto
     public decimal Quantity { get; init; }
     public UnitOfMeasure BaseUnit { get; init; }
     public DateTimeOffset ConsumedAt { get; init; }
-    public string  ConsumedBy { get; set; } = default!;
+    public string  ConsumedBy { get; init; } = default!;
 }

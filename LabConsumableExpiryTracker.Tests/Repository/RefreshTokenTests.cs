@@ -1,4 +1,5 @@
 using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Infrastructure.Data.Entities;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using LabConsumableExpiryTracker.Tests.Helpers;
@@ -81,8 +82,11 @@ public class RefreshTokenRepositoryTests
         await SeedTokenAsync(user.Id, tokenVal);
         var result = await _repository.GetByTokenWithUserAsync(tokenVal);
         Assert.That(result, Is.Not.Null);
-        Assert.That(result!.Token, Is.EqualTo(tokenVal));
-        Assert.That(result.User, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result!.Token, Is.EqualTo(tokenVal));
+            Assert.That(result.User, Is.Not.Null);
+        });
         Assert.That(result.User.Id, Is.EqualTo(user.Id));
     }
     [Test]
@@ -101,9 +105,12 @@ public class RefreshTokenRepositoryTests
         var fetched1 = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == t1.Token);
         var fetched2 = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == t2.Token);
         Assert.That(fetched1, Is.Not.Null);
-        Assert.That(fetched1!.IsRevoked, Is.True);
-        Assert.That(fetched1.RevokedOnUtc, Is.Not.Null);
-        Assert.That(fetched2, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(fetched1!.IsRevoked, Is.True);
+            Assert.That(fetched1.RevokedOnUtc, Is.Not.Null);
+            Assert.That(fetched2, Is.Not.Null);
+        });
         Assert.That(fetched2!.IsRevoked, Is.True);
     }
     [Test]
@@ -117,8 +124,11 @@ public class RefreshTokenRepositoryTests
         var fetched1 = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == t1.Token);
         var fetched2 = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == t2.Token);
         Assert.That(fetched1, Is.Not.Null);
-        Assert.That(fetched1!.IsRevoked, Is.True);
-        Assert.That(fetched2, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(fetched1!.IsRevoked, Is.True);
+            Assert.That(fetched2, Is.Not.Null);
+        });
         Assert.That(fetched2!.IsRevoked, Is.False);
     }
 }

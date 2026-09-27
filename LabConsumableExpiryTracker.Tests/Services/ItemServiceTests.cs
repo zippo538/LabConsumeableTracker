@@ -148,8 +148,11 @@ public class ItemServiceTests
             id,
             new UpdateItemDto(),
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Item not found."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Item not found."));
+        });
     }
     [Test]
     public async Task UpdateItem_WhenValid_UpdatesAndSaves()
@@ -159,7 +162,7 @@ public class ItemServiceTests
             .Setup(x => x.GetByIdAsync(item.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(item);
         _itemRepository
-            .Setup(x => x.UpdateAsync(item, It.IsAny<CancellationToken>()))
+            .Setup(x => x.UpdateAsync(item))
             .ReturnsAsync(item);
         _unitOfWork
             .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
@@ -215,8 +218,11 @@ public class ItemServiceTests
             .Setup(x => x.GetByCodeAsync(dto.Code, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Item?)null);
         var result = await _sut.CreateItem(dto, CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Validation failed."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Validation failed."));
+        });
         _itemRepository.Verify(
             x => x.AddAsync(It.IsAny<Item>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -353,11 +359,14 @@ public class ItemServiceTests
 
         var dto = result.Data.Items.Single();
 
-        Assert.That(dto.Id, Is.EqualTo(itemId));
-        Assert.That(dto.TotalRemainingQuantity, Is.EqualTo(usableQuantity));
-        Assert.That(
-            dto.StockStatus,
-            Is.EqualTo(item.GetStockStatus(usableQuantity)));
+        Assert.Multiple(() =>
+        {
+            Assert.That(dto.Id, Is.EqualTo(itemId));
+            Assert.That(dto.TotalRemainingQuantity, Is.EqualTo(usableQuantity));
+            Assert.That(
+                dto.StockStatus,
+                Is.EqualTo(item.GetStockStatus(usableQuantity)));
+        });
     }
 
     [Test]
@@ -437,13 +446,19 @@ public class ItemServiceTests
             dto,
             CancellationToken.None);
 
-        // Assert
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data!.Id, Is.EqualTo(createdItem.Id));
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Item created successfully."));
+        Assert.Multiple(() =>
+        {
+            // Assert
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.Id, Is.EqualTo(createdItem.Id));
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Item created successfully."));
+        });
 
         _imageStorageRepository.Verify(
             x => x.SaveImageAsync(
@@ -502,13 +517,15 @@ public class ItemServiceTests
             request,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Item not found."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Item not found."));
+        });
 
         _itemRepository.Verify(
             x => x.UpdateAsync(
-                It.IsAny<Item>(),
-                It.IsAny<CancellationToken>()),
+                It.IsAny<Item>()),
             Times.Never);
 
         _unitOfWork.Verify(
@@ -547,14 +564,16 @@ public class ItemServiceTests
             request,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Validation failed."));
-        Assert.That(result.Errors, Does.Contain("Image cannot be empty."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Validation failed."));
+            Assert.That(result.Errors, Does.Contain("Image cannot be empty."));
+        });
 
         _itemRepository.Verify(
             x => x.UpdateAsync(
-                It.IsAny<Item>(),
-                It.IsAny<CancellationToken>()),
+                It.IsAny<Item>()),
             Times.Never);
     }
 
@@ -591,14 +610,16 @@ public class ItemServiceTests
             request,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Validation failed."));
-        Assert.That(result.Errors, Does.Contain("Image cannot exceed 5 MB."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Validation failed."));
+            Assert.That(result.Errors, Does.Contain("Image cannot exceed 5 MB."));
+        });
 
         _itemRepository.Verify(
             x => x.UpdateAsync(
-                It.IsAny<Item>(),
-                It.IsAny<CancellationToken>()),
+                It.IsAny<Item>()),
             Times.Never);
     }
 
@@ -637,14 +658,16 @@ public class ItemServiceTests
             request,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Validation failed."));
-        Assert.That(result.Errors, Does.Contain("Invalid image type."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Validation failed."));
+            Assert.That(result.Errors, Does.Contain("Invalid image type."));
+        });
 
         _itemRepository.Verify(
             x => x.UpdateAsync(
-                It.IsAny<Item>(),
-                It.IsAny<CancellationToken>()),
+                It.IsAny<Item>()),
             Times.Never);
     }
 
@@ -688,8 +711,7 @@ public class ItemServiceTests
             .Setup(x => x.UpdateAsync(
                 It.Is<Item>(item1 =>
                     item1.Id == id &&
-                    item1.Name == request.Name),
-                It.IsAny<CancellationToken>()))
+                    item1.Name == request.Name)))
             .ReturnsAsync(updatedItem);
 
         _unitOfWork
@@ -706,18 +728,23 @@ public class ItemServiceTests
             request,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data!.Id, Is.EqualTo(id));
-        Assert.That(result.Data.Name, Is.EqualTo("Updated Item"));
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Item updated successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.Id, Is.EqualTo(id));
+            Assert.That(result.Data.Name, Is.EqualTo("Updated Item"));
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Item updated successfully."));
+        });
 
         _itemRepository.Verify(
             x => x.UpdateAsync(
-                It.IsAny<Item>(),
-                It.IsAny<CancellationToken>()),
+                It.IsAny<Item>()),
             Times.Once);
 
         _unitOfWork.Verify(
@@ -734,8 +761,7 @@ public class ItemServiceTests
 
         _imageStorageRepository.Verify(
             x => x.DeleteImageAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()),
+                It.IsAny<Guid>()),
             Times.Never);
     }
 
@@ -790,14 +816,12 @@ public class ItemServiceTests
 
         _imageStorageRepository
             .Setup(x => x.DeleteImageAsync(
-                oldImageId,
-                It.IsAny<CancellationToken>()))
+                oldImageId))
             .Returns(Task.CompletedTask);
 
         _itemRepository
             .Setup(x => x.UpdateAsync(
-                It.IsAny<Item>(),
-                It.IsAny<CancellationToken>()))
+                It.IsAny<Item>()))
             .ReturnsAsync(item);
 
         _unitOfWork
@@ -814,12 +838,18 @@ public class ItemServiceTests
             request,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data!.Id, Is.EqualTo(id));
-        Assert.That(result.Message, Is.EqualTo("Item updated successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.Id, Is.EqualTo(id));
+            Assert.That(result.Message, Is.EqualTo("Item updated successfully."));
 
-        Assert.That(item.ImageId, Is.EqualTo(newImageId));
+            Assert.That(item.ImageId, Is.EqualTo(newImageId));
+        });
 
         _imageStorageRepository.Verify(
             x => x.SaveImageAsync(
@@ -830,16 +860,14 @@ public class ItemServiceTests
 
         _imageStorageRepository.Verify(
             x => x.DeleteImageAsync(
-                oldImageId,
-                It.IsAny<CancellationToken>()),
+                oldImageId),
             Times.Once);
 
         _itemRepository.Verify(
             x => x.UpdateAsync(
                 It.Is<Item>(item1 =>
                     item1.Id == id &&
-                    item1.ImageId == newImageId),
-                It.IsAny<CancellationToken>()),
+                    item1.ImageId == newImageId)),
             Times.Once);
 
         _unitOfWork.Verify(
@@ -896,8 +924,7 @@ public class ItemServiceTests
 
         _itemRepository
             .Setup(x => x.UpdateAsync(
-                It.IsAny<Item>(),
-                It.IsAny<CancellationToken>()))
+                It.IsAny<Item>()))
             .ReturnsAsync(item);
 
         _unitOfWork
@@ -914,8 +941,11 @@ public class ItemServiceTests
             request,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(item.ImageId, Is.EqualTo(newImageId));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(item.ImageId, Is.EqualTo(newImageId));
+        });
 
         _imageStorageRepository.Verify(
             x => x.SaveImageAsync(
@@ -926,8 +956,7 @@ public class ItemServiceTests
 
         _imageStorageRepository.Verify(
             x => x.DeleteImageAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()),
+                It.IsAny<Guid>()),
             Times.Never);
 
         _unitOfWork.Verify(
@@ -956,11 +985,14 @@ public class ItemServiceTests
             id,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "This item cannot be deleted because it is already used by one or more lots."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "This item cannot be deleted because it is already used by one or more lots."));
+        });
 
         _itemRepository.Verify(
             x => x.DeleteAsync(

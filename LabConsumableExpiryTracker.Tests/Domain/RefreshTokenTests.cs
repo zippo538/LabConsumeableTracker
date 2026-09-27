@@ -1,4 +1,5 @@
 using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Infrastructure.Data.Entities;
 
 namespace LabConsumableExpiryTracker.Tests.Domain;
 

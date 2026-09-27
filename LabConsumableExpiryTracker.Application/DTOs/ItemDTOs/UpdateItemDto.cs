@@ -10,5 +10,5 @@ public class UpdateItemDto
     public decimal MinimumStock { get; init; }
     public int ExpiringSoonDays { get; init; }
 
-    public IFormFile? Image { get; set; }
+    public IFormFile? Image { get; init; }
 }

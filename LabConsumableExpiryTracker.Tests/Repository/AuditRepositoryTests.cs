@@ -1,7 +1,7 @@
 using LabConsumableExpiryTracker.Application.DTOs.AuditDTOs;
-using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Infrastructure.Data.Entities;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using LabConsumableExpiryTracker.Tests.Helpers;
@@ -151,9 +151,12 @@ public class AuditRepositoryTests
         await SeedDisposalAsync(lot.Id, user.Id, 10m, _baseTime);
         var query = new AuditQuery { Page = 1, PageSize = 10 };
         var result = await _repository.GetAuditEventsAsync(query);
-        Assert.That(result.TotalCount, Is.EqualTo(2));
-        Assert.That(result.Items.Any(e => e.EventType == AuditEventType.Consumption), Is.True);
-        Assert.That(result.Items.Any(e => e.EventType == AuditEventType.Disposal), Is.True);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.TotalCount, Is.EqualTo(2));
+            Assert.That(result.Items.Any(e => e.EventType == AuditEventType.Consumption), Is.True);
+            Assert.That(result.Items.Any(e => e.EventType == AuditEventType.Disposal), Is.True);
+        });
     }
     [Test]
     public async Task GetAuditEventsAsync_FiltersByEventType()
@@ -166,8 +169,11 @@ public class AuditRepositoryTests
         await SeedDisposalAsync(lot.Id, user.Id, 10m, _baseTime);
         var query = new AuditQuery { Page = 1, PageSize = 10, EventType = AuditEventType.Consumption };
         var result = await _repository.GetAuditEventsAsync(query);
-        Assert.That(result.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Items[0].EventType, Is.EqualTo(AuditEventType.Consumption));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Items[0].EventType, Is.EqualTo(AuditEventType.Consumption));
+        });
     }
     [Test]
     public async Task GetAuditEventsAsync_FiltersBySearch_ILike_CaseInsensitive()
@@ -179,8 +185,11 @@ public class AuditRepositoryTests
         await SeedConsumptionAsync(job.Id, lot.Id, user.Id, 5m, _baseTime);
         var query = new AuditQuery { Page = 1, PageSize = 10, Search = "lot-abc" };
         var result = await _repository.GetAuditEventsAsync(query);
-        Assert.That(result.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Items[0].LotNumber, Is.EqualTo("LOT-ABC-123"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Items[0].LotNumber, Is.EqualTo("LOT-ABC-123"));
+        });
     }
     [Test]
     public async Task GetAuditEventsAsync_FiltersByJobId_ReturnsOnlyConsumptions()
@@ -195,9 +204,12 @@ public class AuditRepositoryTests
         await SeedDisposalAsync(lot.Id, user.Id, 10m, _baseTime);
         var query = new AuditQuery { Page = 1, PageSize = 10, JobId = job1.Id };
         var result = await _repository.GetAuditEventsAsync(query);
-        Assert.That(result.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Items[0].JobId, Is.EqualTo(job1.Id));
-        Assert.That(result.Items[0].EventType, Is.EqualTo(AuditEventType.Consumption));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Items[0].JobId, Is.EqualTo(job1.Id));
+            Assert.That(result.Items[0].EventType, Is.EqualTo(AuditEventType.Consumption));
+        });
     }
     [Test]
     public async Task GetAuditEventsAsync_FiltersByDateRange()
@@ -217,8 +229,11 @@ public class AuditRepositoryTests
             To = _baseTime
         };
         var result = await _repository.GetAuditEventsAsync(query);
-        Assert.That(result.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Items[0].Quantity, Is.EqualTo(2m));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Items[0].Quantity, Is.EqualTo(2m));
+        });
     }
     [Test]
     public async Task GetAuditEventsAsync_PaginatesCorrectly()
@@ -227,13 +242,16 @@ public class AuditRepositoryTests
         var item = await SeedItemAsync();
         var lot = await SeedLotAsync(item.Id);
         var job = await SeedJobAsync();
-        for (int i = 0; i < 5; i++)
+        for (var i = 0; i < 5; i++)
             await SeedConsumptionAsync(job.Id, lot.Id, user.Id, 1m, _baseTime.AddMinutes(i));
         var query = new AuditQuery { Page = 1, PageSize = 2 };
         var result = await _repository.GetAuditEventsAsync(query);
-        Assert.That(result.TotalCount, Is.EqualTo(5));
-        Assert.That(result.Items, Has.Count.EqualTo(2));
-        Assert.That(result.Page, Is.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.TotalCount, Is.EqualTo(5));
+            Assert.That(result.Items, Has.Count.EqualTo(2));
+            Assert.That(result.Page, Is.EqualTo(1));
+        });
     }
     [Test]
     public async Task GetConsumptionsAsync_FiltersByItemIdAndPaginates()
@@ -248,8 +266,11 @@ public class AuditRepositoryTests
         await SeedConsumptionAsync(job.Id, lot2.Id, user.Id, 10m, _baseTime);
         var query = new AuditQuery { Page = 1, PageSize = 10, ItemId = item1.Id };
         var result = await _repository.GetConsumptionsAsync(query);
-        Assert.That(result.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Items[0].itemCode, Is.EqualTo("ITM-C1"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Items[0].ItemCode, Is.EqualTo("ITM-C1"));
+        });
     }
     [Test]
     public async Task GetConsumptionByIdAsync_ReturnsDetail_WhenExists()
@@ -261,10 +282,13 @@ public class AuditRepositoryTests
         var c = await SeedConsumptionAsync(job.Id, lot.Id, user.Id, 7m, _baseTime);
         var detail = await _repository.GetConsumptionByIdAsync(c.Id);
         Assert.That(detail, Is.Not.Null);
-        Assert.That(detail!.Quantity, Is.EqualTo(7m));
-        Assert.That(detail.FullName, Is.EqualTo("Dr. Smith"));
-        Assert.That(detail.itemCode, Is.EqualTo("ITM-DETAIL"));
-        Assert.That(detail.JobNumber, Is.EqualTo("JOB-DETAIL"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(detail!.Quantity, Is.EqualTo(7m));
+            Assert.That(detail.FullName, Is.EqualTo("Dr. Smith"));
+            Assert.That(detail.ItemCode, Is.EqualTo("ITM-DETAIL"));
+            Assert.That(detail.JobNumber, Is.EqualTo("JOB-DETAIL"));
+        });
     }
     [Test]
     public async Task GetConsumptionByIdAsync_ReturnsNull_WhenNotExists()
@@ -283,8 +307,11 @@ public class AuditRepositoryTests
         await SeedDisposalAsync(lot2.Id, user.Id, 10m, _baseTime);
         var query = new AuditQuery { Page = 1, PageSize = 10, LotId = lot1.Id, Search = "search" };
         var result = await _repository.GetDisposalsAsync(query);
-        Assert.That(result.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Items[0].Reason, Is.EqualTo("Contaminated"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Items[0].Reason, Is.EqualTo("Contaminated"));
+        });
     }
     [Test]
     public async Task GetDisposalByIdAsync_ReturnsDetail_WhenExists()
@@ -295,9 +322,12 @@ public class AuditRepositoryTests
         var d = await SeedDisposalAsync(lot.Id, user.Id, 15m, _baseTime, "Broken");
         var detail = await _repository.GetDisposalByIdAsync(d.Id);
         Assert.That(detail, Is.Not.Null);
-        Assert.That(detail!.Quantity, Is.EqualTo(15m));
-        Assert.That(detail.Reason, Is.EqualTo("Broken"));
-        Assert.That(detail.LotNumber, Is.EqualTo("LOT-D-DETAIL"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(detail!.Quantity, Is.EqualTo(15m));
+            Assert.That(detail.Reason, Is.EqualTo("Broken"));
+            Assert.That(detail.LotNumber, Is.EqualTo("LOT-D-DETAIL"));
+        });
     }
     [Test]
     public async Task GetDisposalByIdAsync_ReturnsNull_WhenNotExists()

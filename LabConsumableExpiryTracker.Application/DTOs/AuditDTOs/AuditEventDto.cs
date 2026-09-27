@@ -17,7 +17,7 @@ public sealed class AuditEventDto
     public Guid ActorId { get; init; }
     public string FullName {get;init;}= string.Empty;
     public Guid? JobId { get; init; }
-    public string JobNumber {get;init;} = string.Empty;
+    public string? JobNumber {get;init;} = string.Empty;
     
     public string? Reason { get; init; }
 }

@@ -11,7 +11,7 @@ public class ImageService(
     private const string ScientistRole = nameof(UserRole.Scientist);
     private const string WarehouseAdminRole = nameof(UserRole.WarehouseAdmin);
 
-    public async Task<ServiceResult<(Stream Stream, string ContentType)>> GetSecureImageAsync(Guid imageId, CancellationToken cancellationToken)
+    public async Task<ServiceResult<(Stream Stream, string ContentType)>> GetSecureImageAsync(Guid imageId)
     {
         if (!currentUserContext.IsAuthenticated)
         {
@@ -23,7 +23,7 @@ public class ImageService(
         {
             return ServiceResult<(Stream, string)>.ErrorResult("You do not have permission to view this image.");
         }
-        var (stream, contentType) = await imageStorageRepository.GetImageAsync(imageId, cancellationToken);
+        var (stream, contentType) = await imageStorageRepository.GetImageAsync(imageId);
         return stream == null ? ServiceResult<(Stream, string)>.ErrorResult("Image Not Found") : ServiceResult<(Stream, string)>.SuccessResult((stream, contentType));
     }
 }

@@ -74,7 +74,7 @@ public class DisposalService : IDisposalService
 
             var disposal = Disposal.Create(lotId, request.Quantity, request.Reason, now);
             
-            await _lotRepository.UpdateAsync(lot, ct);
+            await _lotRepository.UpdateAsync(lot);
             await _disposalRepository.AddAsync(disposal, ct);
             await _unitOfWork.SaveChangesAsync(ct);
 

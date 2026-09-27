@@ -107,8 +107,11 @@ public class ConsumptionHistoryRepositoryTests
         await SeedConsumptionAsync(job.Id, lot.Id, _user1, 5m, now);
         await SeedConsumptionAsync(job.Id, lot.Id, _user2, 10m, now);
         var (items, totalCount) = await _repository.GetPagedAsync(_user1, null, null, null, null, null, null, 1, 10);
-        Assert.That(totalCount, Is.EqualTo(1));
-        Assert.That(items[0].Quantity, Is.EqualTo(5m));
+        Assert.Multiple(() =>
+        {
+            Assert.That(totalCount, Is.EqualTo(1));
+            Assert.That(items[0].Quantity, Is.EqualTo(5m));
+        });
     }
     [Test]
     public async Task GetPagedAsync_FiltersByLotNumber_CaseInsensitive()
@@ -131,13 +134,16 @@ public class ConsumptionHistoryRepositoryTests
         var lot = await SeedLotAsync(item.Id, "LOT-3");
         var job = await SeedJobAsync("JOB-3");
         var now = DateTimeOffset.UtcNow;
-        for (int i = 0; i < 5; i++)
+        for (var i = 0; i < 5; i++)
             await SeedConsumptionAsync(job.Id, lot.Id, _user1, 1m, now.AddMinutes(i));
         var (page1, count1) = await _repository.GetPagedAsync(_user1, null, null, null, null, null, null, 1, 2);
         var (page2, _) = await _repository.GetPagedAsync(_user1, null, null, null, null, null, null, 2, 2);
-        Assert.That(count1, Is.EqualTo(5));
-        Assert.That(page1, Has.Count.EqualTo(2));
-        Assert.That(page2, Has.Count.EqualTo(2));
+        Assert.Multiple(() =>
+        {
+            Assert.That(count1, Is.EqualTo(5));
+            Assert.That(page1, Has.Count.EqualTo(2));
+            Assert.That(page2, Has.Count.EqualTo(2));
+        });
     }
     [Test]
     public async Task GetDetailAsync_ReturnsDetail_WhenExistsAndMatchesUser()
@@ -148,9 +154,12 @@ public class ConsumptionHistoryRepositoryTests
         var c = await SeedConsumptionAsync(job.Id, lot.Id, _user1, 7m, DateTimeOffset.UtcNow);
         var detail = await _repository.GetDetailAsync(c.Id, _user1);
         Assert.That(detail, Is.Not.Null);
-        Assert.That(detail!.Quantity, Is.EqualTo(7m));
-        Assert.That(detail.ItemCode, Is.EqualTo("ITM-4"));
-        Assert.That(detail.JobNumber, Is.EqualTo("JOB-4"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(detail!.Quantity, Is.EqualTo(7m));
+            Assert.That(detail.ItemCode, Is.EqualTo("ITM-4"));
+            Assert.That(detail.JobNumber, Is.EqualTo("JOB-4"));
+        });
     }
     [Test]
     public async Task GetDetailAsync_ReturnsNull_WhenUserMismatch()

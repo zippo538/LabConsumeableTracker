@@ -4,6 +4,7 @@ using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Infrastructure.Data.Entities;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -479,11 +480,17 @@ public class UserServiceTests
             null,
             currentUserId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data!.Page, Is.EqualTo(1));
-        Assert.That(result.Data.PageSize, Is.EqualTo(20));
-        Assert.That(result.Data.TotalCount, Is.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.Page, Is.EqualTo(1));
+            Assert.That(result.Data.PageSize, Is.EqualTo(20));
+            Assert.That(result.Data.TotalCount, Is.EqualTo(1));
+        });
     }
 
     [Test]
@@ -520,9 +527,12 @@ public class UserServiceTests
             null,
             currentUserId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data!.Page, Is.EqualTo(2));
-        Assert.That(result.Data.PageSize, Is.EqualTo(50));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data!.Page, Is.EqualTo(2));
+            Assert.That(result.Data.PageSize, Is.EqualTo(50));
+        });
     }
 
     [Test]
@@ -571,9 +581,12 @@ public class UserServiceTests
             null,
             currentUserId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data!.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Data.Items, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data!.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Data.Items, Has.Count.EqualTo(1));
+        });
     }
 
     [Test]
@@ -612,8 +625,11 @@ public class UserServiceTests
             null,
             currentUserId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data!.TotalCount, Is.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data!.TotalCount, Is.EqualTo(1));
+        });
     }
 
     [Test]
@@ -652,8 +668,11 @@ public class UserServiceTests
             null,
             currentUserId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data!.TotalCount, Is.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data!.TotalCount, Is.EqualTo(1));
+        });
     }
 
     [Test]
@@ -697,8 +716,11 @@ public class UserServiceTests
             "ACTIVE",
             currentUserId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data!.TotalCount, Is.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data!.TotalCount, Is.EqualTo(1));
+        });
     }
 
     [Test]
@@ -742,9 +764,12 @@ public class UserServiceTests
             "inactive",
             currentUserId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data!.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Data.Items.Count, Is.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data!.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Data.Items, Has.Count.EqualTo(1));
+        });
     }
 
     [Test]
@@ -792,9 +817,12 @@ public class UserServiceTests
             null,
             currentUserId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data!.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Data.Items, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data!.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Data.Items, Has.Count.EqualTo(1));
+        });
     }
     [Test]
     public async Task GetAllUsersAsync_ShouldExcludeCurrentUser()
@@ -836,9 +864,12 @@ public class UserServiceTests
             null,
             currentUserId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data!.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Data.Items, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data!.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Data.Items, Has.Count.EqualTo(1));
+        });
     }
     [Test]
 
@@ -882,8 +913,11 @@ public class UserServiceTests
             null,
             currentUserId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data!.Items, Has.Count.EqualTo(2));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data!.Items, Has.Count.EqualTo(2));
+        });
     }
 
     [Test]
@@ -903,11 +937,14 @@ public class UserServiceTests
             null,
             currentUserId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data!.Items, Is.Empty);
-        Assert.That(result.Data.TotalCount, Is.EqualTo(0));
-        Assert.That(result.Data.Page, Is.EqualTo(1));
-        Assert.That(result.Data.PageSize, Is.EqualTo(20));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data!.Items, Is.Empty);
+            Assert.That(result.Data.TotalCount, Is.EqualTo(0));
+            Assert.That(result.Data.Page, Is.EqualTo(1));
+            Assert.That(result.Data.PageSize, Is.EqualTo(20));
+        });
 
         _mapper.Verify(
             x => x.Map<UserResponseDto>(It.IsAny<ApplicationUser>()),
@@ -936,8 +973,11 @@ public class UserServiceTests
 
         var result = await _service.UpdateUserAsync(userId, request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("User not found."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("User not found."));
+        });
 
         _userManager.Verify(
             x => x.SetUserNameAsync(
@@ -985,11 +1025,14 @@ public class UserServiceTests
 
         var result = await _service.UpdateUserAsync(user.Id, request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Failed to update username."));
-        Assert.That(
-            result.Errors,
-            Does.Contain("Username is already taken."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Failed to update username."));
+            Assert.That(
+                result.Errors,
+                Does.Contain("Username is already taken."));
+        });
     }
 
     [Test]
@@ -1029,11 +1072,14 @@ public class UserServiceTests
 
         var result = await _service.UpdateUserAsync(user.Id, request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Failed to update email."));
-        Assert.That(
-            result.Errors,
-            Does.Contain("Invalid email."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Failed to update email."));
+            Assert.That(
+                result.Errors,
+                Does.Contain("Invalid email."));
+        });
 
         _userManager.Verify(
             x => x.UpdateAsync(It.IsAny<ApplicationUser>()),
@@ -1080,11 +1126,14 @@ public class UserServiceTests
 
         var result = await _service.UpdateUserAsync(user.Id, request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Failed to update user."));
-        Assert.That(
-            result.Errors,
-            Does.Contain("Failed to update user."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Failed to update user."));
+            Assert.That(
+                result.Errors,
+                Does.Contain("Failed to update user."));
+        });
     }
 
     [Test]
@@ -1133,12 +1182,15 @@ public class UserServiceTests
 
         var result = await _service.UpdateUserAsync(user.Id, request);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Message, Is.EqualTo("User updated successfully."));
-        Assert.That(result.Data, Is.EqualTo(response));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Message, Is.EqualTo("User updated successfully."));
+            Assert.That(result.Data, Is.EqualTo(response));
 
 
-        Assert.That(user.FullName, Is.EqualTo("New User"));
+            Assert.That(user.FullName, Is.EqualTo("New User"));
+        });
     }
 
     [Test]
@@ -1151,10 +1203,13 @@ public class UserServiceTests
             adminId,
             false);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("You cannot deactivate your own account."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("You cannot deactivate your own account."));
+        });
 
         _userManager.Verify(
             x => x.FindByIdAsync(It.IsAny<string>()),
@@ -1176,8 +1231,11 @@ public class UserServiceTests
             targetUserId,
             false);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("User not found."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("User not found."));
+        });
 
         _userManager.Verify(
             x => x.UpdateAsync(It.IsAny<ApplicationUser>()),
@@ -1221,14 +1279,17 @@ public class UserServiceTests
             targetUserId,
             false);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Failed to update user status."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Failed to update user status."));
 
-        Assert.That(
-            result.Errors,
-            Does.Contain("Database update failed."));
+            Assert.That(
+                result.Errors,
+                Does.Contain("Database update failed."));
+        });
 
         _refreshTokenRepository.Verify(
           x => x.RevokeAllByUserIdAsync(
@@ -1269,13 +1330,16 @@ public class UserServiceTests
             targetUserId,
             false);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.True);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("User deactivated successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.True);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("User deactivated successfully."));
 
-        Assert.That(user.IsActive, Is.False);
+            Assert.That(user.IsActive, Is.False);
+        });
 
         _refreshTokenRepository.Verify(
             x => x.RevokeAllByUserIdAsync(
@@ -1309,13 +1373,16 @@ public class UserServiceTests
             targetUserId,
             true);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.True);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("User activated successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.True);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("User activated successfully."));
 
-        Assert.That(user.IsActive, Is.True);
+            Assert.That(user.IsActive, Is.True);
+        });
 
         _refreshTokenRepository.Verify(
             x => x.RevokeAllByUserIdAsync(
@@ -1371,13 +1438,19 @@ public class UserServiceTests
 
         var result = await _service.GetUserStatisticsAsync();
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
 
-        Assert.That(result.Data!.TotalCount, Is.EqualTo(4));
-        Assert.That(result.Data.ActiveCount, Is.EqualTo(2));
-        Assert.That(result.Data.DeactivatedCount, Is.EqualTo(2));
-        Assert.That(result.Data.ActiveAdminCount, Is.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.TotalCount, Is.EqualTo(4));
+            Assert.That(result.Data.ActiveCount, Is.EqualTo(2));
+            Assert.That(result.Data.DeactivatedCount, Is.EqualTo(2));
+            Assert.That(result.Data.ActiveAdminCount, Is.EqualTo(1));
+        });
     }
     [Test]
     public async Task GetUserStatisticsAsync_ShouldReturnZero_WhenNoUsersExist()
@@ -1389,13 +1462,19 @@ public class UserServiceTests
 
         var result = await _service.GetUserStatisticsAsync();
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
 
-        Assert.That(result.Data!.TotalCount, Is.EqualTo(0));
-        Assert.That(result.Data.ActiveCount, Is.EqualTo(0));
-        Assert.That(result.Data.DeactivatedCount, Is.EqualTo(0));
-        Assert.That(result.Data.ActiveAdminCount, Is.EqualTo(0));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.TotalCount, Is.EqualTo(0));
+            Assert.That(result.Data.ActiveCount, Is.EqualTo(0));
+            Assert.That(result.Data.DeactivatedCount, Is.EqualTo(0));
+            Assert.That(result.Data.ActiveAdminCount, Is.EqualTo(0));
+        });
     }
 
     [Test]
@@ -1409,8 +1488,11 @@ public class UserServiceTests
 
         var result = await _service.GetUserByIdAsync(userId);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("User not found."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("User not found."));
+        });
 
         _userManager.Verify(
             x => x.GetRolesAsync(It.IsAny<ApplicationUser>()),
@@ -1450,8 +1532,11 @@ public class UserServiceTests
 
         var result = await _service.GetUserByIdAsync(userId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.EqualTo(response));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.EqualTo(response));
+        });
 
     }
 
@@ -1473,8 +1558,11 @@ public class UserServiceTests
             userId,
             request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("User not found."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("User not found."));
+        });
 
         _userManager.Verify(
             x => x.GeneratePasswordResetTokenAsync(
@@ -1532,14 +1620,17 @@ public class UserServiceTests
             userId,
             request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Failed to change user password."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Failed to change user password."));
 
-        Assert.That(
-            result.Errors,
-            Does.Contain("Password does not meet requirements."));
+            Assert.That(
+                result.Errors,
+                Does.Contain("Password does not meet requirements."));
+        });
 
         _userManager.Verify(
             x => x.GeneratePasswordResetTokenAsync(user),
@@ -1591,11 +1682,14 @@ public class UserServiceTests
             userId,
             request);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.True);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("User password changed successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.True);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("User password changed successfully."));
+        });
 
         _userManager.Verify(
             x => x.GeneratePasswordResetTokenAsync(user),
@@ -1626,8 +1720,11 @@ public class UserServiceTests
             userId,
             request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("User not found."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("User not found."));
+        });
 
         _userManager.Verify(
             x => x.UpdateAsync(It.IsAny<ApplicationUser>()),
@@ -1678,16 +1775,19 @@ public class UserServiceTests
             userId,
             request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Failed to update profile."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Failed to update profile."));
 
-        Assert.That(
-            result.Errors,
-            Does.Contain("Failed to update user."));
+            Assert.That(
+                result.Errors,
+                Does.Contain("Failed to update user."));
 
-        Assert.That(user.FullName, Is.EqualTo("Updated Name"));
+            Assert.That(user.FullName, Is.EqualTo("Updated Name"));
+        });
 
         _userManager.Verify(
             x => x.UpdateAsync(user),
@@ -1743,13 +1843,16 @@ public class UserServiceTests
             userId,
             request);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.EqualTo(response));
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Profile updated successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.EqualTo(response));
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Profile updated successfully."));
 
-        Assert.That(user.FullName, Is.EqualTo("Updated Name"));
+            Assert.That(user.FullName, Is.EqualTo("Updated Name"));
+        });
 
         _userManager.Verify(
             x => x.UpdateAsync(user),

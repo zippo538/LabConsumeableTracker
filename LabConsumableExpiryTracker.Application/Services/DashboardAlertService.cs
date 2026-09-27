@@ -119,9 +119,6 @@ public class DashboardAlertService(
                     Href = $"/app/lots/{alert.LotId}?action=status"
                 });
                 break;
-            default:
-                // Unknown alert type - return only View action
-                break;
         }
 
         return actions;

@@ -6,18 +6,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Services;
 
-public class UserLookupService : IUserLookupService
+public class UserLookupService(UserManager<ApplicationUser> userManager) : IUserLookupService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-
-    public UserLookupService(UserManager<ApplicationUser> userManager) => _userManager = userManager;
-
     public async Task<IReadOnlyDictionary<Guid, string>> GetDisplayNamesAsync(
         IEnumerable<Guid> userIds, CancellationToken ct)
     {
         var ids = userIds.Distinct().ToList();
 
-        var users = await _userManager.Users
+        var users = await userManager.Users
             .Where(u => ids.Contains(u.Id))
             .Select(u => new { u.Id, u.FullName })
             .ToListAsync(ct);

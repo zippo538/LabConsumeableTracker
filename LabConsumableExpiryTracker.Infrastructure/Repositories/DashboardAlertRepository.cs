@@ -7,11 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Repositories;
 
-public class DashboardAlertRepository : IDashboardAlertRepository
+public class DashboardAlertRepository(AppDbContext context) : IDashboardAlertRepository
 {
-    private readonly AppDbContext _context;
-
-    public DashboardAlertRepository(AppDbContext context) => _context = context;
+    private readonly AppDbContext _context = context;
 
     public async Task<PagedResult<DashboardAlertDto>> GetAlertsAsync(
         DashboardAlertQuery query,

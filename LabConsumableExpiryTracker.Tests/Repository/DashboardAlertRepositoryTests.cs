@@ -126,9 +126,12 @@ public class DashboardAlertRepositoryTests
         var query = new DashboardAlertQuery { Type = DashboardAlertType.LowStock, Page = 1, PageSize = 10 };
         var result = await _repository.GetAlertsAsync(query, _evaluatedAt);
 
-        Assert.That(result.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Items[0].AlertType, Is.EqualTo(DashboardAlertType.LowStock));
-        Assert.That(result.Items[0].ItemId, Is.EqualTo(item.Id));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Items[0].AlertType, Is.EqualTo(DashboardAlertType.LowStock));
+            Assert.That(result.Items[0].ItemId, Is.EqualTo(item.Id));
+        });
     }
 
     [Test]
@@ -141,8 +144,11 @@ public class DashboardAlertRepositoryTests
         var query = new DashboardAlertQuery { Type = DashboardAlertType.ExpiringSoon, Page = 1, PageSize = 10 };
         var result = await _repository.GetAlertsAsync(query, _evaluatedAt);
 
-        Assert.That(result.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Items[0].AlertType, Is.EqualTo(DashboardAlertType.ExpiringSoon));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Items[0].AlertType, Is.EqualTo(DashboardAlertType.ExpiringSoon));
+        });
     }
 
     [Test]
@@ -154,8 +160,11 @@ public class DashboardAlertRepositoryTests
         var query = new DashboardAlertQuery { Type = DashboardAlertType.Expired, Page = 1, PageSize = 10 };
         var result = await _repository.GetAlertsAsync(query, _evaluatedAt);
 
-        Assert.That(result.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Items[0].AlertType, Is.EqualTo(DashboardAlertType.Expired));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Items[0].AlertType, Is.EqualTo(DashboardAlertType.Expired));
+        });
     }
 
     [Test]
@@ -168,8 +177,11 @@ public class DashboardAlertRepositoryTests
         var query = new DashboardAlertQuery { Type = DashboardAlertType.Blocked, Page = 1, PageSize = 10 };
         var result = await _repository.GetAlertsAsync(query, _evaluatedAt);
 
-        Assert.That(result.TotalCount, Is.EqualTo(2));
-        Assert.That(result.Items.All(a => a.AlertType == DashboardAlertType.Blocked), Is.True);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.TotalCount, Is.EqualTo(2));
+            Assert.That(result.Items.All(a => a.AlertType == DashboardAlertType.Blocked), Is.True);
+        });
     }
 
     [Test]
@@ -184,8 +196,11 @@ public class DashboardAlertRepositoryTests
         var query = new DashboardAlertQuery { Type = DashboardAlertType.LowStock, ItemId = item1.Id, Page = 1, PageSize = 10 };
         var result = await _repository.GetAlertsAsync(query, _evaluatedAt);
 
-        Assert.That(result.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Items[0].ItemId, Is.EqualTo(item1.Id));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Items[0].ItemId, Is.EqualTo(item1.Id));
+        });
     }
 
     [Test]
@@ -205,7 +220,11 @@ public class DashboardAlertRepositoryTests
         {
             Console.WriteLine($"Type: {alert.AlertType}, Resource: {alert.ResourceId}");
         }
-        Assert.That(result.TotalCount, Is.EqualTo(3));
-        Assert.That(result.Items.Count, Is.EqualTo(3));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.TotalCount, Is.EqualTo(3));
+            Assert.That(result.Items, Has.Count.EqualTo(3));
+        });
     }
 }

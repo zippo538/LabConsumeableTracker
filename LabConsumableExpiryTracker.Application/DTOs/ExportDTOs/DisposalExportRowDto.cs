@@ -4,14 +4,14 @@ namespace LabConsumableExpiryTracker.Application.DTOs.ExportDTOs;
 
 public class DisposalExportRowDto
 {
-    public Guid Id { get; set; }
-    public Guid LotId { get; set; }
-    public string LotNumber { get; set; } = string.Empty;
-    public Guid ItemId { get; set; }
-    public string ItemName { get; set; } = default!;
-    public decimal Quantity { get; set; }
-    public UnitOfMeasure BaseUnit { get; set; }
-    public string Reason { get; set; } = default!;
-    public DateTimeOffset DisposedAt { get; set; }
-    public string DisposedBy { get; set; } = default!;
+    public Guid Id { get; init; }
+    public Guid LotId { get; init; }
+    public string LotNumber { get; init; } = string.Empty;
+    public Guid ItemId { get; init; }
+    public string ItemName { get; init; } = default!;
+    public decimal Quantity { get; init; }
+    public UnitOfMeasure BaseUnit { get; init; }
+    public string Reason { get; init; } = default!;
+    public DateTimeOffset DisposedAt { get; init; }
+    public string DisposedBy { get; init; } = default!;
 }

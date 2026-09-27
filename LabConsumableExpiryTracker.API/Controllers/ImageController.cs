@@ -9,9 +9,9 @@ namespace LabConsumableExpiryTracker.API.Controllers;
 public class ImageController(IImageService imageService) : ControllerBase
 {
     [HttpGet("{imageId:guid}")]
-    public async Task<IActionResult> GetImage(Guid imageId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetImage(Guid imageId)
     {
-        var response = await imageService.GetSecureImageAsync(imageId, cancellationToken);
+        var response = await imageService.GetSecureImageAsync(imageId);
         if (!response.Success)
         {
             return BadRequest(response); 

@@ -280,8 +280,11 @@ public class AuditServiceTests
         var result =
             await _service.GetConsumptionsAsync(query);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.SameAs(pagedResult));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.SameAs(pagedResult));
+        });
 
         _auditRepository.Verify(
             x => x.GetConsumptionsAsync(
@@ -305,11 +308,14 @@ public class AuditServiceTests
         var result =
             await _service.GetConsumptionByIdAsync(id);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Consumption not found."));
-        Assert.That(result.Data, Is.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Consumption not found."));
+            Assert.That(result.Data, Is.Null);
+        });
     }
 
     [Test]
@@ -329,8 +335,11 @@ public class AuditServiceTests
         var result =
             await _service.GetConsumptionByIdAsync(id);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.SameAs(dto));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.SameAs(dto));
+        });
     }
 
     [Test]
@@ -355,12 +364,15 @@ public class AuditServiceTests
         var result =
             await _service.GetDisposalsAsync(query);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Validation failed."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Validation failed."));
 
-        Assert.That(result.Errors, Is.Not.Null);
+            Assert.That(result.Errors, Is.Not.Null);
+        });
         Assert.That(
             result.Errors,
             Has.One.EqualTo("Item is invalid."));
@@ -401,8 +413,11 @@ public class AuditServiceTests
         var result =
             await _service.GetDisposalsAsync(query);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.SameAs(pagedResult));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.SameAs(pagedResult));
+        });
 
         _auditRepository.Verify(
             x => x.GetDisposalsAsync(
@@ -426,11 +441,14 @@ public class AuditServiceTests
         var result =
             await _service.GetDisposalByIdAsync(id);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Disposal not found."));
-        Assert.That(result.Data, Is.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Disposal not found."));
+            Assert.That(result.Data, Is.Null);
+        });
     }
 
     [Test]
@@ -450,8 +468,11 @@ public class AuditServiceTests
         var result =
             await _service.GetDisposalByIdAsync(id);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.SameAs(dto));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.SameAs(dto));
+        });
     }
 
     private static AuditQuery CreateQuery()
