@@ -37,11 +37,13 @@ export const useLotSummary = () => {
 };
 
 export const useItems = () => {
-  return useQuery({
-    queryKey: lotQueryKeys.items(),
+  const query = useQuery({
+    queryKey: ["lot-items"],
     queryFn: lotApi.getItems,
-    staleTime: 5 * 60 * 1000,
+    refetchOnMount: "always",
   });
+
+  return query;
 };
 
 export const useLot = (id: string | null) => {
