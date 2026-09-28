@@ -1,5 +1,5 @@
-import React from "react";
-import { FlaskConical, AlertCircle,Loader2 } from "lucide-react";
+import React, { useState } from "react";
+import { FlaskConical, AlertCircle, Loader2 } from "lucide-react";
 import type { JobDto } from "../../types/job.types";
 import type { ItemDto } from "../../types/item.types";
 
@@ -40,6 +40,28 @@ export const JobItemSection: React.FC<JobItemSectionProps> = ({
     Boolean(selectedJobId) &&
     Boolean(selectedItemId) &&
     parseFloat(requestedQuantity) > 0;
+  
+  const [jobSearch, setJobSearch] = useState("");
+  const [isJobDropdownOpen, setIsJobDropdownOpen] = useState(false);
+
+  const filteredJobs = inProgressJobs.filter((job) => {
+    const search = jobSearch.toLowerCase();
+    return (
+      job.jobNumber.toLowerCase().includes(search) ||
+      (job.description || "").toLowerCase().includes(search)
+    );
+  });
+  
+  const [itemSearch, setItemSearch] = useState("");
+  const [isItemDropdownOpen, setIsItemDropdownOpen] = useState(false);
+
+  const filteredItems = items.filter((item) => {
+    const search = itemSearch.toLowerCase();
+    return (
+      item.name.toLowerCase().includes(search) ||
+      item.code.toLowerCase().includes(search)
+    );
+  });
 
   return (
     <div className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -71,19 +93,82 @@ export const JobItemSection: React.FC<JobItemSectionProps> = ({
               </span>
             </div>
           ) : (
-            <select
-              id="job-select"
-              value={selectedJobId}
-              onChange={(e) => onSelectJobId(e.target.value)}
-              className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-medium text-slate-800 outline-none transition focus:border-[#12a9ad] focus:ring-2 focus:ring-[#12a9ad]/10"
-            >
-              <option value="">-- Choose active job --</option>
-              {inProgressJobs.map((job) => (
-                <option key={job.id} value={job.id}>
-                  {job.jobNumber} - {job.description || "No description"}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <input
+                id="job-select"
+                type="text"
+                value={
+                  isJobDropdownOpen
+                    ? jobSearch
+                    : selectedJob
+                      ? `${selectedJob.jobNumber} - ${
+                          selectedJob.description || "No description"
+                        }`
+                      : ""
+                }
+                onChange={(e) => {
+                  setJobSearch(e.target.value);
+                  setIsJobDropdownOpen(true);
+
+                  if (selectedJobId) {
+                    onSelectJobId("");
+                  }
+                }}
+                onFocus={() => {
+                  setJobSearch("");
+                  setIsJobDropdownOpen(true);
+                }}
+                placeholder="-- Choose active job --"
+                autoComplete="off"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 pr-10 text-[13px] font-medium text-slate-800 outline-none transition focus:border-[#12a9ad] focus:ring-2 focus:ring-[#12a9ad]/10"
+              />
+
+              {selectedJob && !isJobDropdownOpen && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelectJobId("");
+                    setJobSearch("");
+                    setIsJobDropdownOpen(true);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  ×
+                </button>
+              )}
+
+              {isJobDropdownOpen && (
+                <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                  {filteredJobs.length > 0 ? (
+                    filteredJobs.map((job) => (
+                      <button
+                        key={job.id}
+                        type="button"
+                        onClick={() => {
+                          onSelectJobId(job.id);
+                          setJobSearch("");
+                          setIsJobDropdownOpen(false);
+                        }}
+                        className="flex w-full items-center justify-between px-3 py-2.5 text-left hover:bg-teal-50"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-slate-800">
+                            {job.jobNumber}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {job.description || "No description"}
+                          </p>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-3 text-sm text-slate-500">
+                      No jobs found.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           )}
 
           {selectedJob && (
@@ -115,26 +200,90 @@ export const JobItemSection: React.FC<JobItemSectionProps> = ({
           {isLoadingItems ? (
             <div className="h-10 w-full animate-pulse rounded-lg bg-slate-100" />
           ) : (
-            <select
-              id="item-select"
-              value={selectedItemId}
-              onChange={(e) => onSelectItemId(e.target.value)}
-              className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-medium text-slate-800 outline-none transition focus:border-[#12a9ad] focus:ring-2 focus:ring-[#12a9ad]/10"
-            >
-              <option value="">-- Choose master item --</option>
-              {items.map((item) => (
-                <option key={item.id} value={item.id}>
-                  [{item.code}] {item.name} ({item.baseUnit})
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <input
+                id="item-select"
+                type="text"
+                value={
+                  isItemDropdownOpen
+                    ? itemSearch
+                    : selectedItem
+                      ? `[${selectedItem.code}] ${selectedItem.name} (${selectedItem.baseUnit})`
+                      : ""
+                }
+                onChange={(e) => {
+                  setItemSearch(e.target.value);
+                  setIsItemDropdownOpen(true);
+
+                  // Clear selected item ketika user mulai search
+                  if (selectedItemId) {
+                    onSelectItemId("");
+                  }
+                }}
+                onFocus={() => {
+                  setItemSearch("");
+                  setIsItemDropdownOpen(true);
+                }}
+                placeholder="-- Choose master item --"
+                autoComplete="off"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 pr-10 text-[13px] font-medium text-slate-800 outline-none transition focus:border-[#12a9ad] focus:ring-2 focus:ring-[#12a9ad]/10"
+              />
+
+              {selectedItem && !isItemDropdownOpen && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelectItemId("");
+                    setItemSearch("");
+                    setIsItemDropdownOpen(true);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  ×
+                </button>
+              )}
+
+              {isItemDropdownOpen && (
+                <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                  {filteredItems.length > 0 ? (
+                    filteredItems.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          onSelectItemId(item.id);
+                          setItemSearch("");
+                          setIsItemDropdownOpen(false);
+                        }}
+                        className="flex w-full items-center justify-between px-3 py-2.5 text-left hover:bg-teal-50"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-slate-800">
+                            {item.name}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {item.code} · {item.baseUnit}
+                          </p>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-3 text-sm text-slate-500">
+                      No items found.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           )}
 
           {selectedItem && (
             <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
               <span>
                 Unit:{" "}
-                <strong className="text-slate-700">{selectedItem.baseUnit}</strong>
+                <strong className="text-slate-700">
+                  {selectedItem.baseUnit}
+                </strong>
               </span>
               <span>
                 Available Usable Stock:{" "}
@@ -182,33 +331,36 @@ export const JobItemSection: React.FC<JobItemSectionProps> = ({
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3">
-          <p className="text-[11px] font-bold text-slate-700">Scientist access</p>
+          <p className="text-[11px] font-bold text-slate-700">
+            Scientist access
+          </p>
           <p className="mt-0.5 text-[10px] text-slate-500">
-            Can only consume for assigned in-progress jobs using FEFO allocation.
+            Can only consume for assigned in-progress jobs using FEFO
+            allocation.
           </p>
         </div>
       </div>
 
-  <div className="mt-6 pt-4 border-t border-slate-100">
-  <button
-    type="button"
-    onClick={onPreview}
-    disabled={!isFormValid || isPreviewLoading}
-    className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#12a9ad] px-4 text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#0e969a] disabled:cursor-not-allowed disabled:opacity-40"
-  >
-    {isPreviewLoading ? (
-      <>
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <span>Calculating FEFO Preview...</span>
-      </>
-    ) : (
-      <>
-        <FlaskConical className="h-4 w-4" />
-        <span>Preview FEFO Allocation</span>
-      </>
-    )}
-  </button>
-</div>
+      <div className="mt-6 pt-4 border-t border-slate-100">
+        <button
+          type="button"
+          onClick={onPreview}
+          disabled={!isFormValid || isPreviewLoading}
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#12a9ad] px-4 text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#0e969a] disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {isPreviewLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Calculating FEFO Preview...</span>
+            </>
+          ) : (
+            <>
+              <FlaskConical className="h-4 w-4" />
+              <span>Preview FEFO Allocation</span>
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 };

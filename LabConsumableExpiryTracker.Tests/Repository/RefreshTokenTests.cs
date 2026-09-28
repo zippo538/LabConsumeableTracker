@@ -1,4 +1,4 @@
-using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Infrastructure.Models;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using LabConsumableExpiryTracker.Tests.Helpers;
@@ -121,4 +121,59 @@ public class RefreshTokenRepositoryTests
         Assert.That(fetched2, Is.Not.Null);
         Assert.That(fetched2!.IsRevoked, Is.False);
     }
+
+   [Test]
+public async Task AddAsync_ShouldAddRefreshToken()
+{
+    var user = await SeedUserAsync();
+    var tokenValue = $"test-token-{Guid.NewGuid():N}";
+
+    var refreshToken = new RefreshToken
+    {
+        Token = tokenValue,
+        UserId = user.Id,
+        IsRevoked = false,
+        RevokedOnUtc = null
+    };
+
+    await _repository.AddAsync(refreshToken);
+
+    var result = await _context.RefreshTokens
+        .AsNoTracking()
+        .FirstOrDefaultAsync(x => x.Token == tokenValue);
+
+    Assert.That(result, Is.Not.Null);
+    Assert.That(result!.Token, Is.EqualTo(tokenValue));
+    Assert.That(result.UserId, Is.EqualTo(user.Id));
+    Assert.That(result.IsRevoked, Is.False);
+    Assert.That(result.RevokedOnUtc, Is.Null);
+}
+
+  [Test]
+public async Task UpdateAsync_ShouldUpdateRefreshToken()
+{
+    var user = await SeedUserAsync();
+    var tokenValue = $"test-token-{Guid.NewGuid():N}";
+
+    var refreshToken = await SeedTokenAsync(
+        user.Id,
+        tokenValue
+    );
+
+    refreshToken.IsRevoked = true;
+    refreshToken.RevokedOnUtc = DateTime.UtcNow;
+
+    await _repository.UpdateAsync(refreshToken);
+
+    var result = await _context.RefreshTokens
+        .AsNoTracking()
+        .FirstOrDefaultAsync(x => x.Token == tokenValue);
+
+    Assert.That(result, Is.Not.Null);
+    Assert.That(result!.Token, Is.EqualTo(tokenValue));
+    Assert.That(result.UserId, Is.EqualTo(user.Id));
+    Assert.That(result.IsRevoked, Is.True);
+    Assert.That(result.RevokedOnUtc, Is.Not.Null);
+}
+
 }

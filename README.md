@@ -1,8 +1,8 @@
 # Lab Consumable Expiry Tracker
 
 ## Documentation Report Batch 20
+https://docs.google.com/document/d/1wUM_zsrctYrritcjkxvEHM9n4w6ccIun-Tb_xOZl32s/edit?tab=t.0
 
-## Documentation Technical Report Batch 20
 
 ## Project Overview
 **Lab Consumable Expiry Tracker** is a comprehensive inventory management system designed for laboratories to prevent the use of expired or ineligible consumable materials. The system manages inventory at the **Lot** level, prioritizes usage using a deterministic **FEFO** (*First-Expired-First-Out*) algorithm, provides real-time low-stock signals, and records every consumption and disposal transaction atomically with full audit traceability.

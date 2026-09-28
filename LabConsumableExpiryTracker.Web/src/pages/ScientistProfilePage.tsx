@@ -4,6 +4,11 @@ import { AppLayout } from "../components/layout/AppLayout";
 import ProfileAccessCard from "../components/scientist-profile/ProfileAccessCard";
 import ProfileForm from "../components/scientist-profile/ProfileForm";
 import ProfileHeader from "../components/scientist-profile/ProfileHeader";
+import { useAtom } from "jotai";
+import {
+    userAtom,
+    USER_STORAGE_KEY,
+} from "../lib/auth/authAtom";
 import {
     useMyProfile,
     useUpdateMyProfile,
@@ -16,24 +21,51 @@ export default function ScientistProfilePage() {
     const updateProfile = useUpdateMyProfile();
 
     const [fullName, setFullName] = useState("");
-
+const [, setUser] = useAtom(userAtom);
     useEffect(() => {
         if (profile?.fullName) {
             setFullName(profile.fullName);
         }
     }, [profile?.fullName]);
 
-    const handleSave = () => {
-        const trimmed = fullName.trim();
+const handleSave = () => {
+    const trimmed = fullName.trim();
 
-        if (!trimmed || trimmed === profile?.fullName) {
-            return;
-        }
+    if (!trimmed || trimmed === profile?.fullName) {
+        return;
+    }
 
-        updateProfile.mutate({
+    updateProfile.mutate(
+        {
             fullName: trimmed,
-        });
-    };
+        },
+        {
+            onSuccess: () => {
+                setUser((current) => {
+                    if (!current) return current;
+
+                    const updatedUser = {
+                        ...current,
+                        fullName: trimmed,
+                    };
+
+                    const storage = localStorage.getItem(
+                        USER_STORAGE_KEY,
+                    )
+                        ? localStorage
+                        : sessionStorage;
+
+                    storage.setItem(
+                        USER_STORAGE_KEY,
+                        JSON.stringify(updatedUser),
+                    );
+
+                    return updatedUser;
+                });
+            },
+        },
+    );
+};
 
     const handleFullNameChange = (value: string) => {
         setFullName(value);

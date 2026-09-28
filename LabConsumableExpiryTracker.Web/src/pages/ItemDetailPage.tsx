@@ -15,7 +15,10 @@ import { ItemModal } from "../components/Item/ItemModal";
 import { useItemDetail } from "../hooks/useItemDetail";
 import { useItem } from "../hooks/useItem";
 
-import type { CreateItemPayload, UpdateItemPayload } from "../types/item.types";
+import type {
+  CreateItemPayload,
+  UpdateItemPayload,
+} from "../types/item.types";
 import { useImage } from "../hooks/useImage";
 
 export const ItemDetailPage: React.FC = () => {
@@ -23,6 +26,7 @@ export const ItemDetailPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const { data: item, isLoading, isError, refetch } = useItemDetail(id);
 
@@ -30,6 +34,7 @@ export const ItemDetailPage: React.FC = () => {
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const IMAGE_BASE_URL = API_BASE_URL.replace(/\/api$/, "");
+
   const ItemRowImage: React.FC<{
     imageId: string | null | undefined;
     alt: string;
@@ -51,6 +56,7 @@ export const ItemDetailPage: React.FC = () => {
       />
     );
   };
+
   const formatDate = (date: string) => {
     const parsedDate = new Date(date);
 
@@ -102,11 +108,13 @@ export const ItemDetailPage: React.FC = () => {
       return;
     }
 
+    setSuccessMessage(null);
+
     await updateItem(payload);
+    await refetch();
 
     setIsEditModalOpen(false);
-
-    await refetch();
+    setSuccessMessage("Item updated successfully.");
   };
 
   if (isLoading) {
@@ -163,11 +171,17 @@ export const ItemDetailPage: React.FC = () => {
           Back to Item List
         </button>
 
+        {successMessage && (
+          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            {successMessage}
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs px-5 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 overflow-hidden shrink-0">
-                {<ItemRowImage imageId={item.imageId} alt={item.name} />}
+                <ItemRowImage imageId={item.imageId} alt={item.name} />
               </div>
 
               <div>
@@ -190,20 +204,14 @@ export const ItemDetailPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setIsEditModalOpen(true)}
+                onClick={() => {
+                  setSuccessMessage(null);
+                  setIsEditModalOpen(true);
+                }}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 border-[#c3d3df] text-black text-[11px] font-semibold hover:bg-slate-300 transition-colors"
               >
                 <Edit2 className="w-3.5 h-3.5" />
                 Edit Item
-              </button>
-
-              <button
-                type="button"
-                onClick={() => navigate(`/items/${item.id}/lots/new`)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0EA5A5] text-white text-[11px] font-semibold hover:bg-emerald-700 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Register a lot
               </button>
             </div>
           </div>
@@ -268,7 +276,6 @@ export const ItemDetailPage: React.FC = () => {
             <p className="text-[10px] text-slate-400 mt-4">Server-managed</p>
           </div>
 
-          {/* Lots */}
           <div className="bg-[#E6F7EF] rounded-2xl border border-[#168A58] p-4 shadow-2xs">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center">
@@ -331,16 +338,9 @@ export const ItemDetailPage: React.FC = () => {
                   <thead>
                     <tr className="bg-slate-50 text-[9px] font-bold uppercase tracking-wider text-slate-400">
                       <th className="px-3 py-3 rounded-l-lg">Lot Number</th>
-
                       <th className="px-3 py-3">Remains</th>
-
                       <th className="px-3 py-3">Expiry</th>
-
                       <th className="px-3 py-3">Status</th>
-
-                      <th className="px-3 py-3 rounded-r-lg text-right">
-                        Action
-                      </th>
                     </tr>
                   </thead>
 
@@ -377,16 +377,6 @@ export const ItemDetailPage: React.FC = () => {
                             {lot.status}
                           </span>
                         </td>
-
-                        <td className="px-3 py-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/lots/${lot.lotId}`)}
-                            className="text-[10px] font-semibold text-teal-600 hover:text-teal-700"
-                          >
-                            View details →
-                          </button>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -402,7 +392,6 @@ export const ItemDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Item Configuration */}
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
             <div className="px-5 py-4">
               <h3 className="text-sm font-bold text-slate-800">

@@ -4,12 +4,13 @@ using LabConsumableExpiryTracker.Application.Configurations;
 using LabConsumableExpiryTracker.Application.DTOs.LoginDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
-using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Infrastructure.Models;
+using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace LabConsumableExpiryTracker.Application.Services;
+namespace LabConsumableExpiryTracker.Infrastructure.Services;
 
 public class AuthService : IAuthService
 {
@@ -60,7 +61,7 @@ public class AuthService : IAuthService
         var role = roles.FirstOrDefault() ?? string.Empty;
 
         var expiresAt = DateTime.UtcNow.AddHours(_jwtSettings.AccessTokenExpiryMinutes);
-        var token = _tokenGenerator.GenerateToken(user, role);
+        var token = _tokenGenerator.GenerateToken(user.Id, user.UserName ?? string.Empty, user.Email ?? string.Empty, role);
         var refreshTokenString = _tokenGenerator.GenerateRefreshToken();
 
         var refreshTokenEntity = new RefreshToken
@@ -100,7 +101,7 @@ public class AuthService : IAuthService
         var role = roles.FirstOrDefault() ?? string.Empty;
         var expiresAt = DateTime.UtcNow.AddHours(_jwtSettings.AccessTokenExpiryMinutes);
 
-        var newAccessToken = _tokenGenerator.GenerateToken(existingToken.User, role);
+        var newAccessToken = _tokenGenerator.GenerateToken(existingToken.User.Id, existingToken.User.UserName ?? string.Empty, existingToken.User.Email ?? string.Empty, role);
         var newRefreshTokenString = _tokenGenerator.GenerateRefreshToken();
 
         var newRefreshToken = new RefreshToken

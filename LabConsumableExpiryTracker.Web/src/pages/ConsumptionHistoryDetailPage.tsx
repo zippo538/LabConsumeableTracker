@@ -29,18 +29,20 @@ const formatUnit = (baseUnit: string) =>
 const formatQuantity = (quantity: number) =>
   Number.isInteger(quantity) ? quantity.toString() : quantity.toFixed(2);
 
-const formatDate = (value: string) => {
-  const date = new Date(value);
+const formatDate = (isoDate: string) => {
+  const date = new Date(isoDate);
 
-  return new Intl.DateTimeFormat("en-GB", {
+  const formatted = new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: "UTC",
+    timeZone: "Asia/Jakarta",
   }).format(date);
+
+  return `${formatted} WIB`;
 };
 
 const formatExpiryDate = (value: string) => {

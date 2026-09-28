@@ -19,6 +19,8 @@ public class Item(
     public decimal MinimumStock { get; private set; } = minimumStock;
     public int ExpiringSoonDays { get; private set; } = expiringSoonDays;
     public IReadOnlyCollection<Lot> Lots => _lots.AsReadOnly();
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
 
     public void SetImageId(Guid? imageId)
     {
@@ -27,10 +29,10 @@ public class Item(
 
 
     public void UpdateDetails(
-    string name,
-    UnitOfMeasure baseUnit,
-    decimal minimumStock,
-    int expiringSoonDays)
+        string name,
+        UnitOfMeasure baseUnit,
+        decimal minimumStock,
+        int expiringSoonDays)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -38,6 +40,7 @@ public class Item(
                 "Item name cannot be empty or whitespace.",
                 nameof(name));
         }
+
         if (expiringSoonDays < 0)
         {
             throw new ArgumentOutOfRangeException(
@@ -52,12 +55,12 @@ public class Item(
                 "Minimum stock cannot be negative.");
         }
 
-        // Terapkan perubahan jika semua valid
         Name = name;
         BaseUnit = baseUnit;
         MinimumStock = minimumStock;
         ExpiringSoonDays = expiringSoonDays;
     }
+
     public StockLevelStatus GetStockStatus(
         decimal totalUsableQuantity)
     {
@@ -82,5 +85,4 @@ public class Item(
     {
         return totalUsableQuantity < MinimumStock;
     }
-
 }

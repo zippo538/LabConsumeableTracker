@@ -1,8 +1,8 @@
 using AutoMapper;
 using LabConsumableExpiryTracker.Application.DTOs.UserDTOs;
-using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Infrastructure.Models;
 
-namespace LabConsumableExpiryTracker.Application.Mappings;
+namespace LabConsumableExpiryTracker.Infrastructure.Mappings;
 
 public class UserMappingProfile : Profile
 {

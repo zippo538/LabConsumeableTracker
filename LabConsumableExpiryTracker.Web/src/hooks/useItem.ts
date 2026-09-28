@@ -8,6 +8,7 @@ import {
     useMutation,
     useQuery,
     useQueryClient,
+    keepPreviousData,
 } from "@tanstack/react-query";
 
 import {itemApi} from "../api/itemApi";
@@ -23,13 +24,27 @@ export const useItem = () => {
 
 
     const [page, setPage] = useState(1);
-    const pageSize = 20;
+    const [pageSize, setPageSizeState] = useState(20);
+    
+    const setPageSize = (nextPageSize: number) => {
+        setPageSizeState(nextPageSize);
+        setPage(1);
+    };
 
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedUnit, setSelectedUnit] = useState("ALL");
     const [selectedStatus, setSelectedStatus] = useState("ALL");
 
+    const hasActiveFilter =
+        searchQuery.trim() !== "" ||
+        selectedUnit !== "ALL" ||
+        selectedStatus !== "ALL";
 
+
+    // ---- getAll: powers the summary card AND client-side filtering ----
+    // The backend /Item/paged endpoint doesn't accept filter params yet,
+    // so whenever a filter is active we filter+paginate this full dataset
+    // ourselves instead of trusting the server page.
     const {
         data: allItems = [],
         isLoading: isLoadingAllItems,
@@ -37,7 +52,6 @@ export const useItem = () => {
         queryKey: ["items", "all"],
         queryFn: itemApi.getAll,
     });
-
 
     const filteredAllItems = useMemo(() => {
         return allItems.filter((item) => {
@@ -75,29 +89,54 @@ export const useItem = () => {
     ]);
 
 
-    const totalCount = filteredAllItems.length;
+    // ---- getPaged: real backend pagination, used when there's no filter ----
+    const {
+        data: pagedResult,
+        isLoading: isLoadingPaged,
+        isFetching: isFetchingPaged,
+    } = useQuery({
+        queryKey: ["items", "paged", page, pageSize],
+        queryFn: () => itemApi.getPaged(page, pageSize),
+        enabled: !hasActiveFilter,
+        placeholderData: keepPreviousData,
+    });
+
+
+    // ---- Merge the two sources into what the table actually renders ----
+    const totalCount = hasActiveFilter
+        ? filteredAllItems.length
+        : pagedResult?.totalCount ?? 0;
 
     const totalPages = Math.max(
         1,
         Math.ceil(totalCount / pageSize),
     );
 
-
     const filteredItems = useMemo(() => {
-        const startIndex =
-            (page - 1) * pageSize;
+        if (hasActiveFilter) {
+            const startIndex = (page - 1) * pageSize;
+            return filteredAllItems.slice(
+                startIndex,
+                startIndex + pageSize,
+            );
+        }
 
-        return filteredAllItems.slice(
-            startIndex,
-            startIndex + pageSize,
-        );
+        return pagedResult?.items ?? [];
     }, [
+        hasActiveFilter,
         filteredAllItems,
+        pagedResult,
         page,
         pageSize,
     ]);
 
+    const isLoading = hasActiveFilter
+        ? isLoadingAllItems
+        : isLoadingPaged;
 
+
+    // Reset to page 1 whenever a filter changes, so we don't land on an
+    // out-of-range page for the new (filtered) result set.
     useEffect(() => {
         setPage(1);
     }, [
@@ -106,7 +145,8 @@ export const useItem = () => {
         selectedStatus,
     ]);
 
-
+    // Clamp page if it becomes out of range (e.g. last item on last page
+    // got deleted, or a filter shrank the result set).
     useEffect(() => {
         if (page > totalPages) {
             setPage(totalPages);
@@ -117,19 +157,21 @@ export const useItem = () => {
     ]);
 
 
-    const isLoading =
-        isLoadingAllItems;
+    const invalidateItemQueries = () => {
+        queryClient.invalidateQueries({
+            queryKey: ["items", "all"],
+        });
+        queryClient.invalidateQueries({
+            queryKey: ["items", "paged"],
+        });
+    };
 
     const createMutation = useMutation({
         mutationFn: (
             payload: CreateItemPayload,
         ) => itemApi.create(payload),
 
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["items"],
-            });
-        },
+        onSuccess: invalidateItemQueries,
     });
 
     const updateMutation = useMutation({
@@ -137,25 +179,18 @@ export const useItem = () => {
             payload: UpdateItemPayload,
         ) => itemApi.update(payload),
 
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["items"],
-            });
-        },
+        onSuccess: invalidateItemQueries,
     });
 
     const deleteMutation = useMutation({
         mutationFn: (id: string) =>
             itemApi.delete(id),
 
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["items"],
-            });
-        },
+        onSuccess: invalidateItemQueries,
     });
 
 
+    // ---- Card summary, always derived from the full dataset ----
     const stats = useMemo(() => {
         const totalItems =
             allItems.length;
@@ -218,16 +253,18 @@ export const useItem = () => {
         );
     };
 
-  
+
     return {
         items: allItems,
         filteredItems,
         page,
         pageSize,
+        setPageSize,
         totalCount,
         totalPages,
         setPage,
         isLoading,
+        isFetching: isFetchingPaged,
         isError: false,
         error: null,
         stats,

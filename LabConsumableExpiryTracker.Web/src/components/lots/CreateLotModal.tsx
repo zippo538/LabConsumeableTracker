@@ -1,5 +1,4 @@
-// src/components/lots/CreateLotModal.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FormModal, ModalField } from "../Modal";
 import type { CreateLotRequest, ItemOption } from "../../types/lot.types";
 
@@ -12,6 +11,16 @@ interface CreateLotModalProps {
   error?: string;
 }
 
+const getInitialFormData = (): CreateLotRequest => ({
+  itemId: "",
+  lotNumber: "",
+  initialQuantity: 0,
+  expiryDate: "",
+  storageLocation: "",
+  receivedAt: new Date().toISOString().slice(0, 10),
+  suppliername: "",
+  supplierLotNumber: "",
+});
 
 export const CreateLotModal = ({
   isOpen,
@@ -21,22 +30,34 @@ export const CreateLotModal = ({
   isLoading,
   error,
 }: CreateLotModalProps) => {
-  const [formData, setFormData] = useState<CreateLotRequest>({
-    itemId: "",
-    lotNumber: "",
-    initialQuantity: 0,
-    expiryDate: "",
-    storageLocation: "",
-    receivedAt: new Date().toISOString().slice(0, 10),
-    suppliername: "",
-    supplierLotNumber: "",
-  });
-  
+  const [formData, setFormData] = useState<CreateLotRequest>(
+    getInitialFormData()
+  );
+
+  const [itemSearch, setItemSearch] = useState("");
+  const [isItemDropdownOpen, setIsItemDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(getInitialFormData());
+      setItemSearch("");
+      setIsItemDropdownOpen(false);
+    }
+  }, [isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
   };
+
+  const filteredItems = items.filter((item) => {
+    const search = itemSearch.toLowerCase();
+
+    return (
+      item.name.toLowerCase().includes(search) ||
+      item.code.toLowerCase().includes(search)
+    );
+  });
 
   const selectedItem = items.find((item) => item.id === formData.itemId);
 
@@ -70,19 +91,91 @@ export const CreateLotModal = ({
       }
     >
       <ModalField label="Master Item" htmlFor="create-itemId" required>
-        <select
-          id="create-itemId"
-          value={formData.itemId}
-          onChange={(e) => setFormData({ ...formData, itemId: e.target.value })}
-          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
-        >
-          <option value="">Select item...</option>
-          {items.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name} ({item.code})
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <input
+            id="create-itemId"
+            type="text"
+            value={
+              isItemDropdownOpen
+                ? itemSearch
+                : selectedItem
+                  ? `${selectedItem.name} (${selectedItem.code})`
+                  : ""
+            }
+            onChange={(e) => {
+              setItemSearch(e.target.value);
+              setIsItemDropdownOpen(true);
+
+              if (formData.itemId) {
+                setFormData({
+                  ...formData,
+                  itemId: "",
+                });
+              }
+            }}
+            onFocus={() => {
+              setItemSearch("");
+              setIsItemDropdownOpen(true);
+            }}
+            placeholder="Search item..."
+            autoComplete="off"
+            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 pr-10 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+          />
+
+          {selectedItem && !isItemDropdownOpen && (
+            <button
+              type="button"
+              onClick={() => {
+                setFormData({
+                  ...formData,
+                  itemId: "",
+                });
+                setItemSearch("");
+                setIsItemDropdownOpen(true);
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              ×
+            </button>
+          )}
+
+          {isItemDropdownOpen && (
+            <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+              {filteredItems.length > 0 ? (
+                filteredItems.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        itemId: item.id,
+                      });
+
+                      setItemSearch("");
+                      setIsItemDropdownOpen(false);
+                    }}
+                    className="flex w-full items-center justify-between px-3 py-2.5 text-left hover:bg-teal-50"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-slate-800">
+                        {item.name}
+                      </p>
+
+                      <p className="text-xs text-slate-500">
+                        {item.code} · {item.baseUnit}
+                      </p>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="px-3 py-3 text-sm text-slate-500">
+                  No items found.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </ModalField>
 
       <ModalField label="Lot Number" htmlFor="create-lotNumber" required>
@@ -131,7 +224,7 @@ export const CreateLotModal = ({
           className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
         />
       </ModalField>
-      {/* ✅ Received At - Baru */}
+
       <ModalField label="Received At" htmlFor="create-receivedAt" required>
         <input
           id="create-receivedAt"
@@ -143,8 +236,6 @@ export const CreateLotModal = ({
           className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
         />
       </ModalField>
-
-      {/* ✅ Supplier Name - Baru */}
       <ModalField label="Supplier Name" htmlFor="create-supplierName" required>
         <input
           id="create-supplierName"
@@ -158,7 +249,6 @@ export const CreateLotModal = ({
         />
       </ModalField>
 
-      {/* ✅ Supplier Lot Number - Baru */}
       <ModalField
         label="Supplier Lot Number"
         htmlFor="create-supplierLotNumber"

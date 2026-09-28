@@ -207,7 +207,7 @@ export const AppSidebar: FC<AppSidebarProps> = ({
                                 strokeWidth={2}
                                 className="h-2.5 w-2.5"
                             />
-                            {isPending ? "Keluar..." : "Keluar"}
+                            {isPending ? "Log out..." : "Log out"}
                         </button>
                     </div>
 
@@ -216,7 +216,7 @@ export const AppSidebar: FC<AppSidebarProps> = ({
                             type="button"
                             onClick={handleLogout}
                             disabled={isPending}
-                            title="Keluar"
+                            title="Log Out"
                             className="absolute bottom-4 left-1/2 -translate-x-1/2 text-slate-500 hover:text-rose-400 transition-colors disabled:opacity-50"
                         >
                             <LogOut

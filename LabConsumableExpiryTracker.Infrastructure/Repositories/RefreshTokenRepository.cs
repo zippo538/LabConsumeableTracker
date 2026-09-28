@@ -1,5 +1,6 @@
 using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Infrastructure.Models;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 

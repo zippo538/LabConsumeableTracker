@@ -1,4 +1,4 @@
-namespace LabConsumableExpiryTracker.Domain.Models;
+namespace LabConsumableExpiryTracker.Infrastructure.Models;
 
 public class RefreshToken
 {

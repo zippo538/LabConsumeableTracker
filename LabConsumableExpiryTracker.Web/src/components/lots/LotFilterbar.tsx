@@ -30,7 +30,7 @@ export const LotFilterBar = ({
 }: LotFilterBarProps) => {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-      {/* Search */}
+   
       <div className="w-30">
         <input
           type="text"
@@ -41,7 +41,7 @@ export const LotFilterBar = ({
         />
       </div>
 
-      {/* Item Filter */}
+
       <div className="">
         <select
           value={filterItem}
@@ -57,7 +57,6 @@ export const LotFilterBar = ({
         </select>
       </div>
 
-      {/* Administrative Status Filter */}
       <select
         value={filterAdministrativeStatus}
         onChange={(e) => onFilterAdministrativeStatusChange(e.target.value)}
@@ -68,9 +67,9 @@ export const LotFilterBar = ({
         <option value="Quarantined">Quarantined</option>
         <option value="ManuallyBlocked">Manually Blocked</option>
         <option value="Disposed">Disposed</option>
+        <option value="Depleted">Depleted</option>
       </select>
 
-      {/* Expiry Condition Filter */}
       <select
         value={filterExpiryCondition}
         onChange={(e) => onFilterExpiryConditionChange(e.target.value)}
@@ -82,11 +81,10 @@ export const LotFilterBar = ({
         <option value="Expired">Expired</option>
       </select>
 
-      {/* Register Button */}
       {canRegister && (
         <button
           onClick={onRegisterNew}
-          className="rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+          className="rounded-lg bg-[#0EA5A5] hover:bg-[#1dbaba] px-2 py-3 text-[12px] font-semibold text-white transition focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
         >
           + Register New Lot
         </button>

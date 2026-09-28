@@ -25,19 +25,21 @@ import { useLots } from "../hooks/useLot";
 
 import { AppLayout } from "../components/layout/AppLayout";
 
-function formatOccurredAt(isoString: string): string {
-  const date = new Date(isoString);
-  return (
-    date.toLocaleString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "UTC",
-    }) + " UTC"
-  );
-}
+const formatOccurredAt = (isoDate: string) => {
+  const date = new Date(isoDate);
+
+  const formatted = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Jakarta",
+  }).format(date);
+
+  return `${formatted} WIB`;
+};
 
 export function AuditHistoryPage() {
   const user = useAtomValue(userAtom);
@@ -404,14 +406,14 @@ export function AuditHistoryPage() {
               tone={exportState.status === "success" ? "success" : "error"}
               title={
                 exportState.status === "success"
-                  ? "Export Berhasil"
-                  : "Export Gagal"
+                  ? "Export Successful"
+                  : "Export Failed"
               }
               onDismiss={resetState}
               className="min-w-[320px] shadow-lg"
             >
               {exportState.status === "success"
-                ? `File ${exportState.filename} telah diunduh.`
+                ? `File ${exportState.filename} Downloaded.`
                 : exportState.message}
             </InlineAlert>
           </div>

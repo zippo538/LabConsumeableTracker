@@ -111,7 +111,7 @@ public class ExportService : IExportService
                 ItemName = lot.Item.Name,
                 Quantity = c.Quantity,
                 BaseUnit = lot.Item.BaseUnit,
-                ConsumedAt = c.ConsumedAt,
+                ConsumedAt = ConvertToWib(c.ConsumedAt),
                 ConsumedBy = names.GetValueOrDefault(c.ConsumedBy, c.ConsumedBy.ToString())
             };
         }).ToList();
@@ -146,7 +146,7 @@ public class ExportService : IExportService
             Quantity = d.Quantity,
             BaseUnit = d.Lot.Item.BaseUnit,
             Reason = d.Reason,
-            DisposedAt = d.DisposedAt,
+            DisposedAt = ConvertToWib(d.DisposedAt),
             DisposedBy = names.GetValueOrDefault(d.DisposedBy, d.DisposedBy.ToString())
         }).ToList();
 
@@ -155,4 +155,15 @@ public class ExportService : IExportService
 
     private static bool IsValidCsvFormat(string format) =>
         string.Equals(format, "csv", StringComparison.OrdinalIgnoreCase);
+    
+    private static DateTimeOffset ConvertToWib(DateTimeOffset utcDate)
+    {
+        var wib = TimeZoneInfo.FindSystemTimeZoneById(
+            OperatingSystem.IsWindows()
+                ? "SE Asia Standard Time"
+                : "Asia/Jakarta"
+        );
+
+        return TimeZoneInfo.ConvertTime(utcDate, wib);
+    }
 }

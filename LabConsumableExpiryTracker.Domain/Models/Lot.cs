@@ -16,6 +16,7 @@ public class Lot
     public DateOnly ExpiryDate { get; private set; }
     public string StorageLocation { get; private set; }
     public LotAdministrativeStatus AdministrativeStatus { get; private set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public byte[] RowVersion { get; private set; } = [];
 
     public Lot(

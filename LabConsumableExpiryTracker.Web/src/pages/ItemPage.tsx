@@ -15,7 +15,7 @@ import { userAtom } from "../lib/auth/authAtom";
 import { useItem } from "../hooks/useItem";
 import { ItemTable } from "../components/Item/ItemTable";
 import { Pagination } from "../components/Pagination";
-import { SummaryStatsCard } from "../components/SummaryStatsCard";
+import { ItemSummaryCards } from "../components/Item/ItemSummaryCard";
 
 export const ItemListPage: React.FC = () => {
   const user = useAtomValue(userAtom);
@@ -23,9 +23,13 @@ export const ItemListPage: React.FC = () => {
   const isWarehouseAdmin = user?.roles?.includes("WarehouseAdmin") ?? false;
 
   const navigate = useNavigate();
+
   const {
     filteredItems,
     page,
+    pageSize,
+    setPageSize,
+    totalCount,
     totalPages,
     setPage,
     isLoading,
@@ -36,8 +40,6 @@ export const ItemListPage: React.FC = () => {
     setSearchQuery,
     selectedUnit,
     setSelectedUnit,
-    selectedStatus,
-    setSelectedStatus,
     createItem,
     updateItem,
     deleteItem,
@@ -54,15 +56,19 @@ export const ItemListPage: React.FC = () => {
   const [itemToDelete, setItemToDelete] = useState<ItemDto | null>(null);
 
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
-  const [createSuccess, setCreateSuccess] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
   const handleOpenCreate = () => {
     setSelectedItemForEdit(null);
+    setSuccessMessage(null);
+    setDeleteError(null);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (item: ItemDto) => {
     setSelectedItemForEdit(item);
+    setSuccessMessage(null);
+    setDeleteError(null);
     setIsModalOpen(true);
   };
 
@@ -70,11 +76,12 @@ export const ItemListPage: React.FC = () => {
     if (!itemToDelete) return;
 
     setDeleteError(null);
-    setDeleteSuccess(null);
+    setSuccessMessage(null);
 
     try {
       await deleteItem(itemToDelete.id);
-      setDeleteSuccess("Item deleted successfully.");
+
+      setSuccessMessage("Item deleted successfully.");
       setItemToDelete(null);
     } catch (error: any) {
       const status = error?.response?.status;
@@ -82,13 +89,16 @@ export const ItemListPage: React.FC = () => {
       if (status === 409) {
         setDeleteError(
           error.response?.data?.message ??
-            "This item cannot be deleted because it is already used by one or more lots.",
+          "This item cannot be deleted because it is already used by one or more lots.",
         );
       } else if (status === 404) {
         setDeleteError("Item not found.");
       } else {
-        setDeleteError("An unexpected error occurred while deleting the item.");
+        setDeleteError(
+          "An unexpected error occurred while deleting the item.",
+        );
       }
+
       setItemToDelete(null);
     }
   };
@@ -96,14 +106,16 @@ export const ItemListPage: React.FC = () => {
   const handleModalSubmit = async (
     payload: CreateItemPayload | UpdateItemPayload,
   ) => {
-    setCreateSuccess(null);
+    setSuccessMessage(null);
+    setDeleteError(null);
 
     try {
       if ("id" in payload) {
         await updateItem(payload);
+        setSuccessMessage("Item updated successfully.");
       } else {
         await createItem(payload);
-        setCreateSuccess("Item added successfully.");
+        setSuccessMessage("Item added successfully.");
       }
 
       setIsModalOpen(false);
@@ -111,6 +123,7 @@ export const ItemListPage: React.FC = () => {
       throw error;
     }
   };
+
   return (
     <AppLayout
       title="Items"
@@ -129,22 +142,9 @@ export const ItemListPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <SummaryStatsCard
-            className="col-span-1 sm:col-span-2 lg:col-span-3 mt-0 grid-cols-3"
-            stats={[
-              {
-                value: stats.totalActive,
-                title: "Active items",
-                color: "blue",
-              },
-              { value: stats.lowStock, title: "Low stock", color: "amber" },
-              {
-                value: stats.uniqueUnitsCount,
-                title: "Unit types",
-                color: "teal",
-              },
-            ]}
-          />
+
+          <ItemSummaryCards stats={stats} />
+
 
           <div className="bg-[#F0FAFC] rounded-2xl border border-[#BDE5E8] p-4 shadow-2xs flex flex-col justify-center">
             <p className="text-xs font-bold text-sky-900 flex items-center gap-1.5">
@@ -189,41 +189,28 @@ export const ItemListPage: React.FC = () => {
             ))}
           </select>
 
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-700 outline-hidden shadow-2xs cursor-pointer focus:border-emerald-500"
-          >
-            <option value="ALL">Active status</option>
-            <option value="ACTIVE">Active only</option>
-            <option value="LOW_STOCK">Low stock</option>
-          </select>
 
           {isWarehouseAdmin && (
             <button
               type="button"
               onClick={handleOpenCreate}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors shrink-0"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#0EA5A5] hover:bg-[#1dbaba] text-white text-xs font-bold rounded-xl shadow-xs transition-colors shrink-0"
             >
               <Plus className="w-4 h-4" />
               <span>Add Master Item</span>
             </button>
           )}
         </div>
+
         {deleteError && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {deleteError}
           </div>
         )}
 
-        {deleteSuccess && (
+        {successMessage && (
           <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-            {deleteSuccess}
-          </div>
-        )}
-        {createSuccess && (
-          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-            {createSuccess}
+            {successMessage}
           </div>
         )}
 
@@ -274,8 +261,12 @@ export const ItemListPage: React.FC = () => {
 
               <Pagination
                 page={page}
-                totalPages={totalPages}
                 onPageChange={setPage}
+                totalItems={totalCount}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                onPageSizeChange={setPageSize}
+                pageSizeOptions={[10, 20, 50, 100]}
               />
             </div>
           )}
