@@ -3,13 +3,14 @@ using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Repositories;
+
 public class RefreshTokenRepository(AppDbContext context) : IRefreshTokenRepository
 {
-    public async Task<RefreshToken> GetByTokenWithUserAsync(string token, CancellationToken ct = default)
+    public async Task<RefreshToken?> GetByTokenWithUserAsync(string token, CancellationToken ct = default)
     {
         return await context.RefreshTokens
             .Include(r => r.User)
-            .FirstOrDefaultAsync(r => r.Token == token, ct) ?? throw new InvalidOperationException();
+            .FirstOrDefaultAsync(r => r.Token == token, ct);
     }
 
     public async Task AddAsync(RefreshToken refreshToken, CancellationToken ct = default)

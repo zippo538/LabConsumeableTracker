@@ -88,7 +88,7 @@ public class AuthService : IAuthService
     public async Task<ServiceResult<LoginResponseDto>> RefreshTokenAsync(string token)
     {
         var existingToken = await _refreshTokenRepository.GetByTokenWithUserAsync(token);
-        if (!existingToken.IsActive || !existingToken.User.IsActive)
+        if (existingToken is null || !existingToken.IsActive || !existingToken.User.IsActive)
         {
             return ServiceResult<LoginResponseDto>.ErrorResult("Refresh token not valid or has been expired.");
         }
@@ -126,7 +126,7 @@ public class AuthService : IAuthService
     public async Task<ServiceResult<bool>> RevokeTokenAsync(string token)
     {
         var existingToken = await _refreshTokenRepository.GetByTokenWithUserAsync(token);
-        if (existingToken.IsRevoked)
+        if (existingToken is null || existingToken.IsRevoked)
         {
             return ServiceResult<bool>.ErrorResult("Token not found or has been revoked.");
         }
