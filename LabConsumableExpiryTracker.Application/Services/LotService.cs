@@ -234,7 +234,7 @@ public class LotService : ILotService
 
         existing.SetConcurrencyToken(updateLotDto.RowVersion);
 
-        var updated = await _lotRepository.UpdateAsync(existing, ct);
+        var updated = await _lotRepository.UpdateAsync(existing);
         await _unitOfWork.SaveChangesAsync(ct);
 
         var now = _timeProvider.GetUtcNow();
@@ -618,8 +618,8 @@ public class LotService : ILotService
         lot.DeductStock(draft.Quantity, now);
         draft.VerifyScan(now);
 
-        await _lotRepository.UpdateAsync(lot, ct);
-        await _consumptionRepository.UpdateAsync(draft, ct);
+        await _lotRepository.UpdateAsync(lot);
+        await _consumptionRepository.UpdateAsync(draft);
 
         try
         {
