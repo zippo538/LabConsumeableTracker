@@ -3,6 +3,7 @@ using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using LabConsumableExpiryTracker.Tests.Helpers;
 using Microsoft.EntityFrameworkCore;
+
 namespace LabConsumableExpiryTracker.Tests.Repository;
 
 [TestFixture]
@@ -13,6 +14,7 @@ public class RefreshTokenRepositoryTests
     private RefreshTokenRepository _repository = null!;
     private readonly List<string> _seededTokens = [];
     private readonly List<Guid> _seededUserIds = [];
+
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
@@ -25,6 +27,7 @@ public class RefreshTokenRepositoryTests
         _repository = new RefreshTokenRepository(_context);
         await _context.Database.CanConnectAsync();
     }
+
     [TearDown]
     public async Task TearDown()
     {
@@ -43,8 +46,10 @@ public class RefreshTokenRepositoryTests
             _seededUserIds.Clear();
         }
     }
+
     [OneTimeTearDown]
     public async Task OneTimeTearDown() => await _context.DisposeAsync();
+
     private async Task<ApplicationUser> SeedUserAsync()
     {
         var user = new ApplicationUser
@@ -59,6 +64,7 @@ public class RefreshTokenRepositoryTests
         _seededUserIds.Add(user.Id);
         return user;
     }
+
     private async Task<RefreshToken> SeedTokenAsync(Guid userId, string tokenValue, bool isRevoked = false)
     {
         var token = new RefreshToken
@@ -73,6 +79,7 @@ public class RefreshTokenRepositoryTests
         _seededTokens.Add(tokenValue);
         return token;
     }
+
     [Test]
     public async Task GetByTokenWithUserAsync_ReturnsTokenWithUser_WhenExists()
     {
@@ -85,12 +92,14 @@ public class RefreshTokenRepositoryTests
         Assert.That(result.User, Is.Not.Null);
         Assert.That(result.User.Id, Is.EqualTo(user.Id));
     }
+
     [Test]
     public async Task GetByTokenWithUserAsync_ReturnsNull_WhenNotExists()
     {
         var result = await _repository.GetByTokenWithUserAsync("NON-EXISTENT-TOKEN");
         Assert.That(result, Is.Null);
     }
+
     [Test]
     public async Task RevokeAllByUserIdAsync_RevokesActiveTokensForUser()
     {
@@ -106,6 +115,7 @@ public class RefreshTokenRepositoryTests
         Assert.That(fetched2, Is.Not.Null);
         Assert.That(fetched2!.IsRevoked, Is.True);
     }
+
     [Test]
     public async Task RevokeAllByUserIdAsync_DoesNotAffectOtherUsersTokens()
     {
@@ -122,58 +132,58 @@ public class RefreshTokenRepositoryTests
         Assert.That(fetched2!.IsRevoked, Is.False);
     }
 
-   [Test]
-public async Task AddAsync_ShouldAddRefreshToken()
-{
-    var user = await SeedUserAsync();
-    var tokenValue = $"test-token-{Guid.NewGuid():N}";
-
-    var refreshToken = new RefreshToken
+    [Test]
+    public async Task AddAsync_ShouldAddRefreshToken()
     {
-        Token = tokenValue,
-        UserId = user.Id,
-        IsRevoked = false,
-        RevokedOnUtc = null
-    };
+        var user = await SeedUserAsync();
+        var tokenValue = $"test-token-{Guid.NewGuid():N}";
 
-    await _repository.AddAsync(refreshToken);
+        var refreshToken = new RefreshToken
+        {
+            Token = tokenValue,
+            UserId = user.Id,
+            IsRevoked = false,
+            RevokedOnUtc = null
+        };
 
-    var result = await _context.RefreshTokens
-        .AsNoTracking()
-        .FirstOrDefaultAsync(x => x.Token == tokenValue);
+        await _repository.AddAsync(refreshToken);
+        _seededTokens.Add(tokenValue);
 
-    Assert.That(result, Is.Not.Null);
-    Assert.That(result!.Token, Is.EqualTo(tokenValue));
-    Assert.That(result.UserId, Is.EqualTo(user.Id));
-    Assert.That(result.IsRevoked, Is.False);
-    Assert.That(result.RevokedOnUtc, Is.Null);
-}
+        var result = await _context.RefreshTokens
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Token == tokenValue);
 
-  [Test]
-public async Task UpdateAsync_ShouldUpdateRefreshToken()
-{
-    var user = await SeedUserAsync();
-    var tokenValue = $"test-token-{Guid.NewGuid():N}";
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Token, Is.EqualTo(tokenValue));
+        Assert.That(result.UserId, Is.EqualTo(user.Id));
+        Assert.That(result.IsRevoked, Is.False);
+        Assert.That(result.RevokedOnUtc, Is.Null);
+    }
 
-    var refreshToken = await SeedTokenAsync(
-        user.Id,
-        tokenValue
-    );
+    [Test]
+    public async Task UpdateAsync_ShouldUpdateRefreshToken()
+    {
+        var user = await SeedUserAsync();
+        var tokenValue = $"test-token-{Guid.NewGuid():N}";
 
-    refreshToken.IsRevoked = true;
-    refreshToken.RevokedOnUtc = DateTime.UtcNow;
+        var refreshToken = await SeedTokenAsync(
+            user.Id,
+            tokenValue
+        );
 
-    await _repository.UpdateAsync(refreshToken);
+        refreshToken.IsRevoked = true;
+        refreshToken.RevokedOnUtc = DateTime.UtcNow;
 
-    var result = await _context.RefreshTokens
-        .AsNoTracking()
-        .FirstOrDefaultAsync(x => x.Token == tokenValue);
+        await _repository.UpdateAsync(refreshToken);
 
-    Assert.That(result, Is.Not.Null);
-    Assert.That(result!.Token, Is.EqualTo(tokenValue));
-    Assert.That(result.UserId, Is.EqualTo(user.Id));
-    Assert.That(result.IsRevoked, Is.True);
-    Assert.That(result.RevokedOnUtc, Is.Not.Null);
-}
+        var result = await _context.RefreshTokens
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Token == tokenValue);
 
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Token, Is.EqualTo(tokenValue));
+        Assert.That(result.UserId, Is.EqualTo(user.Id));
+        Assert.That(result.IsRevoked, Is.True);
+        Assert.That(result.RevokedOnUtc, Is.Not.Null);
+    }
 }

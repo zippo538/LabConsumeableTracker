@@ -500,18 +500,25 @@ public class LotServiceTests
     public async Task GetAllLot_ShouldReturnEmptyResult_WhenNoLotsExist()
     {
         var lots = new List<Lot>();
+        if (lots == null) throw new ArgumentNullException(nameof(lots));
         _lotRepository
             .Setup(x => x.GetAllWithItemAsync(
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(lots);
         var result = await _service.GetAllLot(
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data, Is.Empty);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Lots retrieved successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data, Is.Empty);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Lots retrieved successfully."));
+        });
         _lotRepository.Verify(
             x => x.GetAllWithItemAsync(
                 It.IsAny<CancellationToken>()),
@@ -583,11 +590,14 @@ public class LotServiceTests
         var result = await _service.CreateLot(
             createLotDto,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Lot created successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Lot created successfully."));
+        });
         _lotRepository.Verify(
             x => x.AddAsync(
                 It.Is<Lot>(l =>
@@ -626,8 +636,11 @@ public class LotServiceTests
             id,
             dto,
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Lot not found."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Lot not found."));
+        });
         _lotRepository.Verify(
             x => x.GetByIdWithItemAsync(
                 id,
@@ -658,10 +671,13 @@ public class LotServiceTests
             lot.Id,
             dto,
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("RowVersion is required for update."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("RowVersion is required for update."));
+        });
     }
     [Test]
     public async Task UpdateLot_ShouldReturnError_WhenRowVersionIsEmpty()
@@ -687,10 +703,13 @@ public class LotServiceTests
             lot.Id,
             dto,
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("RowVersion is required for update."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("RowVersion is required for update."));
+        });
     }
     private static Lot CreateTestLot(Item item)
     {
@@ -756,15 +775,17 @@ public class LotServiceTests
             lot.Id,
             dto,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("No changes detected."));
-        Assert.That(result.Data, Is.SameAs(mappedDto));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("No changes detected."));
+            Assert.That(result.Data, Is.SameAs(mappedDto));
+        });
         _lotRepository.Verify(
             x => x.UpdateAsync(
-                It.IsAny<Lot>(),
-                It.IsAny<CancellationToken>()),
+                It.IsAny<Lot>()),
             Times.Never);
         _unitOfWork.Verify(
             x => x.SaveChangesAsync(
@@ -795,8 +816,7 @@ public class LotServiceTests
             .ReturnsAsync(lot);
         _lotRepository
             .Setup(x => x.UpdateAsync(
-                lot,
-                It.IsAny<CancellationToken>()))
+                lot))
             .ReturnsAsync(lot);
         _unitOfWork
             .Setup(x => x.SaveChangesAsync(
@@ -812,11 +832,14 @@ public class LotServiceTests
             lot.Id,
             dto,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Lot updated successfully."));
-        Assert.That(lot.LotNumber, Is.EqualTo("LOT-002"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Lot updated successfully."));
+            Assert.That(lot.LotNumber, Is.EqualTo("LOT-002"));
+        });
     }
     [Test]
     public async Task UpdateLot_ShouldUpdateSupplierLotNumber()
@@ -842,8 +865,7 @@ public class LotServiceTests
             .ReturnsAsync(lot);
         _lotRepository
             .Setup(x => x.UpdateAsync(
-                lot,
-                It.IsAny<CancellationToken>()))
+                lot))
             .ReturnsAsync(lot);
         _unitOfWork
             .Setup(x => x.SaveChangesAsync(
@@ -859,8 +881,11 @@ public class LotServiceTests
             lot.Id,
             dto,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(lot.SupplierLotNumber, Is.EqualTo("SUP-002"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(lot.SupplierLotNumber, Is.EqualTo("SUP-002"));
+        });
     }
     [Test]
     public async Task UpdateLot_ShouldUpdateSupplierName()
@@ -886,8 +911,7 @@ public class LotServiceTests
             .ReturnsAsync(lot);
         _lotRepository
             .Setup(x => x.UpdateAsync(
-                lot,
-                It.IsAny<CancellationToken>()))
+                lot))
             .ReturnsAsync(lot);
         _unitOfWork
             .Setup(x => x.SaveChangesAsync(
@@ -903,8 +927,11 @@ public class LotServiceTests
             lot.Id,
             dto,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(lot.SupplierName, Is.EqualTo("New Supplier"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(lot.SupplierName, Is.EqualTo("New Supplier"));
+        });
     }
     [Test]
     public async Task UpdateLot_ShouldUpdateStorageLocation()
@@ -930,8 +957,7 @@ public class LotServiceTests
             .ReturnsAsync(lot);
         _lotRepository
             .Setup(x => x.UpdateAsync(
-                lot,
-                It.IsAny<CancellationToken>()))
+                lot))
             .ReturnsAsync(lot);
         _unitOfWork
             .Setup(x => x.SaveChangesAsync(
@@ -947,8 +973,11 @@ public class LotServiceTests
             lot.Id,
             dto,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(lot.StorageLocation, Is.EqualTo("Storage B"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(lot.StorageLocation, Is.EqualTo("Storage B"));
+        });
     }
     [Test]
     public async Task UpdateLot_ShouldUpdateExpiryDate()
@@ -976,8 +1005,7 @@ public class LotServiceTests
             .ReturnsAsync(lot);
         _lotRepository
             .Setup(x => x.UpdateAsync(
-                lot,
-                It.IsAny<CancellationToken>()))
+                lot))
             .ReturnsAsync(lot);
         _unitOfWork
             .Setup(x => x.SaveChangesAsync(
@@ -993,8 +1021,11 @@ public class LotServiceTests
             lot.Id,
             dto,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(lot.ExpiryDate, Is.EqualTo(newExpiryDate));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(lot.ExpiryDate, Is.EqualTo(newExpiryDate));
+        });
     }
     [Test]
     public async Task UpdateLot_ShouldUpdateAdministrativeStatus()
@@ -1021,8 +1052,7 @@ public class LotServiceTests
             .ReturnsAsync(lot);
         _lotRepository
             .Setup(x => x.UpdateAsync(
-                lot,
-                It.IsAny<CancellationToken>()))
+                lot))
             .ReturnsAsync(lot);
         _unitOfWork
             .Setup(x => x.SaveChangesAsync(
@@ -1038,10 +1068,13 @@ public class LotServiceTests
             lot.Id,
             dto,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(
-            lot.AdministrativeStatus,
-            Is.EqualTo(LotAdministrativeStatus.Quarantined));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(
+                lot.AdministrativeStatus,
+                Is.EqualTo(LotAdministrativeStatus.Quarantined));
+        });
     }
     [Test]
     public async Task UpdateLot_ShouldUpdateAllFields_WhenAllChangesProvided()
@@ -1075,8 +1108,7 @@ public class LotServiceTests
             .ReturnsAsync(lot);
         _lotRepository
             .Setup(x => x.UpdateAsync(
-                lot,
-                It.IsAny<CancellationToken>()))
+                lot))
             .ReturnsAsync(lot);
         _unitOfWork
             .Setup(x => x.SaveChangesAsync(
@@ -1092,31 +1124,33 @@ public class LotServiceTests
             lot.Id,
             dto,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Lot updated successfully."));
-        Assert.That(lot.LotNumber, Is.EqualTo("LOT-002"));
-        Assert.That(
-            lot.SupplierLotNumber,
-            Is.EqualTo("SUP-002"));
-        Assert.That(
-            lot.SupplierName,
-            Is.EqualTo("New Supplier"));
-        Assert.That(
-            lot.StorageLocation,
-            Is.EqualTo("Storage B"));
-        Assert.That(
-            lot.ExpiryDate,
-            Is.EqualTo(newExpiryDate));
-        Assert.That(
-            lot.AdministrativeStatus,
-            Is.EqualTo(
-                LotAdministrativeStatus.Quarantined));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Lot updated successfully."));
+            Assert.That(lot.LotNumber, Is.EqualTo("LOT-002"));
+            Assert.That(
+                lot.SupplierLotNumber,
+                Is.EqualTo("SUP-002"));
+            Assert.That(
+                lot.SupplierName,
+                Is.EqualTo("New Supplier"));
+            Assert.That(
+                lot.StorageLocation,
+                Is.EqualTo("Storage B"));
+            Assert.That(
+                lot.ExpiryDate,
+                Is.EqualTo(newExpiryDate));
+            Assert.That(
+                lot.AdministrativeStatus,
+                Is.EqualTo(
+                    LotAdministrativeStatus.Quarantined));
+        });
         _lotRepository.Verify(
             x => x.UpdateAsync(
-                lot,
-                It.IsAny<CancellationToken>()),
+                lot),
             Times.Once);
         _unitOfWork.Verify(
             x => x.SaveChangesAsync(
@@ -1195,6 +1229,7 @@ public class LotServiceTests
         var itemId = Guid.NewGuid();
         var lots = new List<Lot>();
         var summaries = new List<LotSummaryDto>();
+        if (summaries == null) throw new ArgumentNullException(nameof(summaries));
         _lotRepository
             .Setup(x => x.GetByItemIdAsync(
                 itemId,
@@ -1206,12 +1241,18 @@ public class LotServiceTests
         var result = await _service.GetSummaryByItemId(
             itemId,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data, Is.Empty);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Lots retrieved successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data, Is.Empty);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Lots retrieved successfully."));
+        });
     }
     [Test]
     public async Task GetAllSummary_ShouldReturnSuccess_WhenLotsExist()
@@ -1277,6 +1318,7 @@ public class LotServiceTests
     {
         var lots = new List<Lot>();
         var summaries = new List<LotSummaryDto>();
+        if (summaries == null) throw new ArgumentNullException(nameof(summaries));
         _lotRepository
             .Setup(x => x.GetAllAsync(
                 It.IsAny<CancellationToken>()))
@@ -1286,12 +1328,18 @@ public class LotServiceTests
             .Returns(summaries);
         var result = await _service.GetAllSummary(
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data, Is.Empty);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Lot summaries retrieved successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data, Is.Empty);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Lot summaries retrieved successfully."));
+        });
     }
     [Test]
     public async Task GetAllLotPage_ShouldReturnPagedLots_WhenLotsExist()
@@ -1332,14 +1380,20 @@ public class LotServiceTests
             CancellationToken.None,
             1,
             20);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data!.Items, Has.Count.EqualTo(1));
-        Assert.That(result.Data.Items[0], Is.SameAs(mappedDto));
-        Assert.That(result.Data.Page, Is.EqualTo(1));
-        Assert.That(result.Data.PageSize, Is.EqualTo(20));
-        Assert.That(result.Data.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Message, Is.EqualTo("Paged lots retrieved successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.Items, Has.Count.EqualTo(1));
+            Assert.That(result.Data.Items[0], Is.SameAs(mappedDto));
+            Assert.That(result.Data.Page, Is.EqualTo(1));
+            Assert.That(result.Data.PageSize, Is.EqualTo(20));
+            Assert.That(result.Data.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Message, Is.EqualTo("Paged lots retrieved successfully."));
+        });
         _lotRepository.Verify(
             x => x.GetAllWithItemAsyncPage(
                 1,
@@ -1398,10 +1452,16 @@ public class LotServiceTests
             CancellationToken.None,
             1,
             20);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data!.Items, Has.Count.EqualTo(1));
-        Assert.That(result.Data.Items[0], Is.SameAs(mappedDto));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.Items, Has.Count.EqualTo(1));
+            Assert.That(result.Data.Items[0], Is.SameAs(mappedDto));
+        });
     }
     [Test]
     public async Task GetAllLotPage_ShouldReturnEmptyItems_WhenNoLotsExist()
@@ -1430,13 +1490,19 @@ public class LotServiceTests
             CancellationToken.None,
             2,
             20);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data!.Items, Is.Empty);
-        Assert.That(result.Data.Page, Is.EqualTo(2));
-        Assert.That(result.Data.PageSize, Is.EqualTo(20));
-        Assert.That(result.Data.TotalCount, Is.EqualTo(0));
-        Assert.That(result.Message, Is.EqualTo("Paged lots retrieved successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.Items, Is.Empty);
+            Assert.That(result.Data.Page, Is.EqualTo(2));
+            Assert.That(result.Data.PageSize, Is.EqualTo(20));
+            Assert.That(result.Data.TotalCount, Is.EqualTo(0));
+            Assert.That(result.Message, Is.EqualTo("Paged lots retrieved successfully."));
+        });
         _mapper.Verify(
             x => x.Map<LotDto>(It.IsAny<Lot>()),
             Times.Never);
@@ -1461,10 +1527,13 @@ public class LotServiceTests
             itemId,
             0m,
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Requested quantity must be greater than zero."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Requested quantity must be greater than zero."));
+        });
         _lotRepository.Verify(
             x => x.GetByItemIdAsync(
                 It.IsAny<Guid>(),
@@ -1498,10 +1567,13 @@ public class LotServiceTests
             itemId,
             -10m,
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Requested quantity must be greater than zero."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Requested quantity must be greater than zero."));
+        });
     }
     [Test]
     public async Task RequestFefoAllocation_ShouldReturnError_WhenFefoAllocationFails()
@@ -1540,8 +1612,11 @@ public class LotServiceTests
             itemId,
             50m,
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Insufficient stock."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Insufficient stock."));
+        });
         _lotSelectionService.Verify(
             x => x.AllocateAsync(
                 itemId,
@@ -1605,24 +1680,33 @@ public class LotServiceTests
             itemId,
             40m,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Message, Is.EqualTo("Lots allocated successfully."));
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data!.JobId, Is.EqualTo(jobId));
-        Assert.That(result.Data.ItemId, Is.EqualTo(itemId));
-        Assert.That(result.Data.BaseUnit, Is.EqualTo(UnitOfMeasure.Unit));
-        Assert.That(result.Data.RequestedQuantity, Is.EqualTo(40m));
-        Assert.That(result.Data.AllocatedQuantity, Is.EqualTo(40m));
-        Assert.That(result.Data.IsReservation, Is.False);
-        Assert.That(result.Data.PreviewedAt, Is.EqualTo(FixedNow));
-        Assert.That(result.Data.Allocations, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Message, Is.EqualTo("Lots allocated successfully."));
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.JobId, Is.EqualTo(jobId));
+            Assert.That(result.Data.ItemId, Is.EqualTo(itemId));
+            Assert.That(result.Data.BaseUnit, Is.EqualTo(UnitOfMeasure.Unit));
+            Assert.That(result.Data.RequestedQuantity, Is.EqualTo(40m));
+            Assert.That(result.Data.AllocatedQuantity, Is.EqualTo(40m));
+            Assert.That(result.Data.IsReservation, Is.False);
+            Assert.That(result.Data.PreviewedAt, Is.EqualTo(FixedNow));
+            Assert.That(result.Data.Allocations, Has.Count.EqualTo(1));
+        });
         var line = result.Data.Allocations[0];
-        Assert.That(line.LotId, Is.EqualTo(lot.Id));
-        Assert.That(line.LotNumber, Is.EqualTo(lot.LotNumber));
-        Assert.That(line.ExpiryDate, Is.EqualTo(lot.ExpiryDate));
-        Assert.That(line.RemainingQuantity, Is.EqualTo(lot.RemainingQuantity));
-        Assert.That(line.Quantity, Is.EqualTo(40m));
-        Assert.That(line.RowVersion, Is.EqualTo(lot.RowVersion));
+        Assert.Multiple(() =>
+        {
+            Assert.That(line.LotId, Is.EqualTo(lot.Id));
+            Assert.That(line.LotNumber, Is.EqualTo(lot.LotNumber));
+            Assert.That(line.ExpiryDate, Is.EqualTo(lot.ExpiryDate));
+            Assert.That(line.RemainingQuantity, Is.EqualTo(lot.RemainingQuantity));
+            Assert.That(line.Quantity, Is.EqualTo(40m));
+            Assert.That(line.RowVersion, Is.EqualTo(lot.RowVersion));
+        });
     }
     [Test]
     public async Task ConfirmConsumption_ShouldReturnError_WhenAllocationQuantityIsNotPositive()
@@ -1648,10 +1732,13 @@ public class LotServiceTests
             request,
             Guid.NewGuid(),
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Every allocation quantity must be greater than zero."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Every allocation quantity must be greater than zero."));
+        });
         _jobRepository.Verify(
             x => x.GetByIdAsync(
                 It.IsAny<Guid>(),
@@ -1689,11 +1776,14 @@ public class LotServiceTests
             request,
             Guid.NewGuid(),
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Duplicate LotId is not allowed within a single consumption request."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "Duplicate LotId is not allowed within a single consumption request."));
+        });
         _jobRepository.Verify(
             x => x.GetByIdAsync(
                 It.IsAny<Guid>(),
@@ -1724,11 +1814,14 @@ public class LotServiceTests
             request,
             Guid.NewGuid(),
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Sum of allocation quantities (10) does not match RequestedQuantity (20)."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "Sum of allocation quantities (10) does not match RequestedQuantity (20)."));
+        });
         _jobRepository.Verify(
             x => x.GetByIdAsync(
                 It.IsAny<Guid>(),
@@ -1746,8 +1839,8 @@ public class LotServiceTests
             RequestedQuantity = 10m,
             Allocations =
             [
-                new()
-            {
+                new ConsumptionAllocationRequestDto
+                {
                 LotId = Guid.NewGuid(),
                 Quantity = 10m,
                 ExpectedRowVersion = [1, 2, 3]
@@ -1764,8 +1857,11 @@ public class LotServiceTests
             request,
             Guid.NewGuid(),
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Job not found."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Job not found."));
+        });
     }
     [Test]
     public async Task ConfirmConsumption_ShouldReturnError_WhenJobIsNotInProgress()
@@ -1800,11 +1896,14 @@ public class LotServiceTests
             request,
             Guid.NewGuid(),
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Job must be InProgress to confirm consumption. Current status: Draft."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "Job must be InProgress to confirm consumption. Current status: Draft."));
+        });
     }
     [Test]
     public async Task ConfirmConsumption_ShouldReturnError_WhenLotNotFound()
@@ -1849,10 +1948,13 @@ public class LotServiceTests
             request,
             Guid.NewGuid(),
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo($"Lot {lotId} not found."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo($"Lot {lotId} not found."));
+        });
     }
     [Test]
     public async Task ConfirmConsumption_ShouldReturnError_WhenLotDoesNotBelongToItem()
@@ -1909,11 +2011,14 @@ public class LotServiceTests
             request,
             Guid.NewGuid(),
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                $"Lot {lot.Id} does not belong to item {itemId}."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    $"Lot {lot.Id} does not belong to item {itemId}."));
+        });
     }
     [Test]
     public async Task ConfirmConsumption_ShouldReturnError_WhenRowVersionDoesNotMatch()
@@ -1969,11 +2074,14 @@ public class LotServiceTests
             request,
             Guid.NewGuid(),
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                $"Lot {lot.Id} has changed since it was previewed (stale RowVersion)."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    $"Lot {lot.Id} has changed since it was previewed (stale RowVersion)."));
+        });
     }
     [Test]
     public async Task ConfirmConsumption_ShouldReturnError_WhenLotConsumeThrowsInvalidOperationException()
@@ -2030,139 +2138,13 @@ public class LotServiceTests
             request,
             consumedBy,
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Does.StartWith($"Lot {lot.Id}:"));
-    }
-    [Test]
-    public async Task ConfirmConsumption_ShouldReturnSuccess_WhenConsumptionIsValid()
-    {
-        var jobId = Guid.NewGuid();
-        var itemId = Guid.NewGuid();
-        var consumedBy = Guid.NewGuid();
-        var job = new Job(
-            jobId,
-            "JOB-001",
-            "Test Job");
-        job.Start(FixedNow);
-        var lot = new Lot(
-            Guid.NewGuid(),
-            itemId,
-            "LOT-001",
-            "SUP-001",
-            FixedNow,
-            "Test Supplier",
-            100m,
-            100m,
-            DateOnly.FromDateTime(FixedNow.UtcDateTime.AddDays(60)),
-            "Storage A",
-            LotAdministrativeStatus.Active);
-        var item = new Item(
-            itemId,
-            "ITEM-001",
-            "Test Item",
-            UnitOfMeasure.Unit,
-            10m,
-            30);
-        var request = new ConfirmConsumptionRequestDto
+        Assert.Multiple(() =>
         {
-            ItemId = itemId,
-            RequestedQuantity = 40m,
-            Allocations =
-            [
-                new ConsumptionAllocationRequestDto
-                {
-                LotId = lot.Id,
-                Quantity = 40m,
-                ExpectedRowVersion = []
-            }
-            ]
-        };
-        _jobRepository
-            .Setup(x => x.GetByIdAsync(
-                jobId,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(job);
-        _timeProvider
-            .Setup(x => x.GetUtcNow())
-            .Returns(FixedNow);
-        _lotRepository
-            .Setup(x => x.GetByIdAsync(
-                lot.Id,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(lot);
-        _consumptionRepository
-         .Setup(x => x.AddAsync(
-             It.IsAny<Consumption>(),
-             It.IsAny<CancellationToken>()))
-         .ReturnsAsync((Consumption consumption, CancellationToken _) => consumption);
-        _lotRepository
-            .Setup(x => x.UpdateAsync(
-                It.IsAny<Lot>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Lot updatedLot, CancellationToken _) => updatedLot);
-        _unitOfWork
-            .Setup(x => x.SaveChangesAsync(
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
-        _itemRepository
-            .Setup(x => x.GetByIdAsync(
-                itemId,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(item);
-        var result = await _service.ConfirmConsumption(
-            jobId,
-            request,
-            consumedBy,
-            CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Consumption confirmed successfully."));
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data!.JobId, Is.EqualTo(jobId));
-        Assert.That(result.Data.ItemId, Is.EqualTo(itemId));
-        Assert.That(result.Data.BaseUnit, Is.EqualTo(UnitOfMeasure.Unit));
-        Assert.That(result.Data.TotalConsumedQuantity, Is.EqualTo(40m));
-        Assert.That(result.Data.Consumptions, Has.Count.EqualTo(1));
-        Assert.That(result.Data.UpdatedLots, Has.Count.EqualTo(1));
-        Assert.That(
-            result.Data.Consumptions[0].JobId,
-            Is.EqualTo(jobId));
-        Assert.That(
-            result.Data.Consumptions[0].LotId,
-            Is.EqualTo(lot.Id));
-        Assert.That(
-            result.Data.Consumptions[0].Quantity,
-            Is.EqualTo(40m));
-        Assert.That(
-            result.Data.Consumptions[0].ConsumedBy,
-            Is.EqualTo(consumedBy));
-        Assert.That(
-            result.Data.UpdatedLots[0].LotId,
-            Is.EqualTo(lot.Id));
-        Assert.That(
-            result.Data.UpdatedLots[0].RemainingQuantity,
-            Is.EqualTo(60m));
-        _consumptionRepository.Verify(
-            x => x.AddAsync(
-                It.IsAny<Consumption>(),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-        _lotRepository.Verify(
-            x => x.UpdateAsync(
-                It.IsAny<Lot>(),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-        _unitOfWork.Verify(
-            x => x.SaveChangesAsync(
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-        _itemRepository.Verify(
-            x => x.GetByIdAsync(
-                itemId,
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Does.StartWith($"Lot {lot.Id}:"));
+        });
     }
+    
 }

@@ -99,9 +99,12 @@ public class ConsumptionHistoryServiceTests
             query,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data!.Page, Is.EqualTo(2));
-        Assert.That(result.Data.PageSize, Is.EqualTo(20));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data!.Page, Is.EqualTo(2));
+            Assert.That(result.Data.PageSize, Is.EqualTo(20));
+        });
     }
 
     [Test]
@@ -148,10 +151,13 @@ public class ConsumptionHistoryServiceTests
 
             Assert.That(result.Data, Is.Not.Null);
         });
-        Assert.That(result.Data!.Page, Is.EqualTo(3));
-        Assert.That(result.Data.PageSize, Is.EqualTo(50));
-        Assert.That(result.Data.TotalCount, Is.EqualTo(1));
-        Assert.That(result.Data.Items, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.Page, Is.EqualTo(3));
+            Assert.That(result.Data.PageSize, Is.EqualTo(50));
+            Assert.That(result.Data.TotalCount, Is.EqualTo(1));
+            Assert.That(result.Data.Items, Has.Count.EqualTo(1));
+        });
         Assert.That(result.Data.Items[0], Is.EqualTo(item));
     }
 
@@ -278,11 +284,14 @@ public class ConsumptionHistoryServiceTests
             consumedBy,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Consumption retrieved successfully."));
-        Assert.That(result.Data, Is.EqualTo(detail));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Consumption retrieved successfully."));
+            Assert.That(result.Data, Is.EqualTo(detail));
+        });
 
         _repository.Verify(
             x => x.GetDetailAsync(

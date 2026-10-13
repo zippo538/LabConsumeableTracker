@@ -5,7 +5,7 @@ namespace LabConsumableExpiryTracker.Tests.Repository;
 [TestFixture]
 public class PostgreSqlTestFixture : IDisposable
 {
-    public AppDbContext Context { get; }
+    private AppDbContext Context { get; }
     public PostgreSqlTestFixture()
     {
         var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");

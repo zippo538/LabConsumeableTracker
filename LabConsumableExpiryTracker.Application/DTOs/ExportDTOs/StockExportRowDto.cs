@@ -4,12 +4,12 @@ namespace LabConsumableExpiryTracker.Application.DTOs.ExportDTOs;
 
 public class StockExportRowDto
 {
-    public Guid ItemId { get; set; }
-    public string Code { get; set; } = default!;
-    public string Name { get; set; } = default!;
-    public UnitOfMeasure BaseUnit { get; set; }
-    public decimal UsableStock { get; set; }
-    public decimal MinimumStock { get; set; }
+    public Guid ItemId { get; init; }
+    public string Code { get; init; } = default!;
+    public string Name { get; init; } = default!;
+    public UnitOfMeasure BaseUnit { get; init; }
+    public decimal UsableStock { get; init; }
+    public decimal MinimumStock { get; init; }
     public bool IsLowStock { get; init; }
-    public DateTimeOffset EvaluatedAt { get; set; }
+    public DateTimeOffset EvaluatedAt { get; init; }
 }

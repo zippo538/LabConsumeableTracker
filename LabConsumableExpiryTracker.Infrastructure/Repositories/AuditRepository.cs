@@ -11,6 +11,7 @@ public sealed class AuditRepository(AppDbContext context) : IAuditRepository
 {
     public async Task<PagedResult<AuditEventDto>> GetAuditEventsAsync(AuditQuery query, CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(query);
         var consumptions =
             from consumption in context.Consumptions.AsNoTracking()
             join lot in context.Lots.AsNoTracking() on consumption.LotId equals lot.Id
@@ -101,7 +102,7 @@ public sealed class AuditRepository(AppDbContext context) : IAuditRepository
                 LotId = lot.Id,
                 ItemId = lot.ItemId,
                 ItemName = item.Name,
-                itemCode = item.Code,
+                ItemCode = item.Code,
                 LotNumber = lot.LotNumber,
                 Quantity = consumption.Quantity,
                 BaseUnit = item.BaseUnit,
@@ -134,7 +135,7 @@ public sealed class AuditRepository(AppDbContext context) : IAuditRepository
              LotId = lot.Id,
              ItemId = lot.ItemId,
              ItemName = item.Name,
-             itemCode = item.Code,
+             ItemCode = item.Code,
              LotNumber = lot.LotNumber,
              Quantity = consumption.Quantity,
              BaseUnit = item.BaseUnit,
@@ -204,7 +205,7 @@ public sealed class AuditRepository(AppDbContext context) : IAuditRepository
             var pattern = $"%{query.Search.Trim()}%";
             source = source.Where(x =>
                 EF.Functions.ILike(x.LotNumber, pattern) ||
-                EF.Functions.ILike(x.itemCode, pattern));
+                EF.Functions.ILike(x.ItemCode, pattern));
         }
         return source;
     }

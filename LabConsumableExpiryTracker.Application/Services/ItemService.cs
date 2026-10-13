@@ -239,7 +239,7 @@ public class ItemService : IItemService
             // Hapus gambar lama jika ada
             if (oldImageId.HasValue)
             {
-                await _imageStorageRepository.DeleteImageAsync(oldImageId.Value, ct);
+                await _imageStorageRepository.DeleteImageAsync(oldImageId.Value);
             }
 
             _logger.LogInformation(
@@ -247,7 +247,7 @@ public class ItemService : IItemService
                 id);
         }
 
-        var updated = await _itemRepository.UpdateAsync(item, ct);
+        var updated = await _itemRepository.UpdateAsync(item);
 
         await _unitOfWork.SaveChangesAsync(ct);
 

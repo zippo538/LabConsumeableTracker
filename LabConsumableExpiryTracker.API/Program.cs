@@ -28,7 +28,6 @@ using LabConsumableExpiryTracker.Application.DTOs.ItemDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.JobDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.LoginDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.LotDTOs;
-using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
 using LabConsumableExpiryTracker.Application.DTOs.UserDTOs;
 using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using Microsoft.OpenApi.Models;

@@ -51,7 +51,7 @@ public class GenericRepositoryTests
         await SeedJobAsync($"JOB-ALL-1-{Guid.NewGuid():N}");
         await SeedJobAsync($"JOB-ALL-2-{Guid.NewGuid():N}");
         var result = await _repository.GetAllAsync();
-        Assert.That(result.Count, Is.GreaterThanOrEqualTo(2));
+        Assert.That(result, Has.Count.GreaterThanOrEqualTo(2));
     }
     [Test]
     public async Task GetByIdAsync_ReturnsEntity_WhenExists()
@@ -71,7 +71,7 @@ public class GenericRepositoryTests
     public async Task UpdateAsync_ModifiesEntity()
     {
         var job = await SeedJobAsync($"JOB-UPD-{Guid.NewGuid():N}");
-        var newDesc = "Updated Description";
+        const string newDesc = "Updated Description";
         job.UpdateDescription(newDesc);
         await _repository.UpdateAsync(job);
         await _context.SaveChangesAsync();

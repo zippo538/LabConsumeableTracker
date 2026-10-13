@@ -43,10 +43,13 @@ public class LotSelectionServiceTests
             FixedNow,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Requested quantity must be greater than zero."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Requested quantity must be greater than zero."));
+        });
 
         _lotSelectionRepository.Verify(
             x => x.GetAvailableLotsAsync(
@@ -67,10 +70,13 @@ public class LotSelectionServiceTests
             FixedNow,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Requested quantity must be greater than zero."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Requested quantity must be greater than zero."));
+        });
 
         _lotSelectionRepository.Verify(
             x => x.GetAvailableLotsAsync(
@@ -101,11 +107,14 @@ public class LotSelectionServiceTests
             FixedNow,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Insufficient eligible stock to fulfill the requested quantity."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "Insufficient eligible stock to fulfill the requested quantity."));
+        });
 
         _lotSelectionRepository.Verify(
             x => x.GetAvailableLotsAsync(
@@ -135,14 +144,20 @@ public class LotSelectionServiceTests
             FixedNow,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Lots allocated successfully."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Lots allocated successfully."));
 
-        Assert.That(result.Data, Has.Count.EqualTo(1));
-        Assert.That(result.Data![0].LotId, Is.EqualTo(lot.Id));
-        Assert.That(result.Data[0].Quantity, Is.EqualTo(40m));
+            Assert.That(result.Data, Has.Count.EqualTo(1));
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data![0].LotId, Is.EqualTo(lot.Id));
+            Assert.That(result.Data[0].Quantity, Is.EqualTo(40m));
+        });
 
         _lotSelectionRepository.Verify(
             x => x.GetAvailableLotsAsync(
@@ -174,21 +189,27 @@ public class LotSelectionServiceTests
             FixedNow,
             CancellationToken.None);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Has.Count.EqualTo(3));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Has.Count.EqualTo(3));
+        });
 
-        Assert.That(result.Data![0].LotId, Is.EqualTo(lot1.Id));
-        Assert.That(result.Data[0].Quantity, Is.EqualTo(30m));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data![0].LotId, Is.EqualTo(lot1.Id));
+            Assert.That(result.Data[0].Quantity, Is.EqualTo(30m));
 
-        Assert.That(result.Data[1].LotId, Is.EqualTo(lot2.Id));
-        Assert.That(result.Data[1].Quantity, Is.EqualTo(40m));
+            Assert.That(result.Data[1].LotId, Is.EqualTo(lot2.Id));
+            Assert.That(result.Data[1].Quantity, Is.EqualTo(40m));
 
-        Assert.That(result.Data[2].LotId, Is.EqualTo(lot3.Id));
-        Assert.That(result.Data[2].Quantity, Is.EqualTo(30m));
+            Assert.That(result.Data[2].LotId, Is.EqualTo(lot3.Id));
+            Assert.That(result.Data[2].Quantity, Is.EqualTo(30m));
 
-        Assert.That(
-            result.Data.Sum(x => x.Quantity),
-            Is.EqualTo(100m));
+            Assert.That(
+                result.Data.Sum(x => x.Quantity),
+                Is.EqualTo(100m));
+        });
 
         _lotSelectionRepository.Verify(
             x => x.GetAvailableLotsAsync(

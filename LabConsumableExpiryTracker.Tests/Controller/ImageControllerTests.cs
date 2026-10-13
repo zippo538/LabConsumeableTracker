@@ -21,27 +21,30 @@ public class ImageControllerTests
     {
         var imageId = Guid.NewGuid();
         var stream = new MemoryStream([1, 2, 3]);
-        var contentType = "image/jpeg";
+        const string contentType = "image/jpeg";
         var serviceResult = ServiceResult<(Stream, string)>.SuccessResult((stream, contentType));
-        _imageServiceMock.Setup(s => s.GetSecureImageAsync(imageId, It.IsAny<CancellationToken>()))
+        _imageServiceMock.Setup(s => s.GetSecureImageAsync(imageId))
             .ReturnsAsync(serviceResult);
-        var result = await _controller.GetImage(imageId, CancellationToken.None);
-        Assert.IsInstanceOf<FileStreamResult>(result);
+        var result = await _controller.GetImage(imageId);
+        Assert.That(result, Is.InstanceOf<FileStreamResult>());
         var fileResult = result as FileStreamResult;
-        Assert.That(fileResult!.ContentType, Is.EqualTo(contentType));
-        Assert.That(fileResult.FileStream, Is.EqualTo(stream));
-        Assert.That(fileResult.EnableRangeProcessing, Is.True);
-        _imageServiceMock.Verify(s => s.GetSecureImageAsync(imageId, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Multiple(() =>
+        {
+            Assert.That(fileResult!.ContentType, Is.EqualTo(contentType));
+            Assert.That(fileResult.FileStream, Is.EqualTo(stream));
+            Assert.That(fileResult.EnableRangeProcessing, Is.True);
+        });
+        _imageServiceMock.Verify(s => s.GetSecureImageAsync(imageId), Times.Once);
     }
     [Test]
     public async Task GetImage_Failure_ReturnsBadRequest()
     {
         var imageId = Guid.NewGuid();
         var serviceResult = ServiceResult<(Stream, string)>.ErrorResult("Image not found or access denied.");
-        _imageServiceMock.Setup(s => s.GetSecureImageAsync(imageId, It.IsAny<CancellationToken>()))
+        _imageServiceMock.Setup(s => s.GetSecureImageAsync(imageId))
             .ReturnsAsync(serviceResult);
-        var result = await _controller.GetImage(imageId, CancellationToken.None);
-        Assert.IsInstanceOf<BadRequestObjectResult>(result);
+        var result = await _controller.GetImage(imageId);
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
         var badRequestResult = result as BadRequestObjectResult;
         Assert.That(badRequestResult!.Value, Is.EqualTo(serviceResult));
     }

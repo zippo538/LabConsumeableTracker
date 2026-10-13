@@ -19,7 +19,7 @@ public class Item(
     public decimal MinimumStock { get; private set; } = minimumStock;
     public int ExpiringSoonDays { get; private set; } = expiringSoonDays;
     public IReadOnlyCollection<Lot> Lots => _lots.AsReadOnly();
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     
 
     public void SetImageId(Guid? imageId)

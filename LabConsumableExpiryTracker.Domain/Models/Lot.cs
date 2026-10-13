@@ -2,57 +2,54 @@ using LabConsumableExpiryTracker.Domain.Enums;
 
 namespace LabConsumableExpiryTracker.Domain.Models;
 
-public class Lot
+public class Lot(
+    Guid id,
+    Guid itemId,
+    string lotNumber,
+    string? supplierLotNumber,
+    DateTimeOffset receivedAt,
+    string? supplierName,
+    decimal initialQuantity,
+    decimal remainingQuantity,
+    DateOnly expiryDate,
+    string storageLocation,
+    LotAdministrativeStatus administrativeStatus)
 {
-    public Guid Id { get; }
-    public Guid ItemId { get; private set; }
-    public Item Item { get;}
-    public string LotNumber { get; private set; }
-    public string? SupplierLotNumber { get; private set; }
-    public DateTimeOffset ReceivedAt { get; private set; }
-    public string? SupplierName { get; private set; }
-    public decimal InitialQuantity { get; private set; }
-    public decimal RemainingQuantity { get; private set; }
-    public DateOnly ExpiryDate { get; private set; }
-    public string StorageLocation { get; private set; }
-    public LotAdministrativeStatus AdministrativeStatus { get; private set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    // Inisialisasi properti langsung dari parameter primary constructor
+    public Guid Id { get; } = id;
+    public Guid ItemId { get; private set; } = itemId;
+    
+    // Fix Warning CS8618: EF Core akan mengisi navigasi properti ini nanti.
+    public Item Item { get; private set; } = null!; 
+
+    public string LotNumber { get; private set; } = lotNumber.Trim();
+    public string? SupplierLotNumber { get; private set; } = supplierLotNumber?.Trim();
+    public DateTimeOffset ReceivedAt { get; private set; } = receivedAt.ToUniversalTime();
+    public string? SupplierName { get; private set; } = supplierName?.Trim();
+    
+    public decimal InitialQuantity { get; private set; } = initialQuantity;
+    
+    // Validasi dipindahkan ke helper statis agar tetap berjalan saat inisialisasi
+    public decimal RemainingQuantity { get; private set; } = ValidateRemainingQuantity(remainingQuantity, initialQuantity);
+    
+    public DateOnly ExpiryDate { get; private set; } = expiryDate;
+    public string StorageLocation { get; private set; } = storageLocation.Trim();
+    public LotAdministrativeStatus AdministrativeStatus { get; private set; } = administrativeStatus;
+    
+    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public byte[] RowVersion { get; private set; } = [];
 
-    public Lot(
-        Guid id,
-        Guid itemId,
-        string lotNumber,
-        string? supplierLotNumber,
-        DateTimeOffset receivedAt,
-        string? supplierName,
-        decimal initialQuantity,
-        decimal remainingQuantity,
-        DateOnly expiryDate,
-        string storageLocation,
-        LotAdministrativeStatus administrativeStatus)
+    private static decimal ValidateRemainingQuantity(decimal remaining, decimal initial)
     {
-        if (remainingQuantity < 0)
+        if (remaining < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(remainingQuantity), "Remaining quantity cannot be negative.");
+            throw new ArgumentOutOfRangeException(nameof(remaining), "Remaining quantity cannot be negative.");
         }
-
-        if (remainingQuantity > initialQuantity)
+        if (remaining > initial)
         {
-            throw new ArgumentException("Remaining quantity cannot exceed initial quantity.", nameof(remainingQuantity));
+            throw new ArgumentException("Remaining quantity cannot exceed initial quantity.", nameof(remaining));
         }
-
-        Id = id;
-        ItemId = itemId;
-        LotNumber = lotNumber.Trim();
-        SupplierLotNumber = supplierLotNumber?.Trim();
-        ReceivedAt = receivedAt.ToUniversalTime();
-        SupplierName = supplierName?.Trim();
-        InitialQuantity = initialQuantity;
-        RemainingQuantity = remainingQuantity;
-        ExpiryDate = expiryDate;
-        StorageLocation = storageLocation.Trim();
-        AdministrativeStatus = administrativeStatus;
+        return remaining;
     }
 
     public static Lot Create(
@@ -69,7 +66,7 @@ public class Lot
         {
             throw new ArgumentOutOfRangeException(nameof(initialQuantity), "Initial quantity must be greater than zero.");
         }
-
+        
         return new Lot(
             Guid.NewGuid(),
             itemId,
@@ -83,47 +80,45 @@ public class Lot
             storageLocation,
             LotAdministrativeStatus.Active);
     }
+
     public void UpdateRemainingQuantity(decimal quantity)
     {
         if (quantity <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(quantity));
         }
-
         if (quantity > RemainingQuantity)
         {
-            throw new InvalidOperationException(
-                "Consumption quantity exceeds remaining quantity.");
+            throw new InvalidOperationException("Consumption quantity exceeds remaining quantity.");
         }
-
         RemainingQuantity -= quantity;
     }
 
     public Consumption Consume(Guid jobId, decimal quantity, DateTimeOffset now, Guid consumedBy)
     {
-
         if (!IsEligible(now))
         {
-            throw new InvalidOperationException(
-                $"Lot '{LotNumber}' is no longer eligible for consumption.");
+            throw new InvalidOperationException($"Lot '{LotNumber}' is no longer eligible for consumption.");
         }
+        
         UpdateRemainingQuantity(quantity);
-
+        
         if (RemainingQuantity <= 0)
         {
             AdministrativeStatus = LotAdministrativeStatus.Depleted;
         }
-
+        
         return new Consumption(Guid.NewGuid(), jobId, Id, quantity, now, consumedBy);
     }
+
     public bool UpdateLotNumber(string lotNumber)
     {
         if (string.IsNullOrWhiteSpace(lotNumber))
             throw new ArgumentException("Lot number is required.", nameof(lotNumber));
-
+            
         var trimmed = lotNumber.Trim();
         if (LotNumber == trimmed) return false;
-
+        
         LotNumber = trimmed;
         return true;
     }
@@ -132,7 +127,7 @@ public class Lot
     {
         var trimmed = supplierLotNumber?.Trim();
         if (SupplierLotNumber == trimmed) return false;
-
+        
         SupplierLotNumber = trimmed;
         return true;
     }
@@ -141,7 +136,7 @@ public class Lot
     {
         var trimmed = supplierName?.Trim();
         if (SupplierName == trimmed) return false;
-
+        
         SupplierName = trimmed;
         return true;
     }
@@ -152,23 +147,27 @@ public class Lot
         {
             throw new ArgumentException("Storage location is required.", nameof(storageLocation));
         }
+        
         var trimmed = storageLocation.Trim();
         if (StorageLocation == trimmed) return false;
-
+        
         StorageLocation = trimmed;
         return true;
     }
+
     public bool UpdateExpiryDate(DateOnly expiryDate)
     {
         if (ExpiryDate == expiryDate) return false;
+        
         ExpiryDate = expiryDate;
         return true;
     }
+
     public bool UpdateAdministrativeStatus(LotAdministrativeStatus status)
     {
         if (AdministrativeStatus == status)
             return false;
-
+            
         var isValidTransition =
             (AdministrativeStatus == LotAdministrativeStatus.Active &&
              status is LotAdministrativeStatus.ManuallyBlocked or LotAdministrativeStatus.Quarantined)
@@ -178,16 +177,16 @@ public class Lot
             ||
             (AdministrativeStatus == LotAdministrativeStatus.Quarantined &&
              status is LotAdministrativeStatus.Active or LotAdministrativeStatus.ManuallyBlocked);
-
+             
         if (!isValidTransition)
         {
-            throw new InvalidOperationException(
-                $"Cannot change lot status from {AdministrativeStatus} to {status}.");
+            throw new InvalidOperationException($"Cannot change lot status from {AdministrativeStatus} to {status}.");
         }
-
+        
         AdministrativeStatus = status;
         return true;
     }
+
     public bool IsEligible(DateTimeOffset now)
     {
         var today = DateOnly.FromDateTime(now.UtcDateTime);
@@ -200,15 +199,17 @@ public class Lot
         {
             throw new ArgumentOutOfRangeException(nameof(warningDays), "Warning days cannot be negative.");
         }
+        
         var today = DateOnly.FromDateTime(now.UtcDateTime);
         if (today >= ExpiryDate)
         {
             return ExpiryCondition.Expired;
         }
-
+        
         var warningStart = ExpiryDate.AddDays(-warningDays);
         return today >= warningStart ? ExpiryCondition.ExpiringSoon : ExpiryCondition.Valid;
     }
+
     public void Dispose()
     {
         if (RemainingQuantity == 0)
@@ -216,14 +217,12 @@ public class Lot
             AdministrativeStatus = LotAdministrativeStatus.Disposed;
         }
     }
+
     internal void SetConcurrencyToken(byte[] expectedRowVersion)
     {
         if (expectedRowVersion == null || expectedRowVersion.Length == 0)
             throw new ArgumentException("ExpectedRowVersion tidak boleh kosong.");
-
+            
         RowVersion = expectedRowVersion;
     }
-
-
 }
-

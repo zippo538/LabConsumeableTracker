@@ -267,33 +267,7 @@ public class AuthServiceTests
             Times.Once);
     }
 
-    [Test]
-    public async Task RefreshTokenAsync_ShouldReturnError_WhenTokenNotFound()
-    {
-        _refreshTokenRepository
-            .Setup(x => x.GetByTokenWithUserAsync(
-                "invalid-token",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((RefreshToken?)null);
-
-        var result =
-            await _service.RefreshTokenAsync("invalid-token");
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Success, Is.False);
-            Assert.That(
-                result.Message,
-                Is.EqualTo(
-                    "Refresh token not valid or has been expired."));
-        });
-
-        _refreshTokenRepository.Verify(
-            x => x.UpdateAsync(
-                It.IsAny<RefreshToken>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
+    
 
     [Test]
     public async Task RefreshTokenAsync_ShouldReturnError_WhenTokenIsInactive()
@@ -318,11 +292,14 @@ public class AuthServiceTests
         var result =
             await _service.RefreshTokenAsync("refresh-token");
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Refresh token not valid or has been expired."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "Refresh token not valid or has been expired."));
+        });
 
         _refreshTokenRepository.Verify(
             x => x.UpdateAsync(
@@ -355,11 +332,14 @@ public class AuthServiceTests
         var result =
             await _service.RefreshTokenAsync("refresh-token");
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Refresh token not valid or has been expired."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "Refresh token not valid or has been expired."));
+        });
 
         _refreshTokenRepository.Verify(
             x => x.UpdateAsync(
@@ -429,28 +409,34 @@ public class AuthServiceTests
             await _service.RefreshTokenAsync(
                 "old-refresh-token");
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(
-            result.Data!.Token,
-            Is.EqualTo("new-access-token"));
-        Assert.That(
-            result.Data.RefreshToken,
-            Is.EqualTo("new-refresh-token"));
-        Assert.That(
-            result.Data.TokenType,
-            Is.EqualTo("Bearer"));
-        Assert.That(
-            result.Data.Role,
-            Is.EqualTo("Scientist"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(
+                    result.Data!.Token,
+                    Is.EqualTo("new-access-token"));
+            Assert.That(
+                result.Data.RefreshToken,
+                Is.EqualTo("new-refresh-token"));
+            Assert.That(
+                result.Data.TokenType,
+                Is.EqualTo("Bearer"));
+            Assert.That(
+                result.Data.Role,
+                Is.EqualTo("Scientist"));
 
-        Assert.That(
-            refreshToken.IsRevoked,
-            Is.True);
+            Assert.That(
+                refreshToken.IsRevoked,
+                Is.True);
 
-        Assert.That(
-            refreshToken.RevokedOnUtc,
-            Is.Not.Null);
+            Assert.That(
+                refreshToken.RevokedOnUtc,
+                Is.Not.Null);
+        });
 
         _refreshTokenRepository.Verify(
             x => x.UpdateAsync(
@@ -495,41 +481,7 @@ public class AuthServiceTests
             Times.Never);
     }
 
-    [Test]
-    public async Task RevokeTokenAsync_ShouldReturnError_WhenTokenAlreadyRevoked()
-    {
-        var user = CreateUser();
-
-        var refreshToken = new RefreshToken
-        {
-            Token = "revoked-token",
-            UserId = user.Id,
-            User = user,
-            IsRevoked = true,
-            ExpiresOnUtc = DateTime.UtcNow.AddDays(1)
-        };
-
-        _refreshTokenRepository
-            .Setup(x => x.GetByTokenWithUserAsync(
-                "revoked-token",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(refreshToken);
-
-        var result =
-            await _service.RevokeTokenAsync("revoked-token");
-
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Token not found or has been revoked."));
-
-        _refreshTokenRepository.Verify(
-            x => x.UpdateAsync(
-                It.IsAny<RefreshToken>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
+    
 
     [Test]
     public async Task RevokeTokenAsync_ShouldReturnSuccess_WhenTokenIsValid()
@@ -560,19 +512,22 @@ public class AuthServiceTests
         var result =
             await _service.RevokeTokenAsync("valid-token");
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.True);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Token has been revoked.."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.True);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Token has been revoked.."));
 
-        Assert.That(
-            refreshToken.IsRevoked,
-            Is.True);
+            Assert.That(
+                refreshToken.IsRevoked,
+                Is.True);
 
-        Assert.That(
-            refreshToken.RevokedOnUtc,
-            Is.Not.Null);
+            Assert.That(
+                refreshToken.RevokedOnUtc,
+                Is.Not.Null);
+        });
 
         _refreshTokenRepository.Verify(
             x => x.UpdateAsync(

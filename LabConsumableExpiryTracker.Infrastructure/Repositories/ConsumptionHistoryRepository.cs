@@ -5,16 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Repositories;
 
-public class ConsumptionHistoryRepository : IConsumptionHistoryRepository
+public class ConsumptionHistoryRepository(AppDbContext context) : IConsumptionHistoryRepository
 {
-    private readonly AppDbContext _context;
-    
-    public ConsumptionHistoryRepository(AppDbContext context)
-    {
-        _context = context;
-    }
-
-     public async Task<(IReadOnlyList<ConsumptionListItemDto> Items, int TotalCount)> GetPagedAsync(
+    public async Task<(IReadOnlyList<ConsumptionListItemDto> Items, int TotalCount)> GetPagedAsync(
         Guid consumedBy,
         Guid? jobId,
         Guid? itemId,
@@ -27,10 +20,10 @@ public class ConsumptionHistoryRepository : IConsumptionHistoryRepository
         CancellationToken ct = default)
     {
         var query =
-            from c in _context.Consumptions.AsNoTracking()
-            join l in _context.Lots.AsNoTracking() on c.LotId equals l.Id
-            join i in _context.Items.AsNoTracking() on l.ItemId equals i.Id
-            join j in _context.Jobs.AsNoTracking() on c.JobId equals j.Id
+            from c in context.Consumptions.AsNoTracking()
+            join l in context.Lots.AsNoTracking() on c.LotId equals l.Id
+            join i in context.Items.AsNoTracking() on l.ItemId equals i.Id
+            join j in context.Jobs.AsNoTracking() on c.JobId equals j.Id
             where c.ConsumedBy == consumedBy
             select new { c, l, i, j };
 
@@ -97,12 +90,12 @@ public class ConsumptionHistoryRepository : IConsumptionHistoryRepository
         CancellationToken ct = default)
     {
         return await (
-            from c in _context.Consumptions.AsNoTracking()
-            join l in _context.Lots.AsNoTracking()
+            from c in context.Consumptions.AsNoTracking()
+            join l in context.Lots.AsNoTracking()
                 on c.LotId equals l.Id
-            join i in _context.Items.AsNoTracking()
+            join i in context.Items.AsNoTracking()
                 on l.ItemId equals i.Id
-            join j in _context.Jobs.AsNoTracking()
+            join j in context.Jobs.AsNoTracking()
                 on c.JobId equals j.Id
             where c.Id == consumptionId
                   && c.ConsumedBy == consumedBy

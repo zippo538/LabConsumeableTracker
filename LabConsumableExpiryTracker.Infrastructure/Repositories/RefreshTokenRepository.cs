@@ -1,41 +1,33 @@
-using LabConsumableExpiryTracker.Application.Interfaces;
-using LabConsumableExpiryTracker.Domain.Models;
 using LabConsumableExpiryTracker.Infrastructure.Models;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Repositories;
-public class RefreshTokenRepository : IRefreshTokenRepository
+
+public class RefreshTokenRepository(AppDbContext context) : IRefreshTokenRepository
 {
-    private readonly AppDbContext _context;
-
-    public RefreshTokenRepository(AppDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<RefreshToken?> GetByTokenWithUserAsync(string token, CancellationToken ct = default)
     {
-        return await _context.RefreshTokens
+        return await context.RefreshTokens
             .Include(r => r.User)
             .FirstOrDefaultAsync(r => r.Token == token, ct);
     }
 
     public async Task AddAsync(RefreshToken refreshToken, CancellationToken ct = default)
     {
-        await _context.RefreshTokens.AddAsync(refreshToken, ct);
-        await _context.SaveChangesAsync(ct);
+        await context.RefreshTokens.AddAsync(refreshToken, ct);
+        await context.SaveChangesAsync(ct);
     }
 
     public async Task UpdateAsync(RefreshToken refreshToken, CancellationToken ct = default)
     {
-        _context.RefreshTokens.Update(refreshToken);
-        await _context.SaveChangesAsync(ct);
+        context.RefreshTokens.Update(refreshToken);
+        await context.SaveChangesAsync(ct);
     }
 
     public async Task RevokeAllByUserIdAsync(Guid userId, CancellationToken ct = default)
     {
-        var activeTokens = await _context.RefreshTokens
+        var activeTokens = await context.RefreshTokens
             .Where(r => r.UserId == userId && !r.IsRevoked)
             .ToListAsync(ct);
 
@@ -45,6 +37,6 @@ public class RefreshTokenRepository : IRefreshTokenRepository
             token.RevokedOnUtc = DateTime.UtcNow;
         }
 
-        await _context.SaveChangesAsync(ct);
+        await context.SaveChangesAsync(ct);
     }
 }
