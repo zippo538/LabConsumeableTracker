@@ -120,8 +120,7 @@ public class DashboardAlertService(
                 });
                 break;
             default:
-                // Unknown alert type - return only View action
-                break;
+                throw new ArgumentOutOfRangeException();
         }
 
         return actions;

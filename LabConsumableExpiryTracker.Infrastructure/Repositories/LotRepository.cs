@@ -54,7 +54,7 @@ public class LotRepository(
         return lots;
     }
 
-    public async Task<PagedResult<Lot>> GetAllWithItemAsyncPage(
+    public async Task<PagedResult<Lot>> GetAllWithItemAsyncPage(    
         int page,
         int pageSize,
         string? search = null,

@@ -13,7 +13,7 @@ public class ImageStorageRepository : IImageStorageRepository
             Directory.CreateDirectory(_storagePath);
         }
     }
-    public Task<(Stream? Stream, string ContentType)> GetImageAsync(Guid imageId, CancellationToken cancellationToken)
+    public Task<(Stream? Stream, string ContentType)> GetImageAsync(Guid imageId)
     {
         try
         {
@@ -53,7 +53,7 @@ public class ImageStorageRepository : IImageStorageRepository
         await stream.CopyToAsync(fileStream, cancellationToken);
         return imageId;
     }
-    public async Task DeleteImageAsync(Guid imageId, CancellationToken cancellationToken)
+    public async Task DeleteImageAsync(Guid imageId)
     {
         var files = Directory.GetFiles(_storagePath, $"{imageId}.*");
         foreach (var file in files)

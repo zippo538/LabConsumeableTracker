@@ -86,8 +86,11 @@ public class JobRepositoryTests
         var result = await _repository.GetByJobNumberAsync(jobNumber);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result!.Id, Is.EqualTo(seeded.Id));
-        Assert.That(result.JobNumber, Is.EqualTo(jobNumber));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result!.Id, Is.EqualTo(seeded.Id));
+            Assert.That(result.JobNumber, Is.EqualTo(jobNumber));
+        });
     }
 
     [Test]

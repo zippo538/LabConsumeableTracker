@@ -100,7 +100,7 @@ public class JobService : IJobService
         job.UpdateJobNumber(dto.JobNumber);
         job.UpdateDescription(dto.Description);
 
-        var updated = await _jobRepository.UpdateAsync(job, ct);
+        var updated = await _jobRepository.UpdateAsync(job);
 
         await _unitOfWork.SaveChangesAsync(ct);
 
@@ -149,7 +149,7 @@ public class JobService : IJobService
         }
 
         transition(job);
-        var create = await _jobRepository.UpdateAsync(job, ct);
+        var create = await _jobRepository.UpdateAsync(job);
         await _unitOfWork.SaveChangesAsync(ct);
         var response = _mapper.Map<JobDto>(create);
         return ServiceResult<JobDto>.SuccessResult(response);

@@ -133,7 +133,7 @@ public abstract class DisposalSeeder
         IReadOnlyDictionary<Guid, decimal> budgets,
         int disposalIndex)
     {
-        return availableLots.Select((t, offset) => availableLots[(disposalIndex + offset) % availableLots.Length]).FirstOrDefault(candidate => budgets[candidate.Id] > 0m);
+        return availableLots.Select((_, offset) => availableLots[(disposalIndex + offset) % availableLots.Length]).FirstOrDefault(candidate => budgets[candidate.Id] > 0m);
     }
 
     private static DateTimeOffset ResolveDisposedAt(

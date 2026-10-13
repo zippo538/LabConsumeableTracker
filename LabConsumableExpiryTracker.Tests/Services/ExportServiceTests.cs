@@ -113,13 +113,16 @@ public class ExportServiceTests
             CancellationToken.None);
         Assert.That(result.Success, Is.True);
         var row = result.Data!.Single();
-        Assert.That(row.ItemId, Is.EqualTo(item.Id));
-        Assert.That(row.Code, Is.EqualTo(item.Code));
-        Assert.That(row.Name, Is.EqualTo(item.Name));
-        Assert.That(row.BaseUnit, Is.EqualTo(item.BaseUnit));
-        Assert.That(row.UsableStock, Is.EqualTo(25m));
-        Assert.That(row.MinimumStock, Is.EqualTo(item.MinimumStock));
-        Assert.That(row.EvaluatedAt, Is.EqualTo(FixedNow));
+        Assert.Multiple(() =>
+        {
+            Assert.That(row.ItemId, Is.EqualTo(item.Id));
+            Assert.That(row.Code, Is.EqualTo(item.Code));
+            Assert.That(row.Name, Is.EqualTo(item.Name));
+            Assert.That(row.BaseUnit, Is.EqualTo(item.BaseUnit));
+            Assert.That(row.UsableStock, Is.EqualTo(25m));
+            Assert.That(row.MinimumStock, Is.EqualTo(item.MinimumStock));
+            Assert.That(row.EvaluatedAt, Is.EqualTo(FixedNow));
+        });
     }
     [Test]
     public async Task GetStockExport_ShouldReturnEmpty_WhenSpecifiedItemDoesNotExist()
@@ -145,8 +148,11 @@ public class ExportServiceTests
         var result = await _service.GetStockExport(
             filter,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Empty);
+        });
     }
     [Test]
     public async Task GetStockExport_ShouldGetAllItems_WhenItemIdIsNotSpecified()
@@ -291,7 +297,7 @@ public class ExportServiceTests
                 result.Data!.Single().ItemId,
                 Is.EqualTo(sufficientItem.Id));
             Assert.That(
-                result?.Data?.Single().IsLowStock,
+                result.Data?.Single().IsLowStock,
                 Is.False);
         });
     }
@@ -335,10 +341,13 @@ public class ExportServiceTests
         var result = await _service.GetConsumptionExport(
             filter,
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Invalid date range: From must be <= To."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Invalid date range: From must be <= To."));
+        });
         _consumptionRepository.Verify(
             x => x.SearchAsync(
                 It.IsAny<Guid?>(),
@@ -435,15 +444,18 @@ public class ExportServiceTests
             CancellationToken.None);
         Assert.That(result.Success, Is.True);
         var row = result.Data!.Single();
-        Assert.That(row.Id, Is.EqualTo(consumption.Id));
-        Assert.That(row.JobId, Is.EqualTo(jobId));
-        Assert.That(row.LotId, Is.EqualTo(lot.Id));
-        Assert.That(row.ItemId, Is.EqualTo(item.Id));
-        Assert.That(row.ItemName, Is.EqualTo(item.Name));
-        Assert.That(row.Quantity, Is.EqualTo(25m));
-        Assert.That(row.BaseUnit, Is.EqualTo(item.BaseUnit));
-        Assert.That(row.ConsumedAt, Is.EqualTo(FixedNow));
-        Assert.That(row.ConsumedBy, Is.EqualTo("Scientist One"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(row.Id, Is.EqualTo(consumption.Id));
+            Assert.That(row.JobId, Is.EqualTo(jobId));
+            Assert.That(row.LotId, Is.EqualTo(lot.Id));
+            Assert.That(row.ItemId, Is.EqualTo(item.Id));
+            Assert.That(row.ItemName, Is.EqualTo(item.Name));
+            Assert.That(row.Quantity, Is.EqualTo(25m));
+            Assert.That(row.BaseUnit, Is.EqualTo(item.BaseUnit));
+            Assert.That(row.ConsumedAt, Is.EqualTo(FixedNow));
+            Assert.That(row.ConsumedBy, Is.EqualTo("Scientist One"));
+        });
     }
     [Test]
     public async Task GetConsumptionExport_ShouldUseUserId_WhenDisplayNameIsNotFound()
@@ -485,10 +497,13 @@ public class ExportServiceTests
         var result = await _service.GetConsumptionExport(
             filter,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(
-            result.Data!.Single().ConsumedBy,
-            Is.EqualTo(consumedBy.ToString()));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(
+                result.Data!.Single().ConsumedBy,
+                Is.EqualTo(consumedBy.ToString()));
+        });
     }
     [Test]
     public async Task GetDisposalExport_ShouldReturnError_WhenFormatIsInvalid()
@@ -500,11 +515,14 @@ public class ExportServiceTests
         var result = await _service.GetDisposalExport(
             filter,
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Invalid format. Only 'csv' is currently supported."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "Invalid format. Only 'csv' is currently supported."));
+        });
         _disposalRepository.Verify(
             x => x.SearchAsync(
                 It.IsAny<Guid?>(),
@@ -526,10 +544,13 @@ public class ExportServiceTests
         var result = await _service.GetDisposalExport(
             filter,
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Invalid date range: From must be <= To."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Invalid date range: From must be <= To."));
+        });
         _disposalRepository.Verify(
             x => x.SearchAsync(
                 It.IsAny<Guid?>(),
@@ -563,11 +584,14 @@ public class ExportServiceTests
         var result = await _service.GetDisposalExport(
             filter,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Empty);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Disposal export retrieved."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Empty);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Disposal export retrieved."));
+        });
     }
     [Test]
     public async Task GetDisposalExport_ShouldReturnRows_WhenDisposalsExist()
@@ -610,16 +634,19 @@ public class ExportServiceTests
             CancellationToken.None);
         Assert.That(result.Success, Is.True);
         var row = result.Data!.Single();
-        Assert.That(row.Id, Is.EqualTo(disposal.Id));
-        Assert.That(row.LotId, Is.EqualTo(lot.Id));
-        Assert.That(row.LotNumber, Is.EqualTo(lot.LotNumber));
-        Assert.That(row.ItemId, Is.EqualTo(item.Id));
-        Assert.That(row.ItemName, Is.EqualTo(item.Name));
-        Assert.That(row.Quantity, Is.EqualTo(20m));
-        Assert.That(row.BaseUnit, Is.EqualTo(item.BaseUnit));
-        Assert.That(row.Reason, Is.EqualTo("Expired"));
-        Assert.That(row.DisposedAt, Is.EqualTo(FixedNow));
-        Assert.That(row.DisposedBy, Is.EqualTo("Warehouse Admin"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(row.Id, Is.EqualTo(disposal.Id));
+            Assert.That(row.LotId, Is.EqualTo(lot.Id));
+            Assert.That(row.LotNumber, Is.EqualTo(lot.LotNumber));
+            Assert.That(row.ItemId, Is.EqualTo(item.Id));
+            Assert.That(row.ItemName, Is.EqualTo(item.Name));
+            Assert.That(row.Quantity, Is.EqualTo(20m));
+            Assert.That(row.BaseUnit, Is.EqualTo(item.BaseUnit));
+            Assert.That(row.Reason, Is.EqualTo("Expired"));
+            Assert.That(row.DisposedAt, Is.EqualTo(FixedNow));
+            Assert.That(row.DisposedBy, Is.EqualTo("Warehouse Admin"));
+        });
     }
     [Test]
     public async Task GetDisposalExport_ShouldUseUserId_WhenDisplayNameIsNotFound()
@@ -655,10 +682,13 @@ public class ExportServiceTests
         var result = await _service.GetDisposalExport(
             filter,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(
-            result.Data!.Single().DisposedBy,
-            Is.EqualTo(disposedBy.ToString()));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(
+                result.Data!.Single().DisposedBy,
+                Is.EqualTo(disposedBy.ToString()));
+        });
     }
     private static Item CreateItem(
         string code = "ITEM-001",

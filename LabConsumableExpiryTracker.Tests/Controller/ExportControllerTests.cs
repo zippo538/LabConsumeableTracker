@@ -37,8 +37,11 @@ public class ExportsControllerTests
 
         var fileResult = result as FileContentResult;
         Assert.That(fileResult, Is.Not.Null);
-        Assert.That(fileResult!.ContentType, Is.EqualTo("text/csv"));
-        Assert.That(fileResult.FileDownloadName, Does.StartWith("stock-export-"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(fileResult!.ContentType, Is.EqualTo("text/csv"));
+            Assert.That(fileResult.FileDownloadName, Does.StartWith("stock-export-"));
+        });
     }
 
     [Test]
@@ -71,8 +74,11 @@ public class ExportsControllerTests
 
         var fileResult = result as FileContentResult;
         Assert.That(fileResult, Is.Not.Null);
-        Assert.That(fileResult!.ContentType, Is.EqualTo("text/csv"));
-        Assert.That(fileResult.FileDownloadName, Does.StartWith("consumptions-export-"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(fileResult!.ContentType, Is.EqualTo("text/csv"));
+            Assert.That(fileResult.FileDownloadName, Does.StartWith("consumptions-export-"));
+        });
     }
 
     [Test]
@@ -105,8 +111,11 @@ public class ExportsControllerTests
 
         var fileResult = result as FileContentResult;
         Assert.That(fileResult, Is.Not.Null);
-        Assert.That(fileResult!.ContentType, Is.EqualTo("text/csv"));
-        Assert.That(fileResult.FileDownloadName, Does.StartWith("disposals-export-"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(fileResult!.ContentType, Is.EqualTo("text/csv"));
+            Assert.That(fileResult.FileDownloadName, Does.StartWith("disposals-export-"));
+        });
     }
 
     [Test]

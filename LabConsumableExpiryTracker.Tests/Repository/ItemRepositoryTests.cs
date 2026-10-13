@@ -114,7 +114,7 @@ public class ItemRepositoryTests
         await SeedItemAsync("ITM-ALL-2", "All 2");
 
         var all = await _repository.GetAllAsync();
-        Assert.That(all.Count, Is.GreaterThanOrEqualTo(2));
+        Assert.That(all, Has.Count.GreaterThanOrEqualTo(2));
     }
 
     [Test]
@@ -174,10 +174,13 @@ public class ItemRepositoryTests
         await SeedItemAsync("ITM-PG-3", "Paged 3");
 
         var page1 = await _repository.GetAllWithLotsAsyncPaged(1, 2);
-        Assert.That(page1.Items, Has.Count.EqualTo(2));
-        Assert.That(page1.TotalCount, Is.GreaterThanOrEqualTo(3));
-        Assert.That(page1.Page, Is.EqualTo(1));
-        Assert.That(page1.PageSize, Is.EqualTo(2));
+        Assert.Multiple(() =>
+        {
+            Assert.That(page1.Items, Has.Count.EqualTo(2));
+            Assert.That(page1.TotalCount, Is.GreaterThanOrEqualTo(3));
+            Assert.That(page1.Page, Is.EqualTo(1));
+            Assert.That(page1.PageSize, Is.EqualTo(2));
+        });
     }
 
     [Test]

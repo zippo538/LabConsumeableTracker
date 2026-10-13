@@ -5,13 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Repositories;
 
-public class ConsumptionRepository : Repository<Consumption, Guid>, IConsumptionRepository
+public class ConsumptionRepository(AppDbContext context) : Repository<Consumption, Guid>(context), IConsumptionRepository
 {
-    private readonly AppDbContext _context;
-    public ConsumptionRepository(AppDbContext context) : base(context)
-    {
-        _context = context;
-    }
+    private readonly AppDbContext _context = context;
+
     public async Task<IReadOnlyList<Consumption>> SearchAsync(
         Guid? jobId, Guid? itemId, Guid? lotId, DateTimeOffset? from, DateTimeOffset? to, CancellationToken ct)
     {

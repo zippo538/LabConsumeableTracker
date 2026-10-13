@@ -79,7 +79,7 @@ public class JobTests
             Is.EqualTo(JobStatus.Cancelled)
         );
     }
-    private Job CreateJob()
+    private static Job CreateJob()
     {
         return new Job(
             Guid.NewGuid(),

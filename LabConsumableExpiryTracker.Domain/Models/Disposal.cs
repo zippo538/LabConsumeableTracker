@@ -1,48 +1,48 @@
-
 namespace LabConsumableExpiryTracker.Domain.Models;
 
-public class Disposal
+public class Disposal(
+    Guid id,
+    Guid lotId,
+    decimal quantity,
+    string reason,
+    DateTimeOffset disposedAt,
+    Guid disposedBy)
 {
-    public Guid Id { get; private set; }
-    public Guid LotId { get; private set; }
-    public decimal Quantity { get; private set; }
-    public string Reason { get; private set; } = string.Empty;
-    public DateTimeOffset DisposedAt { get; private set; }
-    public Guid DisposedBy { get; private set; }
+    public Guid Id { get; } = id;
+    public Guid LotId { get; } = ValidateGuid(lotId, nameof(lotId));
+    public decimal Quantity { get; } = ValidateQuantity(quantity);
+    public string Reason { get; } = ValidateReason(reason);
+    public DateTimeOffset DisposedAt { get; } = disposedAt;
+    public Guid DisposedBy { get; } = ValidateGuid(disposedBy, nameof(disposedBy));
+
     public Lot Lot { get; private set; } = null!;
 
-    private Disposal(Guid id, Guid lotId, decimal quantity, string reason, DateTimeOffset disposedAt)
-    {
-        if (lotId == Guid.Empty)
-            throw new ArgumentException("Lot id is required.", nameof(lotId));
+    public static Disposal Create(
+        Guid lotId, 
+        decimal quantity, 
+        string reason, 
+        DateTimeOffset disposedAt, 
+        Guid disposedBy) =>
+        new(Guid.NewGuid(), lotId, quantity, reason, disposedAt, disposedBy);
 
+    private static Guid ValidateGuid(Guid value, string paramName)
+    {
+        if (value == Guid.Empty)
+            throw new ArgumentException($"{paramName} is required.", paramName);
+        return value;
+    }
+
+    private static decimal ValidateQuantity(decimal quantity)
+    {
         if (quantity <= 0)
             throw new ArgumentOutOfRangeException(nameof(quantity), "Disposal quantity must be greater than zero.");
+        return quantity;
+    }
 
+    private static string ValidateReason(string reason)
+    {
         if (string.IsNullOrWhiteSpace(reason))
             throw new ArgumentException("Disposal reason is required.", nameof(reason));
-
-        Id = id;
-        LotId = lotId;
-        Quantity = quantity;
-        Reason = reason.Trim();
-        DisposedAt = disposedAt;
+        return reason.Trim();
     }
-    public Disposal(
-        Guid id,
-        Guid lotId,
-        decimal quantity,
-        string reason,
-        DateTimeOffset disposedAt,
-        Guid disposedBy)
-        : this(id, lotId, quantity, reason, disposedAt)
-    {
-        if (disposedBy == Guid.Empty)
-            throw new ArgumentException("Disposed by is required.", nameof(disposedBy));
-
-        DisposedBy = disposedBy;
-    }
-    public static Disposal Create(Guid lotId, decimal quantity, string reason, DateTimeOffset disposedAt) =>
-            new(Guid.NewGuid(), lotId, quantity, reason, disposedAt);
-
 }

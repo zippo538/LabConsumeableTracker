@@ -12,7 +12,6 @@ public class Consumption
         DateTimeOffset consumedAt,
         Guid consumedBy)
     {
-
         Id = id;
         JobId = jobId;
         LotId = lotId;

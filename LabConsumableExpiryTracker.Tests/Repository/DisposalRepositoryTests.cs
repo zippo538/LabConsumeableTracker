@@ -105,7 +105,7 @@ public class DisposalRepositoryTests
         await SeedDisposalAsync(lot.Id, 5m, _baseTime);
         await SeedDisposalAsync(lot.Id, 10m, _baseTime);
         var all = await _repository.GetAllAsync();
-        Assert.That(all.Count, Is.GreaterThanOrEqualTo(2));
+        Assert.That(all, Has.Count.GreaterThanOrEqualTo(2));
     }
     [Test]
     public async Task DeleteAsync_RemovesEntity()
@@ -137,8 +137,11 @@ public class DisposalRepositoryTests
         await SeedDisposalAsync(lot2.Id, 15m, _baseTime);
         var result = await _repository.GetByLotIdAsync(lot1.Id);
         Assert.That(result, Has.Count.EqualTo(2));
-        Assert.That(result.All(d => d.LotId == lot1.Id), Is.True);
-        Assert.That(result[0].DisposedAt, Is.GreaterThan(result[1].DisposedAt));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.All(d => d.LotId == lot1.Id), Is.True);
+            Assert.That(result[0].DisposedAt, Is.GreaterThan(result[1].DisposedAt));
+        });
     }
     [Test]
     public async Task GetByLotIdAsync_ReturnsEmpty_WhenNoDisposals()

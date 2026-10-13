@@ -127,13 +127,13 @@ useEffect(() => {
       }
 
       onClose();
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while saving the item.';
+    } catch (err: any) {
+      const message =
+          err?.response?.data?.message ??
+          err?.message ??
+          'An error occurred while saving the item.';
 
-      setError(msg);
+      setError(message);
     }
   };
 

@@ -4,5 +4,5 @@ namespace LabConsumableExpiryTracker.Application.Services.Interfaces;
 
 public interface IImageService
 {
-    Task<ServiceResult<(Stream Stream, string ContentType)>> GetSecureImageAsync(Guid imageId, CancellationToken cancellationToken);
+    Task<ServiceResult<(Stream Stream, string ContentType)>> GetSecureImageAsync(Guid imageId);
 }

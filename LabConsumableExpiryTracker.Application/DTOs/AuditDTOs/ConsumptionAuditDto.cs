@@ -9,7 +9,7 @@ public sealed class ConsumptionAuditDto
     public Guid LotId { get; init; }
     public Guid ItemId { get; init; }
     public string ItemName {get;init;}= string.Empty;
-    public string itemCode {get;init;} = string.Empty;
+    public string ItemCode {get;init;} = string.Empty;
     public string LotNumber { get; init; } = string.Empty;
     public decimal Quantity { get; init; }
     public UnitOfMeasure BaseUnit { get; init; }

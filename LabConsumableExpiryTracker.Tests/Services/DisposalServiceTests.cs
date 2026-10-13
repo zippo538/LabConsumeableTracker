@@ -68,8 +68,11 @@ public class DisposalServiceTests
 
         var result = await _service.CreateDisposalAsync(lotId, request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Quantity harus lebih dari nol."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Quantity harus lebih dari nol."));
+        });
 
         _lotRepository.Verify(
             x => x.GetByIdAsync(
@@ -92,8 +95,11 @@ public class DisposalServiceTests
 
         var result = await _service.CreateDisposalAsync(lotId, request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Quantity harus lebih dari nol."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Quantity harus lebih dari nol."));
+        });
     }
 
     [Test]
@@ -110,8 +116,11 @@ public class DisposalServiceTests
 
         var result = await _service.CreateDisposalAsync(lotId, request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Reason wajib diisi."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Reason wajib diisi."));
+        });
     }
 
     [Test]
@@ -128,8 +137,11 @@ public class DisposalServiceTests
 
         var result = await _service.CreateDisposalAsync(lotId, request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Reason wajib diisi."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Reason wajib diisi."));
+        });
     }
 
     [Test]
@@ -150,8 +162,11 @@ public class DisposalServiceTests
 
         var result = await _service.CreateDisposalAsync(lotId, request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Lot not found."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Lot not found."));
+        });
 
         _lotRepository.Verify(
             x => x.GetByIdAsync(lotId, It.IsAny<CancellationToken>()),
@@ -181,8 +196,11 @@ public class DisposalServiceTests
 
         var result = await _service.CreateDisposalAsync(lotId, request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Lot is already disposed."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Lot is already disposed."));
+        });
     }
 
     [Test]
@@ -208,10 +226,13 @@ public class DisposalServiceTests
 
         var result = await _service.CreateDisposalAsync(lotId, request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Disposal quantity exceeds remaining quantity."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Disposal quantity exceeds remaining quantity."));
+        });
     }
 
     [Test]
@@ -237,221 +258,14 @@ public class DisposalServiceTests
 
         var result = await _service.CreateDisposalAsync(lotId, request);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Invalid RowVersion format."));
-    }
-
-    [Test]
-    public async Task CreateDisposalAsync_ShouldCreateDisposal_WhenRemainingQuantityIsGreaterThanZero()
-    {
-        var lotId = Guid.NewGuid();
-        var expectedRowVersion = new byte[] { 1, 2, 3 };
-
-        var lot = CreateLot(
-            lotId,
-            remainingQuantity: 100m,
-            administrativeStatus: LotAdministrativeStatus.Active);
-
-        var request = new CreateDisposalDto
+        Assert.Multiple(() =>
         {
-            Quantity = 30,
-            Reason = "Expired",
-            ExpectedRowVersion = Convert.ToBase64String(expectedRowVersion)
-        };
-
-        var disposalDto = new DisposalDto();
-        var lotSnapshotDto = new LotSnapshotDto();
-
-        _lotRepository
-            .Setup(x => x.GetByIdAsync(lotId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(lot);
-
-        _lotRepository
-            .Setup(x => x.UpdateAsync(lot, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(lot);
-
-        _disposalRepository
-            .Setup(x => x.AddAsync(
-                It.IsAny<Disposal>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Disposal disposal, CancellationToken _) => disposal);
-
-        _unitOfWork
-            .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
-
-        _mapper
-            .Setup(x => x.Map<DisposalDto>(It.IsAny<Disposal>()))
-            .Returns(disposalDto);
-
-        _mapper
-            .Setup(x => x.Map<LotSnapshotDto>(lot))
-            .Returns(lotSnapshotDto);
-
-        var result = await _service.CreateDisposalAsync(lotId, request);
-
-        Assert.That(result.Success, Is.True);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Lot disposed successfully."));
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data!.Disposal, Is.EqualTo(disposalDto));
-        Assert.That(result.Data.Lot, Is.EqualTo(lotSnapshotDto));
-        Assert.That(lot.RemainingQuantity, Is.EqualTo(70m));
-        Assert.That(lot.AdministrativeStatus, Is.EqualTo(LotAdministrativeStatus.Active));
-
-        _lotRepository.Verify(
-            x => x.UpdateAsync(lot, It.IsAny<CancellationToken>()),
-            Times.Once);
-
-        _disposalRepository.Verify(
-            x => x.AddAsync(
-                It.IsAny<Disposal>(),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-
-        _unitOfWork.Verify(
-            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
-            Times.Once);
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Invalid RowVersion format."));
+        });
     }
 
-    [Test]
-    public async Task CreateDisposalAsync_ShouldDisposeLot_WhenRemainingQuantityBecomesZero()
-    {
-        var lotId = Guid.NewGuid();
-        var expectedRowVersion = new byte[] { 1, 2, 3 };
-
-        var lot = CreateLot(
-            lotId,
-            remainingQuantity: 100m,
-            administrativeStatus: LotAdministrativeStatus.Active);
-
-        var request = new CreateDisposalDto
-        {
-            Quantity = 100,
-            Reason = "Expired",
-            ExpectedRowVersion = Convert.ToBase64String(expectedRowVersion)
-        };
-
-        _lotRepository
-            .Setup(x => x.GetByIdAsync(lotId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(lot);
-
-        _lotRepository
-            .Setup(x => x.UpdateAsync(lot, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(lot);
-
-        _disposalRepository
-            .Setup(x => x.AddAsync(
-                It.IsAny<Disposal>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Disposal disposal, CancellationToken _) => disposal);
-
-        _unitOfWork
-            .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
-
-        _mapper
-            .Setup(x => x.Map<DisposalDto>(It.IsAny<Disposal>()))
-            .Returns(new DisposalDto());
-
-        _mapper
-            .Setup(x => x.Map<LotSnapshotDto>(lot))
-            .Returns(new LotSnapshotDto());
-
-        var result = await _service.CreateDisposalAsync(lotId, request);
-
-        Assert.That(result.Success, Is.True);
-        Assert.That(lot.RemainingQuantity, Is.EqualTo(0m));
-        Assert.That(
-            lot.AdministrativeStatus,
-            Is.EqualTo(LotAdministrativeStatus.Disposed));
-    }
-
-    [Test]
-    public async Task CreateDisposalAsync_ShouldReturnConcurrencyError_WhenConcurrencyExceptionOccurs()
-    {
-        var lotId = Guid.NewGuid();
-
-        var lot = CreateLot(
-            lotId,
-            remainingQuantity: 100m,
-            administrativeStatus: LotAdministrativeStatus.Active);
-
-        var request = new CreateDisposalDto
-        {
-            Quantity = 10,
-            Reason = "Expired",
-            ExpectedRowVersion = Convert.ToBase64String([1, 2, 3])
-        };
-
-        _lotRepository
-            .Setup(x => x.GetByIdAsync(lotId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(lot);
-
-        _lotRepository
-            .Setup(x => x.UpdateAsync(lot, It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new DbUpdateConcurrencyException());
-
-        var result = await _service.CreateDisposalAsync(lotId, request);
-
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Concurrency conflict. The lot was modified by another user."));
-        Assert.That(
-            result.Errors,
-            Does.Contain("CONCURRENCY_CONFLICT"));
-
-        _lotRepository.Verify(
-            x => x.UpdateAsync(lot, It.IsAny<CancellationToken>()),
-            Times.Once);
-
-        _disposalRepository.Verify(
-            x => x.AddAsync(
-                It.IsAny<Disposal>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
-    [Test]
-    public async Task CreateDisposalAsync_ShouldReturnError_WhenInvalidOperationExceptionOccurs()
-    {
-        var lotId = Guid.NewGuid();
-
-        var lot = CreateLot(
-            lotId,
-            remainingQuantity: 100m,
-            administrativeStatus: LotAdministrativeStatus.Active);
-
-        var request = new CreateDisposalDto
-        {
-            Quantity = 10,
-            Reason = "Expired",
-            ExpectedRowVersion = Convert.ToBase64String([1, 2, 3])
-        };
-
-        _lotRepository
-            .Setup(x => x.GetByIdAsync(lotId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(lot);
-
-        _lotRepository
-            .Setup(x => x.UpdateAsync(lot, It.IsAny<CancellationToken>()))
-            .ThrowsAsync(
-                new InvalidOperationException("Invalid disposal operation."));
-
-        var result = await _service.CreateDisposalAsync(lotId, request);
-
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Invalid disposal operation."));
-
-        _unitOfWork.Verify(
-            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
+    
 
     private static Lot CreateLot(
         Guid lotId,

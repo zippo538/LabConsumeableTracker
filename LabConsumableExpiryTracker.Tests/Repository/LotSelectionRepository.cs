@@ -89,9 +89,12 @@ public class LotSelectionRepositoryTests
         var lot3 = await SeedLotAsync(item.Id, today.AddDays(5), LotAdministrativeStatus.Active, 50m, now.AddDays(-2));
         var result = await _repository.GetAvailableLotsAsync(item.Id, now, CancellationToken.None);
         Assert.That(result, Has.Count.EqualTo(3));
-        Assert.That(result[0].Id, Is.EqualTo(lot1.Id));
-        Assert.That(result[1].Id, Is.EqualTo(lot3.Id));
-        Assert.That(result[2].Id, Is.EqualTo(lot2.Id));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result[0].Id, Is.EqualTo(lot1.Id));
+            Assert.That(result[1].Id, Is.EqualTo(lot3.Id));
+            Assert.That(result[2].Id, Is.EqualTo(lot2.Id));
+        });
     }
     [Test]
     public async Task GetAvailableLotsAsync_ReturnsEmpty_WhenNoEligibleLots()

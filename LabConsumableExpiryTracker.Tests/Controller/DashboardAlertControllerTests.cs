@@ -43,7 +43,7 @@ public class DashboardAlertsControllerTests
 
         // Assert
         // PERBAIKAN: Gunakan result.Result untuk mengakses IActionResult yang sebenarnya
-        Assert.IsInstanceOf<OkObjectResult>(result.Result);
+        Assert.That(result.Result, Is.InstanceOf<OkObjectResult>());
         var okResult = result.Result as OkObjectResult;
 
         Assert.That(okResult, Is.Not.Null);
@@ -65,7 +65,7 @@ public class DashboardAlertsControllerTests
 
         // Assert
         // PERBAIKAN: Gunakan result.Result untuk mengakses IActionResult yang sebenarnya
-        Assert.IsInstanceOf<BadRequestObjectResult>(result.Result);
+        Assert.That(result.Result, Is.InstanceOf<BadRequestObjectResult>());
         var badRequestResult = result.Result as BadRequestObjectResult;
 
         Assert.That(badRequestResult, Is.Not.Null);

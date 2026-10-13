@@ -26,10 +26,13 @@ public class DashboardSummaryControllerTests
         _serviceMock.Setup(s => s.GetSummaryAsync(itemId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(serviceResult);
         var result = await _controller.GetSummary(itemId, CancellationToken.None);
-        Assert.IsInstanceOf<OkObjectResult>(result);
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
         var okResult = result as OkObjectResult;
-        Assert.That(okResult!.Value, Is.EqualTo(serviceResult));
-        Assert.That(okResult.Value, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(okResult!.Value, Is.EqualTo(serviceResult));
+            Assert.That(okResult.Value, Is.Not.Null);
+        });
     }
     [Test]
     public async Task GetSummary_Failure_ReturnsBadRequest()
@@ -39,7 +42,7 @@ public class DashboardSummaryControllerTests
         _serviceMock.Setup(s => s.GetSummaryAsync(itemId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(serviceResult);
         var result = await _controller.GetSummary(itemId, CancellationToken.None);
-        Assert.IsInstanceOf<BadRequestObjectResult>(result);
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
         var badRequestResult = result as BadRequestObjectResult;
         Assert.That(badRequestResult!.Value, Is.EqualTo(serviceResult));
     }
@@ -51,7 +54,7 @@ public class DashboardSummaryControllerTests
         _serviceMock.Setup(s => s.GetSummaryAsync(null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(serviceResult);
         var result = await _controller.GetSummary(null, CancellationToken.None);
-        Assert.IsInstanceOf<OkObjectResult>(result);
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
         _serviceMock.Verify(s => s.GetSummaryAsync(null, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

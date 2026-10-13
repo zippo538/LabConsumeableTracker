@@ -149,10 +149,13 @@ public class ConsumptionRepositoryTests
         _seededConsumptionIds.Add(consumption.Id);
         var fetched = await _repository.GetByIdAsync(consumption.Id);
         Assert.That(fetched, Is.Not.Null);
-        Assert.That(fetched!.JobId, Is.EqualTo(job.Id));
-        Assert.That(fetched.LotId, Is.EqualTo(lot.Id));
-        Assert.That(fetched.Quantity, Is.EqualTo(5m));
-        Assert.That(fetched.ConsumedBy, Is.EqualTo(testActorId));
+        Assert.Multiple(() =>
+        {
+            Assert.That(fetched!.JobId, Is.EqualTo(job.Id));
+            Assert.That(fetched.LotId, Is.EqualTo(lot.Id));
+            Assert.That(fetched.Quantity, Is.EqualTo(5m));
+            Assert.That(fetched.ConsumedBy, Is.EqualTo(testActorId));
+        });
     }
     [Test]
     public async Task GetByIdAsync_ReturnsNull_WhenNotFound()

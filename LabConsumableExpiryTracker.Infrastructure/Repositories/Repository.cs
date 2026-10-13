@@ -37,8 +37,7 @@ public class Repository<TEntity, TKey>
     }
 
     public Task<TEntity> UpdateAsync(
-        TEntity entity,
-        CancellationToken ct = default)
+        TEntity entity)
     {
         DbSet.Update(entity);
 

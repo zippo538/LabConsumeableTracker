@@ -37,13 +37,15 @@ public class ImageServiceTests
             .Returns(false);
 
         var result = await _service.GetSecureImageAsync(
-            imageId,
-            CancellationToken.None);
+            imageId);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Access denied. Please log in first."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Access denied. Please log in first."));
+        });
 
         _currentUserContext.Verify(
             x => x.IsInRole(It.IsAny<string>()),
@@ -51,8 +53,7 @@ public class ImageServiceTests
 
         _imageStorageRepository.Verify(
             x => x.GetImageAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()),
+                It.IsAny<Guid>()),
             Times.Never);
     }
 
@@ -74,19 +75,20 @@ public class ImageServiceTests
             .Returns(false);
 
         var result = await _service.GetSecureImageAsync(
-            imageId,
-            CancellationToken.None);
+            imageId);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "You do not have permission to view this image."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "You do not have permission to view this image."));
+        });
 
         _imageStorageRepository.Verify(
             x => x.GetImageAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()),
+                It.IsAny<Guid>()),
             Times.Never);
     }
 
@@ -109,24 +111,24 @@ public class ImageServiceTests
 
         _imageStorageRepository
             .Setup(x => x.GetImageAsync(
-                imageId,
-                CancellationToken.None))
+                imageId))
             .ReturnsAsync(
                 (null, "image/jpeg"));
 
         var result = await _service.GetSecureImageAsync(
-            imageId,
-            CancellationToken.None);
+            imageId);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Image Not Found"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Image Not Found"));
+        });
 
         _imageStorageRepository.Verify(
             x => x.GetImageAsync(
-                imageId,
-                CancellationToken.None),
+                imageId),
             Times.Once);
     }
 
@@ -151,25 +153,25 @@ public class ImageServiceTests
 
         _imageStorageRepository
             .Setup(x => x.GetImageAsync(
-                imageId,
-                CancellationToken.None))
+                imageId))
             .ReturnsAsync(
                 (stream, "image/jpeg"));
 
         var result = await _service.GetSecureImageAsync(
-            imageId,
-            CancellationToken.None);
+            imageId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data.Stream, Is.SameAs(stream));
-        Assert.That(
-            result.Data.ContentType,
-            Is.EqualTo("image/jpeg"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data.Stream, Is.SameAs(stream));
+            Assert.That(
+                result.Data.ContentType,
+                Is.EqualTo("image/jpeg"));
+        });
 
         _imageStorageRepository.Verify(
             x => x.GetImageAsync(
-                imageId,
-                CancellationToken.None),
+                imageId),
             Times.Once);
     }
 
@@ -194,25 +196,25 @@ public class ImageServiceTests
 
         _imageStorageRepository
             .Setup(x => x.GetImageAsync(
-                imageId,
-                CancellationToken.None))
+                imageId))
             .ReturnsAsync(
                 (stream, "image/png"));
 
         var result = await _service.GetSecureImageAsync(
-            imageId,
-            CancellationToken.None);
+            imageId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data.Stream, Is.SameAs(stream));
-        Assert.That(
-            result.Data.ContentType,
-            Is.EqualTo("image/png"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data.Stream, Is.SameAs(stream));
+            Assert.That(
+                result.Data.ContentType,
+                Is.EqualTo("image/png"));
+        });
 
         _imageStorageRepository.Verify(
             x => x.GetImageAsync(
-                imageId,
-                CancellationToken.None),
+                imageId),
             Times.Once);
     }
 }

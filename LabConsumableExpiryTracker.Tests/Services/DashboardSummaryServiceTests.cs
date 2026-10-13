@@ -56,8 +56,11 @@ public class DashboardSummaryServiceTests
 
         var result = await _service.GetSummaryAsync(itemId);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Item tidak ditemukan."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Is.EqualTo("Item tidak ditemukan."));
+        });
 
         _itemRepository.Verify(
             x => x.GetByIdWithLotsAsync(
@@ -108,15 +111,20 @@ public class DashboardSummaryServiceTests
 
         var result = await _service.GetSummaryAsync(itemId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
 
-
-        Assert.That(result.Data.ValidLotCount, Is.EqualTo(1));
-        Assert.That(result.Data.ExpiringSoonLotCount, Is.EqualTo(1));
-        Assert.That(result.Data.ExpiredLotCount, Is.EqualTo(1));
-        Assert.That(result.Data.BlockedLotCount, Is.EqualTo(1));
-        Assert.That(result.Data.EvaluatedAt, Is.EqualTo(FixedNow));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data.ValidLotCount, Is.EqualTo(1));
+            Assert.That(result.Data.ExpiringSoonLotCount, Is.EqualTo(1));
+            Assert.That(result.Data.ExpiredLotCount, Is.EqualTo(1));
+            Assert.That(result.Data.BlockedLotCount, Is.EqualTo(1));
+            Assert.That(result.Data.EvaluatedAt, Is.EqualTo(FixedNow));
+        });
     }
 
     [Test]
@@ -142,10 +150,14 @@ public class DashboardSummaryServiceTests
 
         var result = await _service.GetSummaryAsync(itemId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data?.ExpiringSoonLotCount, Is.EqualTo(0));
-        Assert.That(result.Data.ExpiredLotCount, Is.EqualTo(0));
-        Assert.That(result.Data.LowStockItemCount, Is.EqualTo(0));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data?.ExpiringSoonLotCount, Is.EqualTo(0));
+            if (result.Data == null) return;
+            Assert.That(result.Data.ExpiredLotCount, Is.EqualTo(0));
+            Assert.That(result.Data.LowStockItemCount, Is.EqualTo(0));
+        });
     }
 
     [Test]
@@ -171,9 +183,12 @@ public class DashboardSummaryServiceTests
 
         var result = await _service.GetSummaryAsync(itemId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data?.ExpiredLotCount, Is.EqualTo(0));
-        Assert.That(result.Data.BlockedLotCount, Is.EqualTo(0));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data?.ExpiredLotCount, Is.EqualTo(0));
+            if (result.Data != null) Assert.That(result.Data.BlockedLotCount, Is.EqualTo(0));
+        });
     }
 
     [Test]
@@ -234,8 +249,11 @@ public class DashboardSummaryServiceTests
 
         var result = await _service.GetSummaryAsync(null);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
         Assert.That(result.Data.ExpiredLotCount, Is.EqualTo(0));
     }
 
@@ -248,15 +266,21 @@ public class DashboardSummaryServiceTests
 
         var result = await _service.GetSummaryAsync(null);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data, Is.Not.Null);
+        });
 
-        Assert.That(result.Data!.LowStockItemCount, Is.EqualTo(0));
-        Assert.That(result.Data.ValidLotCount, Is.EqualTo(0));
-        Assert.That(result.Data.ExpiringSoonLotCount, Is.EqualTo(0));
-        Assert.That(result.Data.ExpiredLotCount, Is.EqualTo(0));
-        Assert.That(result.Data.BlockedLotCount, Is.EqualTo(0));
-        Assert.That(result.Data.EvaluatedAt, Is.EqualTo(FixedNow));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data!.LowStockItemCount, Is.EqualTo(0));
+            Assert.That(result.Data.ValidLotCount, Is.EqualTo(0));
+            Assert.That(result.Data.ExpiringSoonLotCount, Is.EqualTo(0));
+            Assert.That(result.Data.ExpiredLotCount, Is.EqualTo(0));
+            Assert.That(result.Data.BlockedLotCount, Is.EqualTo(0));
+            Assert.That(result.Data.EvaluatedAt, Is.EqualTo(FixedNow));
+        });
     }
 
     [Test]
@@ -282,9 +306,12 @@ public class DashboardSummaryServiceTests
 
         var result = await _service.GetSummaryAsync(itemId);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Data!.LowStockItemCount, Is.EqualTo(0));
-        Assert.That(result.Data.ValidLotCount, Is.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Data!.LowStockItemCount, Is.EqualTo(0));
+            Assert.That(result.Data.ValidLotCount, Is.EqualTo(1));
+        });
     }
 
     [Test]
