@@ -390,6 +390,7 @@ public class LotService : ILotService
                     LotNumber = lot.LotNumber,
                     ExpiryDate = lot.ExpiryDate,
                     RemainingQuantity = lot.RemainingQuantity,
+                    StorageLocation = lot.StorageLocation,
                     Quantity = allocation.Quantity,
                     RowVersion = lot.RowVersion
                 };

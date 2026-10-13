@@ -32,6 +32,7 @@
     <ItemGroup>
       <ProjectReference Include="..\LabConsumableExpiryTracker.Application\LabConsumableExpiryTracker.Application.csproj" />
       <ProjectReference Include="..\LabConsumableExpiryTracker.API\LabConsumableExpiryTracker.API.csproj" />
+      <ProjectReference Include="..\LabConsumableExpiryTracker.Infrastructure\LabConsumableExpiryTracker.Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>

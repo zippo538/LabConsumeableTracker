@@ -15,7 +15,7 @@ public class ItemDto
     public UnitOfMeasure BaseUnit { get; init; }
 
     public decimal MinimumStock { get; init; }
-
+    public int ExpiringSoonDays { get; init; }
     public StockLevelStatus StockStatus {get;set;}
 
     public decimal TotalRemainingQuantity { get; set; }

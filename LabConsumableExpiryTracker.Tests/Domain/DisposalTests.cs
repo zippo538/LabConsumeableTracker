@@ -14,7 +14,8 @@ public class DisposalTests
                 lotId,
                 20,
                 "Expired material",
-                DateTimeOffset.UtcNow
+                DateTimeOffset.UtcNow,
+                Guid.NewGuid()
             );
         Assert.Multiple(() =>
         {
@@ -35,7 +36,8 @@ public class DisposalTests
                 Guid.NewGuid(),
                 0,
                 "Expired",
-                DateTimeOffset.UtcNow
+                DateTimeOffset.UtcNow,
+                Guid.NewGuid()
             );
         });
     }
@@ -48,7 +50,8 @@ public class DisposalTests
                 Guid.NewGuid(),
                 10,
                 "",
-                DateTimeOffset.UtcNow
+                DateTimeOffset.UtcNow,
+                Guid.NewGuid()
             );
         });
     }

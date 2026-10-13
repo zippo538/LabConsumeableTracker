@@ -119,6 +119,8 @@ public class DashboardAlertService(
                     Href = $"/app/lots/{alert.LotId}?action=status"
                 });
                 break;
+            default:
+                throw new ArgumentOutOfRangeException();
         }
 
         return actions;

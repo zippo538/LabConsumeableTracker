@@ -54,7 +54,7 @@ public class LotRepository(
         return lots;
     }
 
-    public async Task<PagedResult<Lot>> GetAllWithItemAsyncPage(
+    public async Task<PagedResult<Lot>> GetAllWithItemAsyncPage(    
         int page,
         int pageSize,
         string? search = null,
@@ -113,7 +113,8 @@ public class LotRepository(
         }
 
         query = query
-            .OrderBy(lot => lot.ExpiryDate)
+            .OrderByDescending(lot => lot.CreatedAt)
+            .ThenBy(lot => lot.ExpiryDate)
             .ThenBy(lot => lot.LotNumber);
 
         var totalCount = await query.CountAsync(ct);

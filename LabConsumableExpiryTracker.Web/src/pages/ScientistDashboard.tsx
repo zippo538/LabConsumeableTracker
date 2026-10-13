@@ -48,7 +48,7 @@ export const ScientistDashboard: FC<DashboardProps> = ({ user }) => {
         />
       ) : (
         <>
-          <p className="mt-2 text-xs text-slate-400">
+          <p className="mt-2 text-xs text-slate-400 mb-5">
             Last Refresh : {formatEvaluatedAt(data.evaluatedAt)}
           </p>
           <SummaryStatsCard

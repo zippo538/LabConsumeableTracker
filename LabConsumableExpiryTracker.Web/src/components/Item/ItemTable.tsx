@@ -115,14 +115,13 @@ export const ItemTable: React.FC<ItemTableProps> = ({
             <th className="py-3.5 px-4">Base Unit</th>
             <th className="py-3.5 px-4">Min. Stock</th>
             <th className="py-3.5 px-4">Expiry Warning</th>
-            <th className="py-3.5 px-4">Status</th>
             {showActions && (
               <th className="py-3.5 pr-6 pl-4 text-right">Actions</th>
             )}
           </tr>
         </thead>
 
-        <tbody className="divide-y divide-slate-100 text-xs">
+        <tbody className="divide-y divide-slate-100">
           {items.map((item) => (
             <tr
               key={item.id}
@@ -138,35 +137,28 @@ export const ItemTable: React.FC<ItemTableProps> = ({
                   </div>
 
                   <div>
-                    <p className="font-bold text-slate-900 leading-snug">
+                    <p className=" font-semibold text-[14px] text-slate-900">
                       {item.code}
                     </p>
-                    <p className="text-[11px] text-slate-400 leading-tight">
+                    <p className="text-xs text-slate-500 font-bold">
                       {item.name}
                     </p>
                   </div>
                 </div>
               </td>
 
-              <td className="py-4 px-4 font-medium text-slate-700">
+              <td className="py-4 px-4 text-sm font-medium text-slate-800">
                 {item.baseUnit}
               </td>
 
-              <td className="py-4 px-4 font-semibold text-slate-800">
+              <td className="py-4 px-4 text-sm font-medium text-slate-800">
                 {item.minimumStock}
               </td>
 
-              <td className="py-4 px-4 text-slate-600 font-medium">
+              <td className="py-4 px-4 text-sm font-medium text-slate-800">
                 {item.expiringSoonDays
                   ? `${item.expiringSoonDays} days`
                   : "14 days"}
-              </td>
-
-              <td className="py-4 px-4">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Active
-                </span>
               </td>
 
               {showActions && (

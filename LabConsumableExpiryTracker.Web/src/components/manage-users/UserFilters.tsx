@@ -96,7 +96,7 @@ export function UserFilters({
                 <button
                     type="button"
                     onClick={onAddUser}
-                    className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+                    className="rounded-lg bg-[#0EA5A5] hover:bg-[#1dbaba] px-4 py-2 text-sm font-medium text-white"
                 >
                     + Add user
                 </button>

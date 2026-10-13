@@ -1,7 +1,7 @@
 using LabConsumableExpiryTracker.Application.DTOs.AuditDTOs;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
-using LabConsumableExpiryTracker.Infrastructure.Data.Entities;
+using LabConsumableExpiryTracker.Infrastructure.Models;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using LabConsumableExpiryTracker.Infrastructure.Repositories;
 using LabConsumableExpiryTracker.Tests.Helpers;

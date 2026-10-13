@@ -14,13 +14,15 @@ public class ItemRepository(
 {
     private readonly AppDbContext _context = context;
 
-    public async Task<IReadOnlyList<Item>> GetAllWithLotsAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<Item>> GetAllWithLotsAsync(
+        CancellationToken ct = default)
     {
         logger.LogDebug("Retrieving all items with their lots");
 
         var items = await _context.Items
             .AsNoTracking()
             .Include(item => item.Lots)
+            .OrderByDescending(item => item.CreatedAt)
             .ToListAsync(ct);
 
         logger.LogDebug(
@@ -45,7 +47,7 @@ public class ItemRepository(
         var query = _context.Items
             .AsNoTracking()
             .Include(item => item.Lots)
-            .OrderBy(item => item.Code);
+            .OrderByDescending(item => item.CreatedAt);
 
         var totalCount = await query.CountAsync(ct);
 

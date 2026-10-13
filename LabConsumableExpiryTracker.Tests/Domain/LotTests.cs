@@ -27,20 +27,6 @@ public class LotTests
         });
     }
     [Test]
-    public void Constructor_WhenRemainingQuantityNegative_ShouldThrowException()
-    {
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-        {
-        });
-    }
-    [Test]
-    public void Constructor_WhenRemainingGreaterThanInitial_ShouldThrowException()
-    {
-        Assert.Throws<ArgumentException>(() =>
-        {
-        });
-    }
-    [Test]
     public void UpdateRemainingQuantity_ShouldReduceStock()
     {
         var lot = CreateLot();

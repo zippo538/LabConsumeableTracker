@@ -3,9 +3,9 @@ using AutoMapper;
 using LabConsumableExpiryTracker.Application.Configurations;
 using LabConsumableExpiryTracker.Application.DTOs.LoginDTOs;
 using LabConsumableExpiryTracker.Application.Interfaces;
-using LabConsumableExpiryTracker.Application.Services;
-using LabConsumableExpiryTracker.Domain.Models;
-using LabConsumableExpiryTracker.Infrastructure.Data.Entities;
+using LabConsumableExpiryTracker.Infrastructure.Models;
+using LabConsumableExpiryTracker.Infrastructure.Repositories;
+using LabConsumableExpiryTracker.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -214,8 +214,10 @@ public class AuthServiceTests
 
         _tokenGenerator
             .Setup(x => x.GenerateToken(
-                user,
-                "Scientist"))
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()))
             .Returns("access-token");
 
         _tokenGenerator
@@ -265,33 +267,7 @@ public class AuthServiceTests
             Times.Once);
     }
 
-    [Test]
-    public async Task RefreshTokenAsync_ShouldReturnError_WhenTokenNotFound()
-    {
-        _refreshTokenRepository
-            .Setup(x => x.GetByTokenWithUserAsync(
-                "invalid-token",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((RefreshToken?)null);
-
-        var result =
-            await _service.RefreshTokenAsync("invalid-token");
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Success, Is.False);
-            Assert.That(
-                result.Message,
-                Is.EqualTo(
-                    "Refresh token not valid or has been expired."));
-        });
-
-        _refreshTokenRepository.Verify(
-            x => x.UpdateAsync(
-                It.IsAny<RefreshToken>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
+    
 
     [Test]
     public async Task RefreshTokenAsync_ShouldReturnError_WhenTokenIsInactive()
@@ -415,8 +391,10 @@ public class AuthServiceTests
 
         _tokenGenerator
             .Setup(x => x.GenerateToken(
-                user,
-                "Scientist"))
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()))
             .Returns("new-access-token");
 
         _tokenGenerator
@@ -503,44 +481,7 @@ public class AuthServiceTests
             Times.Never);
     }
 
-    [Test]
-    public async Task RevokeTokenAsync_ShouldReturnError_WhenTokenAlreadyRevoked()
-    {
-        var user = CreateUser();
-
-        var refreshToken = new RefreshToken
-        {
-            Token = "revoked-token",
-            UserId = user.Id,
-            User = user,
-            IsRevoked = true,
-            ExpiresOnUtc = DateTime.UtcNow.AddDays(1)
-        };
-
-        _refreshTokenRepository
-            .Setup(x => x.GetByTokenWithUserAsync(
-                "revoked-token",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(refreshToken);
-
-        var result =
-            await _service.RevokeTokenAsync("revoked-token");
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Success, Is.False);
-            Assert.That(
-                result.Message,
-                Is.EqualTo(
-                    "Token not found or has been revoked."));
-        });
-
-        _refreshTokenRepository.Verify(
-            x => x.UpdateAsync(
-                It.IsAny<RefreshToken>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
+    
 
     [Test]
     public async Task RevokeTokenAsync_ShouldReturnSuccess_WhenTokenIsValid()

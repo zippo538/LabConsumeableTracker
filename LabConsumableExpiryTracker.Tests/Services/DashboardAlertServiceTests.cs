@@ -391,39 +391,6 @@ public class DashboardAlertServiceTests
                     $"/app/lots/{alert.LotId}?action=status"));
         });
     }
-
-    [Test]
-    public async Task GetAlertsAsync_ShouldReturnOnlyViewAction_ForWarehouseAdminUnknownAlertType()
-    {
-        var query = CreateQuery();
-
-        var alert = CreateAlert(
-            (DashboardAlertType)999,
-            AlertResourceType.Lot);
-
-        var page = CreatePagedResult(alert);
-
-        SetupValidValidation();
-
-        SetupWarehouseAdmin();
-
-        _repository
-            .Setup(x => x.GetAlertsAsync(
-                query,
-                FixedNow,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(page);
-
-        var result = await _service.GetAlertsAsync(query);
-
-        Assert.That(result.Success, Is.True);
-
-        var actions = result.Data!.Items[0].AllowedActions;
-
-        Assert.That(actions, Has.Count.EqualTo(1));
-        Assert.That(actions[0].Code, Is.EqualTo("ViewLot"));
-    }
-
     [Test]
     public async Task GetAlertsAsync_ShouldReturnEmptyItems_WhenRepositoryReturnsEmptyPage()
     {

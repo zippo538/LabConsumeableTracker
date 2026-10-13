@@ -1,5 +1,5 @@
 using FluentValidation;
-using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Infrastructure.Models;
 using LabConsumableExpiryTracker.Infrastructure.Persistence;
 using LabConsumableExpiryTracker.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -135,12 +135,12 @@ builder.Services.AddFluentValidationAutoValidation();
 
 builder.Services.AddAutoMapper(cfg =>
 {
-    cfg.AddProfile<UserMappingProfile>();
+    cfg.AddProfile<LabConsumableExpiryTracker.Infrastructure.Mappings.UserMappingProfile>();
     cfg.AddProfile<ItemMappingProfile>();
     cfg.AddProfile<LotMappingProfile>();
     cfg.AddProfile<JobMappingProfile>();
     cfg.AddProfile<DisposalMappingProfile>();
-    cfg.AddProfile<LoginMappingProfile>();
+    cfg.AddProfile<LabConsumableExpiryTracker.Infrastructure.Mappings.LoginMappingProfile>();
 });
 // --- Serilog ---
 Log.Logger = new LoggerConfiguration()

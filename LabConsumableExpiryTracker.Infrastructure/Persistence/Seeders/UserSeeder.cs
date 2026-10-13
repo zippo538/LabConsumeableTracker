@@ -1,7 +1,7 @@
 using System.Text;
 using Bogus;
 using LabConsumableExpiryTracker.Domain.Enums;
-using LabConsumableExpiryTracker.Domain.Models;
+using LabConsumableExpiryTracker.Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;

@@ -4,7 +4,6 @@ using System.Security.Cryptography;
 using System.Text;
 using LabConsumableExpiryTracker.Application.Configurations;
 using LabConsumableExpiryTracker.Application.Interfaces;
-using LabConsumableExpiryTracker.Domain.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -14,20 +13,17 @@ public class JwtTokenGenerator(IOptions<JwtSettings> settings) : IJwtTokenGenera
 {
     private readonly JwtSettings _settings = settings.Value;
 
-    public string GenerateToken(ApplicationUser user, string role)
+    public string GenerateToken(Guid userId, string userName, string email, string role)
     {
-        
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Name, user.UserName ?? string.Empty),
-            new(ClaimTypes.Email, user.Email ?? string.Empty),
+            new(ClaimTypes.NameIdentifier, userId.ToString()),
+            new(ClaimTypes.Name, userName),
+            new(ClaimTypes.Email, email),
             new(ClaimTypes.Role, role)
         };
-
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
         var token = new JwtSecurityToken(
             issuer: _settings.Issuer,
             audience: _settings.Audience,

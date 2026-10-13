@@ -12,6 +12,12 @@ import {
     useUpdateUser,
 } from "../hooks/useUser";
 
+import { useAtom } from "jotai";
+import {
+    userAtom,
+    USER_STORAGE_KEY,
+} from "../lib/auth/authAtom";
+
 interface FieldErrors {
     username?: string;
     fullName?: string;
@@ -36,6 +42,8 @@ export default function AdminProfilePage() {
 
     const [successMessage, setSuccessMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
+
+    const [, setUser] = useAtom(userAtom);
 
     useEffect(() => {
         if (!profile) return;
@@ -111,16 +119,37 @@ export default function AdminProfilePage() {
         }
 
         try {
-            const response =
-                await updateUser.mutateAsync({
-                    id: profile.id,
-                    payload,
-                });
+            const response = await updateUser.mutateAsync({
+                id: profile.id,
+                payload,
+            });
+
+            setUser((current) => {
+                if (!current) return current;
+
+                const updatedUser = {
+                    ...current,
+                    userName: payload.username,
+                    fullName: payload.fullName,
+                    email: payload.email,
+                };
+
+                const storage = localStorage.getItem(USER_STORAGE_KEY)
+                    ? localStorage
+                    : sessionStorage;
+
+                storage.setItem(
+                    USER_STORAGE_KEY,
+                    JSON.stringify(updatedUser),
+                );
+
+                return updatedUser;
+            });
 
             setSuccessMessage(
-                response.message ||
-                    "Profile updated successfully.",
+                response.message || "Profile updated successfully.",
             );
+
         } catch (error: any) {
             const data = error?.response?.data;
             const backendErrors = data?.errors;
@@ -140,8 +169,8 @@ export default function AdminProfilePage() {
 
             setErrorMessage(
                 data?.message ??
-                    data?.title ??
-                    "Failed to update profile.",
+                data?.title ??
+                "Failed to update profile.",
             );
         }
     };
@@ -301,7 +330,7 @@ export default function AdminProfilePage() {
                         />
                     </div>
 
-                   
+
                 </div>
 
                 <ChangePasswordModal

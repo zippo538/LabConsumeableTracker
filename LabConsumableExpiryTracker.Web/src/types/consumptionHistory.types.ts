@@ -26,7 +26,7 @@ export interface GetConsumptionHistoryParams {
   jobId?: string;
   itemId?: string;
   lotId?: string;
-    lotNumber?: string;
+  lotNumber?: string;
   from?: string;
   to?: string;
 }

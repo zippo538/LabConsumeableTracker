@@ -52,7 +52,7 @@ export const WarehouseAdminDashboard: FC<DashboardProps> = ({ user }) => {
         />
       ) : (
         <>
-          <p className="mt-2 text-xs text-slate-400">
+          <p className="mt-2 text-xs text-slate-400 mb-5">
             Last Refresh : {formatEvaluatedAt(data.evaluatedAt)}
           </p>
           <SummaryStatsCard
@@ -87,7 +87,7 @@ export const WarehouseAdminDashboard: FC<DashboardProps> = ({ user }) => {
           />
 
           <div className="mt-7 flex gap-6">
-            <div className="flex-1">
+            <div className="flex-1 mt-5">
               <DashboardAlertsCard />
             </div>
 

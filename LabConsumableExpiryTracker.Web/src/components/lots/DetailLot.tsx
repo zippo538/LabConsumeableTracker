@@ -10,7 +10,7 @@ import { useUpdateLot } from "../../hooks/useLot";
 
 type DetailLotProps = {
   lot: Lot;
-  // Prop onUpdateAdministrativeStatus dihapus karena ditangani oleh useUpdateLot
+
 };
 
 type Notice = {
@@ -24,6 +24,7 @@ const statusClass: Record<Lot["administrativeStatus"], string> = {
   Quarantined: "border-amber-200 bg-amber-50 text-amber-800",
   ManuallyBlocked: "border-red-200 bg-red-50 text-red-700",
   Disposed: "border-slate-200 bg-slate-100 text-slate-600",
+  Depleted: "border-slate-200 bg-slate-100 text-red-800",
 };
 
 const statusLabel: Record<Lot["administrativeStatus"], string> = {
@@ -31,6 +32,7 @@ const statusLabel: Record<Lot["administrativeStatus"], string> = {
   Quarantined: "Quarantined",
   ManuallyBlocked: "Manually blocked",
   Disposed: "Disposed",
+  Depleted: "Depleted",
 };
 
 export function DetailLot({ lot }: DetailLotProps) {
@@ -45,6 +47,8 @@ export function DetailLot({ lot }: DetailLotProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string>();
   const [notice, setNotice] = useState<Notice>(() => getInitialNotice(lot));
+
+  const [isDisposalCompleted, setIsDisposalCompleted] = useState(false);
 
   // Inisialisasi hook
   const createDisposal = useCreateDisposal();
@@ -66,6 +70,7 @@ export function DetailLot({ lot }: DetailLotProps) {
 
   const saveDisposal = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
+
     const formData = new FormData(event.currentTarget);
     const reason = String(formData.get("reason") ?? "").trim();
     const quantity = Number(formData.get("quantity"));
@@ -74,6 +79,7 @@ export function DetailLot({ lot }: DetailLotProps) {
       setDisposalFormError("Reason is required for disposal.");
       return;
     }
+
     if (isNaN(quantity) || quantity <= 0 || quantity > lot.remainingQuantity) {
       setDisposalFormError(
         `Quantity must be between 0 and ${lot.remainingQuantity}.`,
@@ -95,10 +101,13 @@ export function DetailLot({ lot }: DetailLotProps) {
       });
 
       setIsDisposalOpen(false);
+      setDisposalFormError(undefined);
+      setIsDisposalCompleted(true);
+
       setNotice({
         variant: "success",
-        title: "Disposal recorded",
-        description: `${formatQuantity(quantity, lot.baseUnit)} has been recorded in lot history.`,
+        title: "Disposal successful",
+        description: `${formatQuantity(quantity, lot.baseUnit)} has been successfully disposed from ${lot.lotNumber}.`,
       });
     } catch (err: any) {
       setDisposalFormError(
@@ -122,7 +131,7 @@ export function DetailLot({ lot }: DetailLotProps) {
     setFormError(undefined);
 
     try {
-      // Menyusun payload lengkap karena backend (UpdateLotDto) mewajibkan field-field ini
+
       await updateLot.mutateAsync({
         id: lot.id,
         payload: {
@@ -130,7 +139,7 @@ export function DetailLot({ lot }: DetailLotProps) {
           administrativeStatus: status,
           rowVersion: lot.rowVersion,
           suppliername: lot.suppliername ?? "",
-          supplierLotNumber: lot.supplierLotNumber ?? "", // Handle optional field
+          supplierLotNumber: lot.supplierLotNumber ?? "",
           expiryDate: lot.expiryDate,
           storageLocation: lot.storageLocation,
         },
@@ -177,7 +186,7 @@ export function DetailLot({ lot }: DetailLotProps) {
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              disabled={isDisposed}
+              disabled={isDisposed || isDisposalCompleted}
               onClick={() => setIsDisposalOpen(true)}
               className="rounded-lg border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -223,7 +232,12 @@ export function DetailLot({ lot }: DetailLotProps) {
           />
         </div>
       </section>
-
+      <Alert
+        variant={notice.variant}
+        title={notice.title}
+        description={notice.description}
+        dismissible={false}
+      />
       <section className="grid gap-5 lg:grid-cols-3">
         <div className="space-y-5 lg:col-span-2">
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
@@ -249,12 +263,7 @@ export function DetailLot({ lot }: DetailLotProps) {
               />
             </dl>
           </section>
-          <Alert
-            variant={notice.variant}
-            title={notice.title}
-            description={notice.description}
-            dismissible={false}
-          />
+
         </div>
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <h3 className="text-base font-bold">Allocation eligibility</h3>
@@ -273,7 +282,6 @@ export function DetailLot({ lot }: DetailLotProps) {
         </section>
       </section>
 
-      {/* Form Disposal */}
       <FormModal
         isOpen={isDisposalOpen}
         onClose={closeDisposal}
@@ -324,7 +332,7 @@ export function DetailLot({ lot }: DetailLotProps) {
         />
       </FormModal>
 
-      {/* Form Manage Status (Tanpa Reason) */}
+  
       <FormModal
         isOpen={isStatusFormOpen}
         onClose={closeStatusForm}
@@ -366,7 +374,6 @@ export function DetailLot({ lot }: DetailLotProps) {
           </select>
         </ModalField>
 
-        {/* Field reason dihapus sesuai permintaan */}
 
         <Alert
           variant="warning"
@@ -379,7 +386,6 @@ export function DetailLot({ lot }: DetailLotProps) {
   );
 }
 
-// --- Helper Functions ---
 function getInitialNotice(lot: Lot): Notice {
   if (lot.expiryCondition === "Expired") {
     return {
