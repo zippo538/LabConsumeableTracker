@@ -12,7 +12,8 @@ import { itemApi } from "../api/itemApi";
 import { useQuery } from "@tanstack/react-query";
 import {
   useFefoPreview,
-  useConfirmConsumption,
+  useCreateDraftConsumption,
+  useVerifyScan,
 } from "../hooks/useConsumption";
 
 import type { FefoAllocationPreviewDto } from "../types/consumption.types";
@@ -37,6 +38,11 @@ export const ConsumptionPage: React.FC = () => {
   const [previewData, setPreviewData] =
     useState<FefoAllocationPreviewDto | null>(null);
 
+  // F-15: nomor lot dari draft yang masih menunggu scan. null = belum ada draft.
+  const [pendingLotNumbers, setPendingLotNumbers] = useState<string[] | null>(
+    null
+  );
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -44,7 +50,19 @@ export const ConsumptionPage: React.FC = () => {
   const [fefoMessage, setFefoMessage] = useState("");
 
   const fefoPreviewMutation = useFefoPreview();
-  const confirmConsumptionMutation = useConfirmConsumption();
+  const createDraftMutation = useCreateDraftConsumption();
+  const verifyScanMutation = useVerifyScan();
+
+  const resetFlow = () => {
+    setPreviewData(null);
+    setPendingLotNumbers(null);
+
+    setFefoSuccess(true);
+    setFefoMessage("");
+
+    setErrorMessage(null);
+    setSuccessMessage(null);
+  };
 
   useEffect(() => {
     if (jobIdFromQuery && jobs.length > 0) {
@@ -60,35 +78,17 @@ export const ConsumptionPage: React.FC = () => {
 
   const handleSelectJobId = (jobId: string) => {
     setSelectedJobId(jobId);
-    setPreviewData(null);
-
-    setFefoSuccess(true);
-    setFefoMessage("");
-
-    setErrorMessage(null);
-    setSuccessMessage(null);
+    resetFlow();
   };
 
   const handleSelectItemId = (itemId: string) => {
     setSelectedItemId(itemId);
-    setPreviewData(null);
-
-    setFefoSuccess(true);
-    setFefoMessage("");
-
-    setErrorMessage(null);
-    setSuccessMessage(null);
+    resetFlow();
   };
 
   const handleQuantityChange = (qty: string) => {
     setRequestedQuantity(qty);
-    setPreviewData(null);
-
-    setFefoSuccess(true);
-    setFefoMessage("");
-
-    setErrorMessage(null);
-    setSuccessMessage(null);
+    resetFlow();
   };
 
  const handlePreview = () => {
@@ -144,7 +144,7 @@ export const ConsumptionPage: React.FC = () => {
   );
 };
 
-  const handleConfirm = () => {
+  const handleCreateDraft = () => {
     if (
       !previewData ||
       previewData.allocations.length === 0
@@ -155,15 +155,11 @@ export const ConsumptionPage: React.FC = () => {
 
     setErrorMessage(null);
 
-    confirmConsumptionMutation.mutate(
+    createDraftMutation.mutate(
       {
         jobId: previewData.jobId || selectedJobId,
         payload: {
           itemId: previewData.itemId || selectedItemId,
-          requestedQuantity:
-            previewData.requestedQuantity ||
-            parseFloat(requestedQuantity),
-
           allocations: previewData.allocations.map((a) => ({
             lotId: a.lotId,
             quantity: a.quantity,
@@ -172,27 +168,77 @@ export const ConsumptionPage: React.FC = () => {
         },
       },
       {
-        onSuccess: (res) => {
-          setSuccessMessage(
-            `Successfully consumed ${res.totalConsumedQuantity} ${
-              res.baseUnit || ""
-            }. Lot stock has been atomically updated.`
+        onSuccess: () => {
+          setPendingLotNumbers(
+            previewData.allocations.map((a) => a.lotNumber)
           );
-
-          setPreviewData(null);
-          setRequestedQuantity("");
-
-          setFefoSuccess(true);
-          setFefoMessage("");
         },
 
         onError: (err: any) => {
-          const msg =
+          setErrorMessage(
             err.response?.data?.message ||
-            err.message ||
-            "Failed to confirm consumption. Stock may have changed.";
+              err.message ||
+              "Failed to create draft consumption."
+          );
+        },
+      }
+    );
+  };
 
-          setErrorMessage(msg);
+  const handleVerifyScan = (scannedLotNumber: string) => {
+    if (!pendingLotNumbers) {
+      return;
+    }
+
+    setErrorMessage(null);
+
+    verifyScanMutation.mutate(
+      {
+        jobId: previewData?.jobId || selectedJobId,
+        payload: {
+          itemId: previewData?.itemId || selectedItemId,
+          scannedLotNumber,
+        },
+      },
+      {
+        onSuccess: (res) => {
+          const remaining = pendingLotNumbers.filter(
+            (n) => n !== res.lotNumber
+          );
+
+          if (remaining.length === 0) {
+            setSuccessMessage(
+              `Verified ${res.quantity} from lot ${res.lotNumber}. All lots scanned, stock updated.`
+            );
+            setPreviewData(null);
+            setPendingLotNumbers(null);
+            setRequestedQuantity("");
+            return;
+          }
+
+          setSuccessMessage(
+            `Verified ${res.quantity} from lot ${res.lotNumber}. ${remaining.length} lot(s) remaining.`
+          );
+          setPendingLotNumbers(remaining);
+        },
+
+        onError: (err: any) => {
+          // D-15 first-to-scan wins: kalah race wajib refresh preview FEFO.
+          if (err.code === "INSUFFICIENT_STOCK") {
+            setErrorMessage(
+              err.message +
+                " Stock was taken by another scan. Please re-run the FEFO preview."
+            );
+            setPreviewData(null);
+            setPendingLotNumbers(null);
+            return;
+          }
+
+          setErrorMessage(
+            err.response?.data?.message ||
+              err.message ||
+              "Failed to verify scan."
+          );
         },
       }
     );
@@ -222,8 +268,9 @@ export const ConsumptionPage: React.FC = () => {
           <Info className="h-4 w-4 shrink-0 text-[#11a9ae]" />
 
           <span>
-            FEFO preview does not reserve stock. Stock and lot order will be
-            checked again at confirmation.
+            FEFO preview does not reserve stock. Stock and lot eligibility are
+            checked again when each lot barcode is scanned, and the first
+            successful scan wins.
           </span>
         </div>
 
@@ -285,13 +332,11 @@ export const ConsumptionPage: React.FC = () => {
         </div>
 
         <ConsumptionConfirmation
-          canConfirm={
-            Boolean(previewData) &&
-            (previewData?.allocations?.length ?? 0) > 0 &&
-            !fefoPreviewMutation.isPending
-          }
-          isSubmitting={confirmConsumptionMutation.isPending}
-          onConfirm={handleConfirm}
+          pendingLotNumbers={pendingLotNumbers}
+          isDrafting={createDraftMutation.isPending}
+          isVerifying={verifyScanMutation.isPending}
+          onCreateDraft={handleCreateDraft}
+          onVerifyScan={handleVerifyScan}
           onBack={() => navigate("/app/jobs")}
         />
       </div>

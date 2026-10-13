@@ -166,6 +166,22 @@ public class LotRepository(
         return lots;
     }
 
+    public async Task<Lot?> GetByItemIdAndLotNumberAsync(
+        Guid itemId,
+        string lotNumber,
+        CancellationToken ct = default)
+    {
+        logger.LogDebug(
+            "Retrieving lot {LotNumber} for item {ItemId}",
+            lotNumber,
+            itemId);
+
+        return await _context.Lots
+            .FirstOrDefaultAsync(
+                lot => lot.ItemId == itemId && lot.LotNumber == lotNumber,
+                ct);
+    }
+
     public async Task<decimal> GetTotalUsableQuantityAsync(
         Guid itemId,
         DateOnly today,

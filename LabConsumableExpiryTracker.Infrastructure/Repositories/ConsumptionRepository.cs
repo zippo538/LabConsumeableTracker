@@ -40,5 +40,18 @@ public class ConsumptionRepository : Repository<Consumption, Guid>, IConsumption
             .ThenBy(c => c.Id)
             .ToListAsync(ct);
     }
-    
+
+    public async Task<Consumption?> GetPendingByJobAndLotAsync(
+        Guid jobId,
+        Guid lotId,
+        CancellationToken ct)
+    {
+        return await _context.Consumptions
+            .FirstOrDefaultAsync(
+                c => c.JobId == jobId
+                     && c.LotId == lotId
+                     && c.Status == Domain.Enums.ConsumptionStatus.PendingScan,
+                ct);
+    }
+
 }

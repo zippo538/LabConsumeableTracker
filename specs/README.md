@@ -3,7 +3,7 @@
 ## 1. Tujuan
 
 Repositori `specs/` merupakan sumber kebenaran tunggal antara SRS dan kode.
-Setiap fitur MVP (F-01 s.d. F-14) memiliki folder sendiri yang berisi:
+Setiap fitur MVP (F-01 s.d. F-17) memiliki folder sendiri yang berisi:
 
 | Berkas          | Isi                                                               |
 | --------------- | ----------------------------------------------------------------- |
@@ -55,7 +55,10 @@ specs/
 ├── F-11-user-management/
 ├── F-12-registration/
 ├── F-13-authentication/
-└── F-14-react-frontend/
+├── F-14-react-frontend/
+├── F-15-scanner-verificaiton/
+├── F-16-lot-qr-label/
+└── F-17-qr-camera-scan/
 
 ## 5. Referensi
 

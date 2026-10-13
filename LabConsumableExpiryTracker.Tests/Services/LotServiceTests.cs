@@ -5,6 +5,7 @@ using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
 using LabConsumableExpiryTracker.Application.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using LabConsumableExpiryTracker.Application.DTOs.PagedDTOs;
@@ -364,30 +365,6 @@ public class LotServiceTests
                 Does.Contain(
                     "must be InProgress"));
         });
-    }
-    [Test]
-    public async Task ConfirmConsumption_WhenJobNotFound_ReturnsError()
-    {
-        var jobId =
-            Guid.NewGuid();
-        _jobRepository
-            .Setup(x =>
-                x.GetByIdAsync(
-                    jobId,
-                    CancellationToken.None))
-            .ReturnsAsync(
-                (Job?)null);
-        var request =
-            new ConfirmConsumptionRequestDto();
-        var result =
-            await _service.ConfirmConsumption(
-                jobId,
-                request,
-                Guid.NewGuid(),
-                CancellationToken.None);
-        Assert.That(
-            result.Success,
-            Is.False);
     }
     private static CreateLotDto CreateLotRequest()
     {
@@ -1625,241 +1602,175 @@ public class LotServiceTests
         Assert.That(line.RowVersion, Is.EqualTo(lot.RowVersion));
     }
     [Test]
-    public async Task ConfirmConsumption_ShouldReturnError_WhenAllocationQuantityIsNotPositive()
+    public async Task CreateDraftConsumption_ShouldReturnError_WhenAllocationQuantityIsNotPositive()
     {
-        var jobId = Guid.NewGuid();
-        var itemId = Guid.NewGuid();
-        var request = new ConfirmConsumptionRequestDto
+        var request = new CreateDraftConsumptionRequestDto
         {
-            ItemId = itemId,
-            RequestedQuantity = 10m,
+            ItemId = Guid.NewGuid(),
             Allocations =
             [
                 new ConsumptionAllocationRequestDto
                 {
-                LotId = Guid.NewGuid(),
-                Quantity = 0m,
-                ExpectedRowVersion = [1, 2, 3]
-            }
+                    LotId = Guid.NewGuid(),
+                    Quantity = 0m,
+                    ExpectedRowVersion = [1, 2, 3]
+                }
             ]
         };
-        var result = await _service.ConfirmConsumption(
-            jobId,
+
+        var result = await _service.CreateDraftConsumption(
+            Guid.NewGuid(),
             request,
             Guid.NewGuid(),
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Every allocation quantity must be greater than zero."));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Code, Is.EqualTo(ErrorCodes.ValidationError));
+            Assert.That(
+                result.Message,
+                Is.EqualTo("Every allocation quantity must be greater than zero."));
+        });
+
         _jobRepository.Verify(
             x => x.GetByIdAsync(
                 It.IsAny<Guid>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
+
     [Test]
-    public async Task ConfirmConsumption_ShouldReturnError_WhenLotIdIsDuplicated()
+    public async Task CreateDraftConsumption_ShouldReturnError_WhenLotIdIsDuplicated()
     {
-        var jobId = Guid.NewGuid();
-        var itemId = Guid.NewGuid();
         var lotId = Guid.NewGuid();
-        var request = new ConfirmConsumptionRequestDto
+        var request = new CreateDraftConsumptionRequestDto
         {
-            ItemId = itemId,
-            RequestedQuantity = 20m,
+            ItemId = Guid.NewGuid(),
             Allocations =
             [
                 new ConsumptionAllocationRequestDto
                 {
-                LotId = lotId,
-                Quantity = 10m,
-                ExpectedRowVersion = [1, 2, 3]
-            },
-            new ConsumptionAllocationRequestDto
+                    LotId = lotId,
+                    Quantity = 10m,
+                    ExpectedRowVersion = [1, 2, 3]
+                },
+                new ConsumptionAllocationRequestDto
                 {
-                LotId = lotId,
-                Quantity = 10m,
-                ExpectedRowVersion = [1, 2, 3]
-            }
+                    LotId = lotId,
+                    Quantity = 10m,
+                    ExpectedRowVersion = [1, 2, 3]
+                }
             ]
         };
-        var result = await _service.ConfirmConsumption(
-            jobId,
+
+        var result = await _service.CreateDraftConsumption(
+            Guid.NewGuid(),
             request,
             Guid.NewGuid(),
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Duplicate LotId is not allowed within a single consumption request."));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Code, Is.EqualTo(ErrorCodes.ValidationError));
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "Duplicate LotId is not allowed within a single consumption request."));
+        });
+
         _jobRepository.Verify(
             x => x.GetByIdAsync(
                 It.IsAny<Guid>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
+
     [Test]
-    public async Task ConfirmConsumption_ShouldReturnError_WhenAllocationTotalDoesNotMatchRequestedQuantity()
+    public async Task CreateDraftConsumption_ShouldReturnError_WhenJobNotFound()
     {
         var jobId = Guid.NewGuid();
-        var itemId = Guid.NewGuid();
-        var request = new ConfirmConsumptionRequestDto
-        {
-            ItemId = itemId,
-            RequestedQuantity = 20m,
-            Allocations =
-            [
-                new ConsumptionAllocationRequestDto
-                {
-                LotId = Guid.NewGuid(),
-                Quantity = 10m,
-                ExpectedRowVersion = [1, 2, 3]
-            }
-            ]
-        };
-        var result = await _service.ConfirmConsumption(
-            jobId,
-            request,
-            Guid.NewGuid(),
-            CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Sum of allocation quantities (10) does not match RequestedQuantity (20)."));
-        _jobRepository.Verify(
-            x => x.GetByIdAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-    [Test]
-    public async Task ConfirmConsumption_ShouldReturnError_WhenJobNotFound()
-    {
-        var jobId = Guid.NewGuid();
-        var itemId = Guid.NewGuid();
-        var request = new ConfirmConsumptionRequestDto
-        {
-            ItemId = itemId,
-            RequestedQuantity = 10m,
-            Allocations =
-            [
-                new()
-            {
-                LotId = Guid.NewGuid(),
-                Quantity = 10m,
-                ExpectedRowVersion = [1, 2, 3]
-            }
-            ]
-        };
         _jobRepository
             .Setup(x => x.GetByIdAsync(
                 jobId,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((Job?)null);
-        var result = await _service.ConfirmConsumption(
+
+        var result = await _service.CreateDraftConsumption(
             jobId,
-            request,
+            new CreateDraftConsumptionRequestDto
+            {
+                ItemId = Guid.NewGuid(),
+                Allocations =
+                [
+                    new ConsumptionAllocationRequestDto
+                    {
+                        LotId = Guid.NewGuid(),
+                        Quantity = 10m,
+                        ExpectedRowVersion = [1, 2, 3]
+                    }
+                ]
+            },
             Guid.NewGuid(),
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("Job not found."));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Code, Is.EqualTo(ErrorCodes.JobNotFound));
+            Assert.That(result.Message, Is.EqualTo("Job not found."));
+        });
     }
+
     [Test]
-    public async Task ConfirmConsumption_ShouldReturnError_WhenJobIsNotInProgress()
+    public async Task CreateDraftConsumption_ShouldReturnError_WhenJobIsNotInProgress()
     {
         var jobId = Guid.NewGuid();
-        var itemId = Guid.NewGuid();
         var job = new Job(
             jobId,
             "JOB-001",
             "Test Job");
-        var request = new ConfirmConsumptionRequestDto
-        {
-            ItemId = itemId,
-            RequestedQuantity = 10m,
-            Allocations =
-            [
-                new ConsumptionAllocationRequestDto
-                {
-                LotId = Guid.NewGuid(),
-                Quantity = 10m,
-                ExpectedRowVersion = [1, 2, 3]
-            }
-            ]
-        };
         _jobRepository
             .Setup(x => x.GetByIdAsync(
                 jobId,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(job);
-        var result = await _service.ConfirmConsumption(
+
+        var result = await _service.CreateDraftConsumption(
             jobId,
-            request,
+            new CreateDraftConsumptionRequestDto
+            {
+                ItemId = Guid.NewGuid(),
+                Allocations =
+                [
+                    new ConsumptionAllocationRequestDto
+                    {
+                        LotId = Guid.NewGuid(),
+                        Quantity = 10m,
+                        ExpectedRowVersion = [1, 2, 3]
+                    }
+                ]
+            },
             Guid.NewGuid(),
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                "Job must be InProgress to confirm consumption. Current status: Draft."));
-    }
-    [Test]
-    public async Task ConfirmConsumption_ShouldReturnError_WhenLotNotFound()
-    {
-        var jobId = Guid.NewGuid();
-        var itemId = Guid.NewGuid();
-        var lotId = Guid.NewGuid();
-        var job = new Job(
-            jobId,
-            "JOB-001",
-            "Test Job");
-        job.Start(FixedNow);
-        var request = new ConfirmConsumptionRequestDto
+
+        Assert.Multiple(() =>
         {
-            ItemId = itemId,
-            RequestedQuantity = 10m,
-            Allocations =
-            [
-                new ConsumptionAllocationRequestDto
-                {
-                LotId = lotId,
-                Quantity = 10m,
-                ExpectedRowVersion = [1, 2, 3]
-            }
-            ]
-        };
-        _jobRepository
-            .Setup(x => x.GetByIdAsync(
-                jobId,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(job);
-        _timeProvider
-            .Setup(x => x.GetUtcNow())
-            .Returns(FixedNow);
-        _lotRepository
-            .Setup(x => x.GetByIdAsync(
-                lotId,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Lot?)null);
-        var result = await _service.ConfirmConsumption(
-            jobId,
-            request,
-            Guid.NewGuid(),
-            CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo($"Lot {lotId} not found."));
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Code, Is.EqualTo(ErrorCodes.InvalidJobState));
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    "Job must be InProgress to create a consumption draft. Current status: Draft."));
+        });
     }
+
     [Test]
-    public async Task ConfirmConsumption_ShouldReturnError_WhenLotDoesNotBelongToItem()
+    public async Task CreateDraftConsumption_ShouldReturnError_WhenRowVersionDoesNotMatch()
     {
         var jobId = Guid.NewGuid();
         var itemId = Guid.NewGuid();
-        var differentItemId = Guid.NewGuid();
         var job = new Job(
             jobId,
             "JOB-001",
@@ -1867,7 +1778,7 @@ public class LotServiceTests
         job.Start(FixedNow);
         var lot = new Lot(
             Guid.NewGuid(),
-            differentItemId,
+            itemId,
             "LOT-001",
             "SUP-001",
             FixedNow,
@@ -1877,49 +1788,52 @@ public class LotServiceTests
             DateOnly.FromDateTime(FixedNow.UtcDateTime.AddDays(60)),
             "Storage A",
             LotAdministrativeStatus.Active);
-        var request = new ConfirmConsumptionRequestDto
-        {
-            ItemId = itemId,
-            RequestedQuantity = 10m,
-            Allocations =
-            [
-                new ConsumptionAllocationRequestDto
-                {
-                LotId = lot.Id,
-                Quantity = 10m,
-                ExpectedRowVersion = []
-            }
-            ]
-        };
         _jobRepository
             .Setup(x => x.GetByIdAsync(
                 jobId,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(job);
-        _timeProvider
-            .Setup(x => x.GetUtcNow())
-            .Returns(FixedNow);
         _lotRepository
             .Setup(x => x.GetByIdAsync(
                 lot.Id,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(lot);
-        var result = await _service.ConfirmConsumption(
+
+        var result = await _service.CreateDraftConsumption(
             jobId,
-            request,
+            new CreateDraftConsumptionRequestDto
+            {
+                ItemId = itemId,
+                Allocations =
+                [
+                    new ConsumptionAllocationRequestDto
+                    {
+                        LotId = lot.Id,
+                        Quantity = 10m,
+                        ExpectedRowVersion = [.. "\t\t\t"u8]
+                    }
+                ]
+            },
             Guid.NewGuid(),
             CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                $"Lot {lot.Id} does not belong to item {itemId}."));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Code, Is.EqualTo(ErrorCodes.ConcurrencyConflict));
+            Assert.That(
+                result.Message,
+                Is.EqualTo(
+                    $"Lot {lot.Id} has changed since it was previewed (stale RowVersion)."));
+        });
     }
+
     [Test]
-    public async Task ConfirmConsumption_ShouldReturnError_WhenRowVersionDoesNotMatch()
+    public async Task CreateDraftConsumption_ShouldCreatePendingDraft_WithoutDeductingStock()
     {
         var jobId = Guid.NewGuid();
         var itemId = Guid.NewGuid();
+        var createdBy = Guid.NewGuid();
         var job = new Job(
             jobId,
             "JOB-001",
@@ -1937,232 +1851,428 @@ public class LotServiceTests
             DateOnly.FromDateTime(FixedNow.UtcDateTime.AddDays(60)),
             "Storage A",
             LotAdministrativeStatus.Active);
-        var request = new ConfirmConsumptionRequestDto
-        {
-            ItemId = itemId,
-            RequestedQuantity = 10m,
-            Allocations =
-            [
-                new ConsumptionAllocationRequestDto
-                {
-                LotId = lot.Id,
-                Quantity = 10m,
-                ExpectedRowVersion = [.. "\t\t\t"u8]
-            }
-            ]
-        };
         _jobRepository
             .Setup(x => x.GetByIdAsync(
                 jobId,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(job);
-        _timeProvider
-            .Setup(x => x.GetUtcNow())
-            .Returns(FixedNow);
-        _lotRepository
-            .Setup(x => x.GetByIdAsync(
-                lot.Id,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(lot);
-        var result = await _service.ConfirmConsumption(
-            jobId,
-            request,
-            Guid.NewGuid(),
-            CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Is.EqualTo(
-                $"Lot {lot.Id} has changed since it was previewed (stale RowVersion)."));
-    }
-    [Test]
-    public async Task ConfirmConsumption_ShouldReturnError_WhenLotConsumeThrowsInvalidOperationException()
-    {
-        var jobId = Guid.NewGuid();
-        var itemId = Guid.NewGuid();
-        var consumedBy = Guid.NewGuid();
-        var job = new Job(
-            jobId,
-            "JOB-001",
-            "Test Job");
-        job.Start(FixedNow);
-        var lot = new Lot(
-            Guid.NewGuid(),
-            itemId,
-            "LOT-001",
-            "SUP-001",
-            FixedNow,
-            "Test Supplier",
-            10m,
-            5m,
-            DateOnly.FromDateTime(FixedNow.UtcDateTime.AddDays(60)),
-            "Storage A",
-            LotAdministrativeStatus.Active);
-        var request = new ConfirmConsumptionRequestDto
-        {
-            ItemId = itemId,
-            RequestedQuantity = 10m,
-            Allocations =
-            [
-                new ConsumptionAllocationRequestDto
-                {
-                LotId = lot.Id,
-                Quantity = 10m,
-                ExpectedRowVersion = []
-            }
-            ]
-        };
-        _jobRepository
-            .Setup(x => x.GetByIdAsync(
-                jobId,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(job);
-        _timeProvider
-            .Setup(x => x.GetUtcNow())
-            .Returns(FixedNow);
-        _lotRepository
-            .Setup(x => x.GetByIdAsync(
-                lot.Id,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(lot);
-        var result = await _service.ConfirmConsumption(
-            jobId,
-            request,
-            consumedBy,
-            CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(
-            result.Message,
-            Does.StartWith($"Lot {lot.Id}:"));
-    }
-    [Test]
-    public async Task ConfirmConsumption_ShouldReturnSuccess_WhenConsumptionIsValid()
-    {
-        var jobId = Guid.NewGuid();
-        var itemId = Guid.NewGuid();
-        var consumedBy = Guid.NewGuid();
-        var job = new Job(
-            jobId,
-            "JOB-001",
-            "Test Job");
-        job.Start(FixedNow);
-        var lot = new Lot(
-            Guid.NewGuid(),
-            itemId,
-            "LOT-001",
-            "SUP-001",
-            FixedNow,
-            "Test Supplier",
-            100m,
-            100m,
-            DateOnly.FromDateTime(FixedNow.UtcDateTime.AddDays(60)),
-            "Storage A",
-            LotAdministrativeStatus.Active);
-        var item = new Item(
-            itemId,
-            "ITEM-001",
-            "Test Item",
-            UnitOfMeasure.Unit,
-            10m,
-            30);
-        var request = new ConfirmConsumptionRequestDto
-        {
-            ItemId = itemId,
-            RequestedQuantity = 40m,
-            Allocations =
-            [
-                new ConsumptionAllocationRequestDto
-                {
-                LotId = lot.Id,
-                Quantity = 40m,
-                ExpectedRowVersion = []
-            }
-            ]
-        };
-        _jobRepository
-            .Setup(x => x.GetByIdAsync(
-                jobId,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(job);
-        _timeProvider
-            .Setup(x => x.GetUtcNow())
-            .Returns(FixedNow);
         _lotRepository
             .Setup(x => x.GetByIdAsync(
                 lot.Id,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(lot);
         _consumptionRepository
-         .Setup(x => x.AddAsync(
-             It.IsAny<Consumption>(),
-             It.IsAny<CancellationToken>()))
-         .ReturnsAsync((Consumption consumption, CancellationToken _) => consumption);
-        _lotRepository
-            .Setup(x => x.UpdateAsync(
-                It.IsAny<Lot>(),
+            .Setup(x => x.AddAsync(
+                It.IsAny<Consumption>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Lot updatedLot, CancellationToken _) => updatedLot);
+            .ReturnsAsync((Consumption c, CancellationToken _) => c);
         _unitOfWork
             .Setup(x => x.SaveChangesAsync(
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
-        _itemRepository
-            .Setup(x => x.GetByIdAsync(
-                itemId,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(item);
-        var result = await _service.ConfirmConsumption(
+
+        var result = await _service.CreateDraftConsumption(
             jobId,
-            request,
-            consumedBy,
+            new CreateDraftConsumptionRequestDto
+            {
+                ItemId = itemId,
+                Allocations =
+                [
+                    new ConsumptionAllocationRequestDto
+                    {
+                        LotId = lot.Id,
+                        Quantity = 40m,
+                        ExpectedRowVersion = lot.RowVersion
+                    }
+                ]
+            },
+            createdBy,
             CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-        Assert.That(
-            result.Message,
-            Is.EqualTo("Consumption confirmed successfully."));
-        Assert.That(result.Data, Is.Not.Null);
-        Assert.That(result.Data!.JobId, Is.EqualTo(jobId));
-        Assert.That(result.Data.ItemId, Is.EqualTo(itemId));
-        Assert.That(result.Data.BaseUnit, Is.EqualTo(UnitOfMeasure.Unit));
-        Assert.That(result.Data.TotalConsumedQuantity, Is.EqualTo(40m));
-        Assert.That(result.Data.Consumptions, Has.Count.EqualTo(1));
-        Assert.That(result.Data.UpdatedLots, Has.Count.EqualTo(1));
-        Assert.That(
-            result.Data.Consumptions[0].JobId,
-            Is.EqualTo(jobId));
-        Assert.That(
-            result.Data.Consumptions[0].LotId,
-            Is.EqualTo(lot.Id));
-        Assert.That(
-            result.Data.Consumptions[0].Quantity,
-            Is.EqualTo(40m));
-        Assert.That(
-            result.Data.Consumptions[0].ConsumedBy,
-            Is.EqualTo(consumedBy));
-        Assert.That(
-            result.Data.UpdatedLots[0].LotId,
-            Is.EqualTo(lot.Id));
-        Assert.That(
-            result.Data.UpdatedLots[0].RemainingQuantity,
-            Is.EqualTo(60m));
-        _consumptionRepository.Verify(
-            x => x.AddAsync(
-                It.IsAny<Consumption>(),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+
+        Assert.Multiple(() =>
+        {
+            // AC-F15-01: draft PendingScan, stok tetap 100.
+            Assert.That(result.Success, Is.True);
+            Assert.That(lot.RemainingQuantity, Is.EqualTo(100m));
+            Assert.That(result.Data!.Consumptions, Has.Count.EqualTo(1));
+            Assert.That(
+                result.Data.Consumptions[0].Status,
+                Is.EqualTo(ConsumptionStatus.PendingScan));
+            Assert.That(
+                result.Data.Consumptions[0].Quantity,
+                Is.EqualTo(40m));
+            Assert.That(result.Data.Consumptions[0].LotId, Is.EqualTo(lot.Id));
+        });
+
+        // Lot tidak pernah di-update pada Fase 1.
         _lotRepository.Verify(
             x => x.UpdateAsync(
                 It.IsAny<Lot>(),
                 It.IsAny<CancellationToken>()),
+            Times.Never);
+        _consumptionRepository.Verify(
+            x => x.AddAsync(
+                It.Is<Consumption>(c => c.Status == ConsumptionStatus.PendingScan),
+                It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Test]
+    public async Task VerifyScan_ShouldReturnError_WhenLotNotFound()
+    {
+        var jobId = Guid.NewGuid();
+        var itemId = Guid.NewGuid();
+        var job = new Job(
+            jobId,
+            "JOB-001",
+            "Test Job");
+        job.Start(FixedNow);
+        _jobRepository
+            .Setup(x => x.GetByIdAsync(
+                jobId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(job);
+        _lotRepository
+            .Setup(x => x.GetByItemIdAndLotNumberAsync(
+                itemId,
+                "LOT-999",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Lot?)null);
+
+        var result = await _service.VerifyScan(
+            jobId,
+            new VerifyScanRequestDto
+            {
+                ItemId = itemId,
+                ScannedLotNumber = "LOT-999"
+            },
+            CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Code, Is.EqualTo(ErrorCodes.LotNotFound));
+        });
+    }
+
+    [Test]
+    public async Task VerifyScan_ShouldReturnError_WhenNoPendingDraftExists()
+    {
+        var jobId = Guid.NewGuid();
+        var itemId = Guid.NewGuid();
+        var job = new Job(
+            jobId,
+            "JOB-001",
+            "Test Job");
+        job.Start(FixedNow);
+        var lot = CreateLot(itemId, "LOT-001", 100m);
+        _jobRepository
+            .Setup(x => x.GetByIdAsync(
+                jobId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(job);
+        _lotRepository
+            .Setup(x => x.GetByItemIdAndLotNumberAsync(
+                itemId,
+                "LOT-001",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lot);
+        _consumptionRepository
+            .Setup(x => x.GetPendingByJobAndLotAsync(
+                jobId,
+                lot.Id,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Consumption?)null);
+
+        var result = await _service.VerifyScan(
+            jobId,
+            new VerifyScanRequestDto
+            {
+                ItemId = itemId,
+                ScannedLotNumber = "LOT-001"
+            },
+            CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Code, Is.EqualTo(ErrorCodes.NoPendingConsumption));
+            Assert.That(lot.RemainingQuantity, Is.EqualTo(100m));
+        });
+    }
+
+    [Test]
+    public async Task VerifyScan_ShouldReturnError_WhenLotExpiredSinceDraftWasCreated()
+    {
+        var jobId = Guid.NewGuid();
+        var itemId = Guid.NewGuid();
+        var job = new Job(
+            jobId,
+            "JOB-001",
+            "Test Job");
+        job.Start(FixedNow);
+        var lot = CreateLot(itemId, "LOT-001", 100m);
+        var draft = Consumption.CreateDraft(
+            Guid.NewGuid(),
+            jobId,
+            lot.Id,
+            4m,
+            FixedNow,
+            Guid.NewGuid());
+        _jobRepository
+            .Setup(x => x.GetByIdAsync(
+                jobId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(job);
+        _lotRepository
+            .Setup(x => x.GetByItemIdAndLotNumberAsync(
+                itemId,
+                "LOT-001",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lot);
+        _consumptionRepository
+            .Setup(x => x.GetPendingByJobAndLotAsync(
+                jobId,
+                lot.Id,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(draft);
+
+        // Lot kedaluwarsa tepat pada hari scan.
+        var expiryDay = DateOnly.FromDateTime(FixedNow.UtcDateTime);
+        lot.UpdateExpiryDate(expiryDay);
+
+        var result = await _service.VerifyScan(
+            jobId,
+            new VerifyScanRequestDto
+            {
+                ItemId = itemId,
+                ScannedLotNumber = "LOT-001"
+            },
+            CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Code, Is.EqualTo(ErrorCodes.LotExpired));
+            Assert.That(lot.RemainingQuantity, Is.EqualTo(100m));
+            Assert.That(draft.Status, Is.EqualTo(ConsumptionStatus.PendingScan));
+        });
+    }
+
+    [Test]
+    public async Task VerifyScan_ShouldReturnInsufficientStock_WhenAnotherScientistDrainedTheLot()
+    {
+        var jobId = Guid.NewGuid();
+        var itemId = Guid.NewGuid();
+        var job = new Job(
+            jobId,
+            "JOB-001",
+            "Test Job");
+        job.Start(FixedNow);
+        // Stok awal 10, Scientist A sudahuzi 6 -> tersisa 4, draft B butuh 6.
+        var lot = CreateLot(itemId, "LOT-001", 4m);
+        var draft = Consumption.CreateDraft(
+            Guid.NewGuid(),
+            jobId,
+            lot.Id,
+            6m,
+            FixedNow,
+            Guid.NewGuid());
+        _jobRepository
+            .Setup(x => x.GetByIdAsync(
+                jobId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(job);
+        _lotRepository
+            .Setup(x => x.GetByItemIdAndLotNumberAsync(
+                itemId,
+                "LOT-001",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lot);
+        _consumptionRepository
+            .Setup(x => x.GetPendingByJobAndLotAsync(
+                jobId,
+                lot.Id,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(draft);
+
+        var result = await _service.VerifyScan(
+            jobId,
+            new VerifyScanRequestDto
+            {
+                ItemId = itemId,
+                ScannedLotNumber = "LOT-001"
+            },
+            CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Code, Is.EqualTo(ErrorCodes.InsufficientStock));
+            // Stok tidak boleh jadi negatif.
+            Assert.That(lot.RemainingQuantity, Is.EqualTo(4m));
+            Assert.That(draft.Status, Is.EqualTo(ConsumptionStatus.PendingScan));
+        });
+
         _unitOfWork.Verify(
             x => x.SaveChangesAsync(
                 It.IsAny<CancellationToken>()),
-            Times.Once);
-        _itemRepository.Verify(
-            x => x.GetByIdAsync(
+            Times.Never);
+    }
+
+    [Test]
+    public async Task VerifyScan_ShouldDeductStockAndMarkVerified_WhenScanIsValid()
+    {
+        var jobId = Guid.NewGuid();
+        var itemId = Guid.NewGuid();
+        var job = new Job(
+            jobId,
+            "JOB-001",
+            "Test Job");
+        job.Start(FixedNow);
+        var lot = CreateLot(itemId, "LOT-001", 10m);
+        var draft = Consumption.CreateDraft(
+            Guid.NewGuid(),
+            jobId,
+            lot.Id,
+            4m,
+            FixedNow,
+            Guid.NewGuid());
+        _jobRepository
+            .Setup(x => x.GetByIdAsync(
+                jobId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(job);
+        _lotRepository
+            .Setup(x => x.GetByItemIdAndLotNumberAsync(
                 itemId,
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+                "LOT-001",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lot);
+        _consumptionRepository
+            .Setup(x => x.GetPendingByJobAndLotAsync(
+                jobId,
+                lot.Id,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(draft);
+        _lotRepository
+            .Setup(x => x.UpdateAsync(
+                It.IsAny<Lot>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Lot l, CancellationToken _) => l);
+        _consumptionRepository
+            .Setup(x => x.UpdateAsync(
+                It.IsAny<Consumption>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Consumption c, CancellationToken _) => c);
+        _unitOfWork
+            .Setup(x => x.SaveChangesAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(2);
+
+        var result = await _service.VerifyScan(
+            jobId,
+            new VerifyScanRequestDto
+            {
+                ItemId = itemId,
+                ScannedLotNumber = "LOT-001"
+            },
+            CancellationToken.None);
+
+        // AC-F15-02: stok 10 -> 6, status Verified, VerifiedAt terisi.
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.True);
+            Assert.That(lot.RemainingQuantity, Is.EqualTo(6m));
+            Assert.That(draft.Status, Is.EqualTo(ConsumptionStatus.Verified));
+            Assert.That(draft.VerifiedAt, Is.EqualTo(FixedNow));
+            Assert.That(result.Data!.ConsumptionId, Is.EqualTo(draft.Id));
+            Assert.That(result.Data.Status, Is.EqualTo(ConsumptionStatus.Verified));
+            Assert.That(result.Data.Quantity, Is.EqualTo(4m));
+            Assert.That(result.Data.LotNumber, Is.EqualTo("LOT-001"));
+            Assert.That(result.Data.UpdatedLot.RemainingQuantity, Is.EqualTo(6m));
+        });
+    }
+
+    [Test]
+    public async Task VerifyScan_ShouldReturnConflict_WhenLotRowVersionChangedConcurrently()
+    {
+        var jobId = Guid.NewGuid();
+        var itemId = Guid.NewGuid();
+        var job = new Job(
+            jobId,
+            "JOB-001",
+            "Test Job");
+        job.Start(FixedNow);
+        var lot = CreateLot(itemId, "LOT-001", 10m);
+        var draft = Consumption.CreateDraft(
+            Guid.NewGuid(),
+            jobId,
+            lot.Id,
+            4m,
+            FixedNow,
+            Guid.NewGuid());
+        _jobRepository
+            .Setup(x => x.GetByIdAsync(
+                jobId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(job);
+        _lotRepository
+            .Setup(x => x.GetByItemIdAndLotNumberAsync(
+                itemId,
+                "LOT-001",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lot);
+        _consumptionRepository
+            .Setup(x => x.GetPendingByJobAndLotAsync(
+                jobId,
+                lot.Id,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(draft);
+        _lotRepository
+            .Setup(x => x.UpdateAsync(
+                It.IsAny<Lot>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Lot l, CancellationToken _) => l);
+        _consumptionRepository
+            .Setup(x => x.UpdateAsync(
+                It.IsAny<Consumption>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Consumption c, CancellationToken _) => c);
+        _unitOfWork
+            .Setup(x => x.SaveChangesAsync(
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new DbUpdateConcurrencyException("row version mismatch"));
+
+        var result = await _service.VerifyScan(
+            jobId,
+            new VerifyScanRequestDto
+            {
+                ItemId = itemId,
+                ScannedLotNumber = "LOT-001"
+            },
+            CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Code, Is.EqualTo(ErrorCodes.ConcurrencyConflict));
+        });
+    }
+
+    private static Lot CreateLot(Guid itemId, string lotNumber, decimal remainingQuantity)
+    {
+        return new Lot(
+            Guid.NewGuid(),
+            itemId,
+            lotNumber,
+            "SUP-001",
+            FixedNow,
+            "Test Supplier",
+            remainingQuantity,
+            remainingQuantity,
+            DateOnly.FromDateTime(FixedNow.UtcDateTime.AddDays(60)),
+            "Storage A",
+            LotAdministrativeStatus.Active);
     }
 }

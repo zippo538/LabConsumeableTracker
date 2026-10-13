@@ -8,6 +8,7 @@ using LabConsumableExpiryTracker.Application.Interfaces;
 using LabConsumableExpiryTracker.Application.Services.Interfaces;
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Domain.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ILotSelectionService = LabConsumableExpiryTracker.Application.Services.Interfaces.ILotSelectionService;
 
@@ -423,81 +424,67 @@ public class LotService : ILotService
     }
 
 
-    public async Task<ServiceResult<ConsumptionResponseDto>> ConfirmConsumption(
+    public async Task<ServiceResult<DraftConsumptionResponseDto>> CreateDraftConsumption(
         Guid jobId,
-        ConfirmConsumptionRequestDto request,
-        Guid consumedBy,
+        CreateDraftConsumptionRequestDto request,
+        Guid createdBy,
         CancellationToken ct)
     {
         _logger.LogDebug(
-            "Confirming consumption for job {JobId}, item {ItemId}",
+            "Creating consumption draft for job {JobId}, item {ItemId}",
             jobId,
             request.ItemId);
 
         if (request.Allocations.Count == 0)
         {
-            return ServiceResult<ConsumptionResponseDto>.ErrorResult(
-                "At least one allocation is required.");
+            return ServiceResult<DraftConsumptionResponseDto>.ErrorResult(
+                "At least one allocation is required.", code: ErrorCodes.ValidationError);
         }
 
         if (request.Allocations.Any(a => a.Quantity <= 0))
         {
-            return ServiceResult<ConsumptionResponseDto>.ErrorResult(
-                "Every allocation quantity must be greater than zero.");
+            return ServiceResult<DraftConsumptionResponseDto>.ErrorResult(
+                "Every allocation quantity must be greater than zero.", code: ErrorCodes.ValidationError);
         }
 
-        var duplicateLotIds = request.Allocations
-            .GroupBy(a => a.LotId)
-            .Where(g => g.Count() > 1)
-            .Select(g => g.Key)
-            .ToList();
-
-        if (duplicateLotIds.Count > 0)
+        if (request.Allocations.GroupBy(a => a.LotId).Any(g => g.Count() > 1))
         {
-            return ServiceResult<ConsumptionResponseDto>.ErrorResult(
-                "Duplicate LotId is not allowed within a single consumption request.");
+            return ServiceResult<DraftConsumptionResponseDto>.ErrorResult(
+                "Duplicate LotId is not allowed within a single consumption request.",
+                code: ErrorCodes.ValidationError);
         }
-
-        var allocationTotal = request.Allocations.Sum(a => a.Quantity);
-        if (allocationTotal != request.RequestedQuantity)
-        {
-            return ServiceResult<ConsumptionResponseDto>.ErrorResult(
-                $"Sum of allocation quantities ({allocationTotal}) does not match RequestedQuantity ({request.RequestedQuantity}).");
-        }
-
 
         var job = await _jobRepository.GetByIdAsync(jobId, ct);
         if (job is null)
         {
-            return ServiceResult<ConsumptionResponseDto>.ErrorResult("Job not found.");
+            return ServiceResult<DraftConsumptionResponseDto>.ErrorResult(
+                "Job not found.", code: ErrorCodes.JobNotFound);
         }
 
         if (job.Status != JobStatus.InProgress)
         {
-            return ServiceResult<ConsumptionResponseDto>.ErrorResult(
-                $"Job must be InProgress to confirm consumption. Current status: {job.Status}.");
+            return ServiceResult<DraftConsumptionResponseDto>.ErrorResult(
+                $"Job must be InProgress to create a consumption draft. Current status: {job.Status}.",
+                code: ErrorCodes.InvalidJobState);
         }
 
         var now = _timeProvider.GetUtcNow();
-
-
-        var consumptions = new List<Consumption>();
-        var updatedLots = new List<Lot>();
+        var drafts = new List<Consumption>();
 
         foreach (var allocation in request.Allocations)
         {
-
             var lot = await _lotRepository.GetByIdAsync(allocation.LotId, ct);
             if (lot is null)
             {
-                return ServiceResult<ConsumptionResponseDto>.ErrorResult(
-                    $"Lot {allocation.LotId} not found.");
+                return ServiceResult<DraftConsumptionResponseDto>.ErrorResult(
+                    $"Lot {allocation.LotId} not found.", code: ErrorCodes.LotNotFound);
             }
 
             if (lot.ItemId != request.ItemId)
             {
-                return ServiceResult<ConsumptionResponseDto>.ErrorResult(
-                    $"Lot {allocation.LotId} does not belong to item {request.ItemId}.");
+                return ServiceResult<DraftConsumptionResponseDto>.ErrorResult(
+                    $"Lot {allocation.LotId} does not belong to item {request.ItemId}.",
+                    code: ErrorCodes.ValidationError);
             }
 
             if (!lot.RowVersion.SequenceEqual(allocation.ExpectedRowVersion))
@@ -507,72 +494,175 @@ public class LotService : ILotService
                     allocation.LotId,
                     Convert.ToBase64String(lot.RowVersion),
                     Convert.ToBase64String(allocation.ExpectedRowVersion));
-                return ServiceResult<ConsumptionResponseDto>.ErrorResult(
-                    $"Lot {allocation.LotId} has changed since it was previewed (stale RowVersion).");
+                return ServiceResult<DraftConsumptionResponseDto>.ErrorResult(
+                    $"Lot {allocation.LotId} has changed since it was previewed (stale RowVersion).",
+                    code: ErrorCodes.ConcurrencyConflict);
             }
 
-            try
+            if (!lot.IsEligible(now))
             {
-                var consumption = lot.Consume(jobId, allocation.Quantity, now, consumedBy);
-                consumptions.Add(consumption);
-                updatedLots.Add(lot);
+                return ServiceResult<DraftConsumptionResponseDto>.ErrorResult(
+                    $"Lot {allocation.LotId} is not eligible for consumption.",
+                    code: ErrorCodes.LotNotEligible);
             }
-            catch (InvalidOperationException ex)
-            {
-                return ServiceResult<ConsumptionResponseDto>.ErrorResult(
-                    $"Lot {allocation.LotId}: {ex.Message}");
-            }
+
+            // BR-19: draft hanya merekam niat. Tidak memanggil DeductStock, tidak
+            // me-reserve lot, sehingga draft orang lain tidak terblokir preview FEFO.
+            drafts.Add(Consumption.CreateDraft(
+                Guid.NewGuid(), jobId, lot.Id, allocation.Quantity, now, createdBy));
         }
 
-        foreach (var consumption in consumptions)
+        foreach (var draft in drafts)
         {
-            await _consumptionRepository.AddAsync(consumption, ct);
-        }
-
-        foreach (var lot in updatedLots)
-        {
-            await _lotRepository.UpdateAsync(lot, ct);
+            await _consumptionRepository.AddAsync(draft, ct);
         }
 
         await _unitOfWork.SaveChangesAsync(ct);
 
-        var item = await _itemRepository.GetByIdAsync(request.ItemId, ct);
-
-        var response = new ConsumptionResponseDto
+        var response = new DraftConsumptionResponseDto
         {
             JobId = jobId,
             ItemId = request.ItemId,
-            BaseUnit = item!.BaseUnit,
-            TotalConsumedQuantity = consumptions.Sum(c => c.Quantity),
-            Consumptions = [.. consumptions
-                .Select(c => new ConsumptionRecordDto
+            Consumptions = [.. drafts
+                .Select(c => new DraftConsumptionRecordDto
                 {
                     Id = c.Id,
-                    JobId = c.JobId,
                     LotId = c.LotId,
                     Quantity = c.Quantity,
-                    ConsumedAt = c.ConsumedAt,
-                    ConsumedBy = c.ConsumedBy
-                })],
-            UpdatedLots = [.. updatedLots
-                .Select(lot => new UpdatedLotDto
-                {
-                    LotId = lot.Id,
-                    RemainingQuantity = lot.RemainingQuantity,
-                    RowVersion = lot.RowVersion
+                    Status = c.Status,
+                    CreatedAt = c.ConsumedAt
                 })]
         };
 
         _logger.LogInformation(
-            "Consumption confirmed for job {JobId}, item {ItemId}, {LotCount} lot(s), total {Total}",
+            "Consumption draft created for job {JobId}, item {ItemId}, {LotCount} lot(s). Stock unchanged.",
             jobId,
             request.ItemId,
-            updatedLots.Count,
-            response.TotalConsumedQuantity);
+            drafts.Count);
 
-        return ServiceResult<ConsumptionResponseDto>.SuccessResult(
+        return ServiceResult<DraftConsumptionResponseDto>.SuccessResult(
             response,
-            "Consumption confirmed successfully.");
+            "Consumption draft created. Stock is deducted after scan verification.");
+    }
+
+    public async Task<ServiceResult<VerifyScanResponseDto>> VerifyScan(
+        Guid jobId,
+        VerifyScanRequestDto request,
+        CancellationToken ct)
+    {
+        _logger.LogDebug(
+            "Verifying scan for job {JobId}, item {ItemId}, lot {LotNumber}",
+            jobId,
+            request.ItemId,
+            request.ScannedLotNumber);
+
+        var job = await _jobRepository.GetByIdAsync(jobId, ct);
+        if (job is null)
+        {
+            return ServiceResult<VerifyScanResponseDto>.ErrorResult(
+                "Job not found.", code: ErrorCodes.JobNotFound);
+        }
+
+        if (job.Status != JobStatus.InProgress)
+        {
+            return ServiceResult<VerifyScanResponseDto>.ErrorResult(
+                $"Job must be InProgress to verify a scan. Current status: {job.Status}.",
+                code: ErrorCodes.InvalidJobState);
+        }
+
+        var lot = await _lotRepository.GetByItemIdAndLotNumberAsync(
+            request.ItemId, request.ScannedLotNumber, ct);
+        if (lot is null)
+        {
+            return ServiceResult<VerifyScanResponseDto>.ErrorResult(
+                $"Lot '{request.ScannedLotNumber}' not found for item {request.ItemId}.",
+                code: ErrorCodes.LotNotFound);
+        }
+
+        var draft = await _consumptionRepository.GetPendingByJobAndLotAsync(jobId, lot.Id, ct);
+        if (draft is null)
+        {
+            return ServiceResult<VerifyScanResponseDto>.ErrorResult(
+                $"No pending consumption waiting for scan of lot '{lot.LotNumber}' in this job.",
+                code: ErrorCodes.NoPendingConsumption);
+        }
+
+        var now = _timeProvider.GetUtcNow();
+
+        // BR-21: eligibility dan stok dievaluasi ulang pada waktu scan aktual.
+        // First-to-Scan Wins (D-15): draft Scientist lain tidak me-reserve stok, jadi
+        // bila stok habis duluan, request ini yang gagal.
+        var today = DateOnly.FromDateTime(now.UtcDateTime);
+        if (today >= lot.ExpiryDate)
+        {
+            return ServiceResult<VerifyScanResponseDto>.ErrorResult(
+                $"Lot '{lot.LotNumber}' expired on {lot.ExpiryDate:yyyy-MM-dd}.",
+                code: ErrorCodes.LotExpired);
+        }
+
+        if (!lot.IsEligible(now))
+        {
+            return ServiceResult<VerifyScanResponseDto>.ErrorResult(
+                $"Lot '{lot.LotNumber}' is no longer eligible for consumption.",
+                code: ErrorCodes.LotNotEligible);
+        }
+
+        if (draft.Quantity > lot.RemainingQuantity)
+        {
+            return ServiceResult<VerifyScanResponseDto>.ErrorResult(
+                $"Lot '{lot.LotNumber}' has only {lot.RemainingQuantity} left but the draft needs {draft.Quantity}. " +
+                "Refresh the FEFO preview and create a new draft.",
+                code: ErrorCodes.InsufficientStock);
+        }
+
+        lot.DeductStock(draft.Quantity, now);
+        draft.VerifyScan(now);
+
+        await _lotRepository.UpdateAsync(lot, ct);
+        await _consumptionRepository.UpdateAsync(draft, ct);
+
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // RowVersion lot berubah sejak dibaca: Scientist lain menang race-nya.
+            _logger.LogWarning(
+                "Concurrency conflict verifying scan for lot {LotId} in job {JobId}",
+                lot.Id,
+                jobId);
+            return ServiceResult<VerifyScanResponseDto>.ErrorResult(
+                $"Lot '{lot.LotNumber}' was updated by another user. Refresh the FEFO preview and try again.",
+                code: ErrorCodes.ConcurrencyConflict);
+        }
+
+        var response = new VerifyScanResponseDto
+        {
+            ConsumptionId = draft.Id,
+            LotId = lot.Id,
+            LotNumber = lot.LotNumber,
+            Quantity = draft.Quantity,
+            Status = draft.Status,
+            VerifiedAt = draft.VerifiedAt,
+            UpdatedLot = new UpdatedLotDto
+            {
+                LotId = lot.Id,
+                RemainingQuantity = lot.RemainingQuantity,
+                RowVersion = lot.RowVersion
+            }
+        };
+
+        _logger.LogInformation(
+            "Scan verified for job {JobId}, lot {LotNumber}, quantity {Quantity}, remaining {Remaining}",
+            jobId,
+            lot.LotNumber,
+            draft.Quantity,
+            lot.RemainingQuantity);
+
+        return ServiceResult<VerifyScanResponseDto>.SuccessResult(
+            response,
+            "Scan verified successfully.");
     }
 
     private LotDto MapToDto(

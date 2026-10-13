@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, AlertCircle } from 'lucide-react';
+import { useImage } from '../../hooks/useImage';
 import type {
   ItemDto,
   CreateItemPayload,
@@ -24,9 +25,6 @@ const UNIT_OPTIONS = [
   { value: 'Box', label: 'Box' },
 ];
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const IMAGE_BASE_URL = API_BASE_URL.replace(/\/api$/, '');
-
 export const ItemModal: React.FC<ItemModalProps> = ({
   isOpen,
   onClose,
@@ -42,8 +40,15 @@ export const ItemModal: React.FC<ItemModalProps> = ({
   const [minimumStock, setMinimumStock] = useState<number>(0);
   const [expiringSoonDays, setExpiringSoonDays] = useState<number>(14);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // Preview file yang baru dipilih user. Gambar item yang sudah tersimpan
+  // diambil lewat useImage(item.imageId), bukan path yang digabung manual.
+  const [localImagePreview, setLocalImagePreview] = useState<string | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
+
+  const { imageUrl: existingImageUrl } = useImage(item?.imageId);
+  const imagePreview = localImagePreview ?? existingImageUrl;
 
 useEffect(() => {
   if (item) {
@@ -52,23 +57,15 @@ useEffect(() => {
     setBaseUnit(item.baseUnit);
     setMinimumStock(item.minimumStock);
     setExpiringSoonDays(item.expiringSoonDays ?? 30);
-
-    setImagePreview(
-      item.imagePath
-        ? `${IMAGE_BASE_URL}/${item.imagePath}`
-        : null
-    );
-
-    setImageFile(null);
   } else {
     setCode('');
     setName('');
     setBaseUnit('Unit');
     setMinimumStock(0);
     setExpiringSoonDays(30);
-    setImagePreview(null);
-    setImageFile(null);
   }
+  setLocalImagePreview(null);
+  setImageFile(null);
 }, [item, isOpen]);
 
   if (!isOpen) return null;
@@ -80,7 +77,7 @@ useEffect(() => {
       const file = e.target.files[0];
 
       setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      setLocalImagePreview(URL.createObjectURL(file));
     }
   };
 

@@ -41,10 +41,6 @@ const ItemRowImage: React.FC<{
       src={imageUrl}
       alt={alt}
       className="w-full h-full object-cover"
-      onError={(e) => {
-        // Fallback tambahan: sembunyikan gambar jika browser gagal merender blob
-        <Layers className="w-4 h-4 opacity-75"/>;
-      }}
     />
   );
 };

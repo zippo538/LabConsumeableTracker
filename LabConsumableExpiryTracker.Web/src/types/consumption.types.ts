@@ -30,19 +30,32 @@ export interface ConsumptionAllocationRequestDto {
   expectedRowVersion: string | number[];
 }
 
-export interface ConfirmConsumptionPayload {
+/** F-15 Fase 1: draft dicatat, stok BELUM berkurang. */
+export interface CreateDraftConsumptionPayload {
   itemId: string;
-  requestedQuantity: number;
   allocations: ConsumptionAllocationRequestDto[];
 }
 
-export interface ConsumptionRecordDto {
+export type ConsumptionStatus = "PendingScan" | "Verified";
+
+export interface DraftConsumptionRecordDto {
   id: string;
-  jobId: string;
   lotId: string;
   quantity: number;
-  consumedAt: string;
-  consumedBy: string;
+  status: number;
+  createdAt: string;
+}
+
+export interface DraftConsumptionResponseDto {
+  jobId: string;
+  itemId: string;
+  consumptions: DraftConsumptionRecordDto[];
+}
+
+/** F-15 Fase 2: hasil scan barcode. */
+export interface VerifyScanPayload {
+  itemId: string;
+  scannedLotNumber: string;
 }
 
 export interface UpdatedLotDto {
@@ -51,11 +64,12 @@ export interface UpdatedLotDto {
   rowVersion: string | number[];
 }
 
-export interface ConsumptionResponseDto {
-  jobId: string;
-  itemId: string;
-  baseUnit: string;
-  totalConsumedQuantity: number;
-  consumptions: ConsumptionRecordDto[];
-  updatedLots: UpdatedLotDto[];
+export interface VerifyScanResponseDto {
+  consumptionId: string;
+  lotId: string;
+  lotNumber: string;
+  quantity: number;
+  status: number;
+  verifiedAt: string | null;
+  updatedLot: UpdatedLotDto;
 }

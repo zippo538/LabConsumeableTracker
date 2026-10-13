@@ -7,7 +7,8 @@ export type TableDensity = "compact" | "default" | "comfortable";
 
 export type DataTableColumn<T> = {
   id: string;
-  header: string;
+  /** Header boleh string atau elemen (mis. checkbox "select all"). */
+  header: ReactNode;
   cell: (row: T) => ReactNode;
   width?: string;
   minWidth?: string;

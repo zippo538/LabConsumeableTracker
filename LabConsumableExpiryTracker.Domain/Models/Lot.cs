@@ -101,20 +101,26 @@ public class Lot
 
     public Consumption Consume(Guid jobId, decimal quantity, DateTimeOffset now, Guid consumedBy)
     {
+        DeductStock(quantity, now);
 
+        return new Consumption(Guid.NewGuid(), jobId, Id, quantity, now, consumedBy);
+    }
+
+    // F-15 Fase 2: dipanggil setelah draft PendingScan diverifikasi lewat scan barcode.
+    public void DeductStock(decimal quantity, DateTimeOffset now)
+    {
         if (!IsEligible(now))
         {
             throw new InvalidOperationException(
                 $"Lot '{LotNumber}' is no longer eligible for consumption.");
         }
+
         UpdateRemainingQuantity(quantity);
 
         if (RemainingQuantity <= 0)
         {
             AdministrativeStatus = LotAdministrativeStatus.Depleted;
         }
-
-        return new Consumption(Guid.NewGuid(), jobId, Id, quantity, now, consumedBy);
     }
     public bool UpdateLotNumber(string lotNumber)
     {

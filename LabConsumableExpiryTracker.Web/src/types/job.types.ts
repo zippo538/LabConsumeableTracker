@@ -27,4 +27,6 @@ export interface ServiceResult<T> {
   success: boolean;
   message: string;
   data: T;
+  /** Kode error mesin-baca, mis. "INSUFFICIENT_STOCK". F-15. */
+  code?: string | null;
 }

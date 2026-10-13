@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useSearchParams } from "react-router";
 import { Download, ChevronDown } from "lucide-react";
-import { useAtomValue } from "jotai";
-import { userAtom } from "../lib/auth/authAtom";
 
 import { DataTable, type DataTableColumn } from "../components/DataTable";
 import { InlineAlert } from "../components/FeedBackStates";
@@ -42,9 +40,6 @@ const formatOccurredAt = (isoDate: string) => {
 };
 
 export function AuditHistoryPage() {
-  const user = useAtomValue(userAtom);
-  const isWarehouseAdmin = user?.roles?.includes("WarehouseAdmin") ?? false;
-
   const [searchParams, setSearchParams] = useSearchParams();
   
 

@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useAtomValue } from "jotai";
 import { useNavigate } from "react-router";
 import { userAtom } from "../lib/auth/authAtom";
-import { Grid2x2, MoreHorizontal, Edit2, Trash2 } from "lucide-react";
+import { Grid2x2, MoreHorizontal, Edit2, Trash2, Printer } from "lucide-react";
 import {
   useLots,
   useLotSummary,
@@ -16,13 +16,19 @@ import type {
   CreateLotRequest,
   UpdateLotRequest,
 } from "../types/lot.types";
-import { DataTable, ItemBadge } from "../components/DataTable";
+import {
+  DataTable,
+  ItemBadge,
+  type DataTableColumn,
+} from "../components/DataTable";
 import { LotStatusBadge } from "../components/lots/LotStatusBadge";
 import { LotSummaryCards } from "../components/lots/LotSummaryCard";
 import { LotFilterBar } from "../components/lots/LotFilterbar";
 import { CreateLotModal } from "../components/lots/CreateLotModal";
 import { UpdateLotModal } from "../components/lots/UpdateLotModal";
 import { DeleteLotModal } from "../components/lots/DeleteLotModal";
+import { LotQr } from "../components/lots/LotQr";
+import { PrintLabelDialog } from "../components/lots/PrintLabelDialog";
 import { AppLayout } from "../components/layout/AppLayout";
 import { EmptyState, ErrorState } from "../components/FeedBackStates";
 
@@ -32,9 +38,6 @@ export const LotsPage = () => {
     user?.roles?.includes("WarehouseAdmin") ?? false;
 
   const navigate = useNavigate();
-
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const IMAGE_BASE_URL = API_BASE_URL.replace(/\/api$/, "");
 
   const [search, setSearch] = useState("");
   const [filterItem, setFilterItem] = useState("");
@@ -109,6 +112,58 @@ export const LotsPage = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const [selectedLot, setSelectedLot] = useState<Lot | null>(null);
+
+  // F-16: bulk print label QR.
+  const [selectedLotIds, setSelectedLotIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [printLots, setPrintLots] = useState<Lot[] | null>(null);
+
+  const toggleLotSelection = (lotId: string) => {
+    setSelectedLotIds((current) => {
+      const next = new Set(current);
+
+      if (next.has(lotId)) {
+        next.delete(lotId);
+      } else {
+        next.add(lotId);
+      }
+
+      return next;
+    });
+  };
+
+  const allVisibleSelected =
+    lots.length > 0 && lots.every((lot) => selectedLotIds.has(lot.id));
+
+  const toggleSelectAllVisible = () => {
+    setSelectedLotIds((current) => {
+      const next = new Set(current);
+
+      if (allVisibleSelected) {
+        lots.forEach((lot) => next.delete(lot.id));
+      } else {
+        lots.forEach((lot) => next.add(lot.id));
+      }
+
+      return next;
+    });
+  };
+
+  const lotsToPrint =
+    printLots ??
+    lots.filter((lot) => selectedLotIds.has(lot.id));
+
+  // Selection dibatasi pada halaman yang sedang tampil — `lotsToPrint` hanya
+  // bisa memfilter lot yang ada di `lots`. Tanpa reset ini, pindah halaman
+  // akan membuat toolbar melaporkan N lot terpilih padahal sebagian besar
+  // tidak ikut tercetak.
+  const currentPageKey = `${page}|${pageSize}`;
+  const [selectionPageKey, setSelectionPageKey] = useState(currentPageKey);
+  if (selectionPageKey !== currentPageKey) {
+    setSelectionPageKey(currentPageKey);
+    setSelectedLotIds(new Set());
+  }
 
   const [createError, setCreateError] = useState<string | undefined>();
   const [updateError, setUpdateError] = useState<string | undefined>();
@@ -208,7 +263,7 @@ export const LotsPage = () => {
     }
   };
 
- const columns = [
+ let columns: DataTableColumn<Lot>[] = [
   {
     id: "item",
     header: "Code / Name",
@@ -350,6 +405,59 @@ export const LotsPage = () => {
     : []),
 ];
 
+// F-16: kolom QR dan bulk-select. Checkbox hanya untuk WarehouseAdmin karena
+// label QR hanya relevan saat Lot siap dicetak ke kemasan.
+columns = [
+  ...(isWarehouseAdmin
+    ? [
+        {
+          id: "select",
+          header: (
+            <input
+              type="checkbox"
+              checked={allVisibleSelected}
+              onChange={toggleSelectAllVisible}
+              aria-label="Select all lots on this page"
+              className="h-4 w-4 cursor-pointer rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+            />
+          ),
+          width: "4%",
+          minWidth: "44px",
+          cell: (lot: Lot) => (
+            <input
+              type="checkbox"
+              checked={selectedLotIds.has(lot.id)}
+              onChange={() => toggleLotSelection(lot.id)}
+              onClick={(e) => e.stopPropagation()}
+              aria-label={`Select lot ${lot.lotNumber}`}
+              className="h-4 w-4 cursor-pointer rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+            />
+          ),
+        },
+      ]
+    : []),
+  {
+    id: "qr",
+    header: "QR",
+    width: "6%",
+    minWidth: "64px",
+    cell: (lot: Lot) => (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/app/lots/${lot.id}`);
+        }}
+        aria-label={`Open details for lot ${lot.lotNumber}`}
+        className="cursor-pointer border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+      >
+        <LotQr lot={lot} size={40} />
+      </button>
+    ),
+  },
+  ...columns,
+];
+
   return (
     <AppLayout
       title="Lot Master"
@@ -406,7 +514,35 @@ export const LotsPage = () => {
             onRetry={() => refetchLots()}
           />
         ) : (
-          <DataTable
+          <>
+            {isWarehouseAdmin && selectedLotIds.size > 0 && (
+              <div className="flex items-center justify-between rounded-lg border border-teal-200 bg-teal-50 px-4 py-3">
+                <span className="text-sm font-medium text-teal-800">
+                  {selectedLotIds.size} lot selected
+                </span>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedLotIds(new Set())}
+                    className="h-9 rounded-lg border border-teal-200 bg-white px-3 text-xs font-semibold text-teal-700 transition hover:bg-teal-100"
+                  >
+                    Clear
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPrintLots(lotsToPrint)}
+                    className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#0e9f6e] px-4 text-xs font-semibold text-white transition hover:bg-[#0b8259]"
+                  >
+                    <Printer className="h-4 w-4" />
+                    <span>Print Selected Labels ({lotsToPrint.length})</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <DataTable
             columns={columns}
             rows={lots}
             getRowId={(lot) => lot.id}
@@ -439,6 +575,7 @@ export const LotsPage = () => {
             onPageChange={setPage}
             onPageSizeChange={setPageSize}
           />
+          </>
         )}
 
         <p className="text-xs text-slate-400">
@@ -481,6 +618,13 @@ export const LotsPage = () => {
           lot={selectedLot}
           isLoading={deleteMutation.isPending}
         />
+
+        {printLots && (
+          <PrintLabelDialog
+            lots={printLots}
+            onClose={() => setPrintLots(null)}
+          />
+        )}
       </div>
     </AppLayout>
   );

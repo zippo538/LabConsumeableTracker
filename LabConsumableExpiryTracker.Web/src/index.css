@@ -19,3 +19,44 @@ body,
   font-family: 'Poppins', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/* F-16: cetak label QR Lot.
+   Saat print, seluruh halaman aplikasi disembunyikan; hanya sheet label yang
+   tampil. Halaman yang sedang mencetak di-mark lewat .lot-label-print-root. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .lot-label-print-root,
+  .lot-label-print-root * {
+    visibility: visible;
+  }
+
+  .lot-label-print-root {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  .lot-label-print-sheet {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4mm;
+  }
+
+  .lot-label {
+    width: 90mm;
+    height: 60mm;
+    border: 1px solid #cbd5e1;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

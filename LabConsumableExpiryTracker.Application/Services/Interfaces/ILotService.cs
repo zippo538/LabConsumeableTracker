@@ -27,10 +27,13 @@ public interface ILotService
     Task<ServiceResult<FefoAllocationPreviewDto>> RequestFefoAllocation(
         Guid jobId, Guid itemId, decimal requestedQuantity, CancellationToken ct);
 
-    Task<ServiceResult<ConsumptionResponseDto>> ConfirmConsumption(Guid jobId,
-        ConfirmConsumptionRequestDto request,
-        Guid consumedBy,
+    Task<ServiceResult<DraftConsumptionResponseDto>> CreateDraftConsumption(Guid jobId,
+        CreateDraftConsumptionRequestDto request,
+        Guid createdBy,
         CancellationToken ct);
 
+    Task<ServiceResult<VerifyScanResponseDto>> VerifyScan(Guid jobId,
+        VerifyScanRequestDto request,
+        CancellationToken ct);
 
 }

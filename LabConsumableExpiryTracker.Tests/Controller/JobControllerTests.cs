@@ -347,22 +347,22 @@ public class JobControllerTests
             Is.TypeOf<OkObjectResult>());
     }
     [Test]
-    public async Task ConfirmConsumption_WithValidUser_ReturnsCreated()
+    public async Task CreateDraftConsumption_WithValidUser_ReturnsCreated()
     {
         var userId =
             Guid.NewGuid();
         var jobId =
             Guid.NewGuid();
         var request =
-            new ConfirmConsumptionRequestDto();
+            new CreateDraftConsumptionRequestDto();
         var response =
-            ServiceResult<ConsumptionResponseDto>
+            ServiceResult<DraftConsumptionResponseDto>
             .SuccessResult(
-                new ConsumptionResponseDto(),
+                new DraftConsumptionResponseDto(),
                 "success");
         _lotServiceMock
             .Setup(x =>
-                x.ConfirmConsumption(
+                x.CreateDraftConsumption(
                     jobId,
                     request,
                     userId,
@@ -388,12 +388,207 @@ public class JobControllerTests
                     }
             };
         var result =
-            await _controller.ConfirmConsumption(
+            await _controller.CreateDraftConsumption(
                 jobId,
                 request,
                 CancellationToken.None);
         Assert.That(
             result.Result,
             Is.TypeOf<CreatedResult>());
+    }
+
+    [Test]
+    public async Task CreateDraftConsumption_WhenLotNotFound_ReturnsNotFound()
+    {
+        var userId =
+            Guid.NewGuid();
+        var jobId =
+            Guid.NewGuid();
+        var request =
+            new CreateDraftConsumptionRequestDto();
+        _lotServiceMock
+            .Setup(x =>
+                x.CreateDraftConsumption(
+                    jobId,
+                    request,
+                    userId,
+                    CancellationToken.None))
+            .ReturnsAsync(
+                ServiceResult<DraftConsumptionResponseDto>
+                    .ErrorResult(
+                        "Lot not found.",
+                        code: ErrorCodes.LotNotFound));
+        _controller.ControllerContext =
+            new ControllerContext
+            {
+                HttpContext =
+                    new DefaultHttpContext
+                    {
+                        User =
+                            new ClaimsPrincipal(
+                                new ClaimsIdentity(
+                                    [
+                                        new Claim(
+                                            ClaimTypes.NameIdentifier,
+                                            userId.ToString())
+                                    ]))
+                    }
+            };
+        var result =
+            await _controller.CreateDraftConsumption(
+                jobId,
+                request,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<NotFoundObjectResult>());
+    }
+
+    [Test]
+    public async Task CreateDraftConsumption_WhenValidationFails_ReturnsBadRequest()
+    {
+        var userId =
+            Guid.NewGuid();
+        var jobId =
+            Guid.NewGuid();
+        var request =
+            new CreateDraftConsumptionRequestDto();
+        _lotServiceMock
+            .Setup(x =>
+                x.CreateDraftConsumption(
+                    jobId,
+                    request,
+                    userId,
+                    CancellationToken.None))
+            .ReturnsAsync(
+                ServiceResult<DraftConsumptionResponseDto>
+                    .ErrorResult(
+                        "At least one allocation is required.",
+                        code: ErrorCodes.ValidationError));
+        _controller.ControllerContext =
+            new ControllerContext
+            {
+                HttpContext =
+                    new DefaultHttpContext
+                    {
+                        User =
+                            new ClaimsPrincipal(
+                                new ClaimsIdentity(
+                                    [
+                                        new Claim(
+                                            ClaimTypes.NameIdentifier,
+                                            userId.ToString())
+                                    ]))
+                    }
+            };
+        var result =
+            await _controller.CreateDraftConsumption(
+                jobId,
+                request,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<BadRequestObjectResult>());
+    }
+
+    [Test]
+    public async Task VerifyScan_WhenScanIsValid_ReturnsOk()
+    {
+        var jobId =
+            Guid.NewGuid();
+        var request =
+            new VerifyScanRequestDto
+            {
+                ItemId = Guid.NewGuid(),
+                ScannedLotNumber = "LOT-001"
+            };
+        _lotServiceMock
+            .Setup(x =>
+                x.VerifyScan(
+                    jobId,
+                    request,
+                    CancellationToken.None))
+            .ReturnsAsync(
+                ServiceResult<VerifyScanResponseDto>
+                    .SuccessResult(
+                        new VerifyScanResponseDto(),
+                        "success"));
+        var result =
+            await _controller.VerifyScan(
+                jobId,
+                request,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<OkObjectResult>());
+    }
+
+    [TestCase(ErrorCodes.NoPendingConsumption)]
+    [TestCase(ErrorCodes.InsufficientStock)]
+    [TestCase(ErrorCodes.LotExpired)]
+    [TestCase(ErrorCodes.LotNotEligible)]
+    [TestCase(ErrorCodes.ConcurrencyConflict)]
+    [TestCase(ErrorCodes.InvalidJobState)]
+    public async Task VerifyScan_WhenConflictCode_ReturnsConflict(string code)
+    {
+        var jobId =
+            Guid.NewGuid();
+        var request =
+            new VerifyScanRequestDto
+            {
+                ItemId = Guid.NewGuid(),
+                ScannedLotNumber = "LOT-001"
+            };
+        _lotServiceMock
+            .Setup(x =>
+                x.VerifyScan(
+                    jobId,
+                    request,
+                    CancellationToken.None))
+            .ReturnsAsync(
+                ServiceResult<VerifyScanResponseDto>
+                    .ErrorResult(
+                        "conflict",
+                        code: code));
+        var result =
+            await _controller.VerifyScan(
+                jobId,
+                request,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<ConflictObjectResult>());
+    }
+
+    [Test]
+    public async Task VerifyScan_WhenLotNotFound_ReturnsNotFound()
+    {
+        var jobId =
+            Guid.NewGuid();
+        var request =
+            new VerifyScanRequestDto
+            {
+                ItemId = Guid.NewGuid(),
+                ScannedLotNumber = "LOT-999"
+            };
+        _lotServiceMock
+            .Setup(x =>
+                x.VerifyScan(
+                    jobId,
+                    request,
+                    CancellationToken.None))
+            .ReturnsAsync(
+                ServiceResult<VerifyScanResponseDto>
+                    .ErrorResult(
+                        "Lot not found.",
+                        code: ErrorCodes.LotNotFound));
+        var result =
+            await _controller.VerifyScan(
+                jobId,
+                request,
+                CancellationToken.None);
+        Assert.That(
+            result.Result,
+            Is.TypeOf<NotFoundObjectResult>());
     }
 }

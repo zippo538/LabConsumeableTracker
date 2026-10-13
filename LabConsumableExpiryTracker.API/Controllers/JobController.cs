@@ -108,25 +108,74 @@ namespace LabConsumableExpiryTracker.API.Controllers ;
             return response.Success ? Ok(response) : BadRequest(response);
         }
         
-        [HttpPost("{jobId:guid}/consumptions")]
+        [HttpPost("{jobId:guid}/consumptions/draft")]
         [Authorize(Roles = nameof(UserRole.Scientist))]
-        public async Task<ActionResult<ServiceResult<ConsumptionResponseDto>>> ConfirmConsumption(
+        public async Task<ActionResult<ServiceResult<DraftConsumptionResponseDto>>> CreateDraftConsumption(
             Guid jobId,
-            [FromBody] ConfirmConsumptionRequestDto request,
+            [FromBody] CreateDraftConsumptionRequestDto request,
             CancellationToken ct)
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var consumedBy))
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var createdBy))
             {
-                return Unauthorized(ServiceResult<ConsumptionResponseDto>.ErrorResult("Invalid user token."));
+                return Unauthorized(ServiceResult<DraftConsumptionResponseDto>.ErrorResult("Invalid user token."));
             }
- 
-            var response = await lotService.ConfirmConsumption(jobId, request, consumedBy, ct);
- 
-            return response.Success
-                ? Created("/api/consumptions", response)
-                : Conflict(response);
+
+            var response = await lotService.CreateDraftConsumption(jobId, request, createdBy, ct);
+
+            if (response.Success)
+            {
+                return Created($"/api/jobs/{jobId}/consumptions/draft", response);
+            }
+
+            return ToActionResult(
+                response,
+                ErrorCodes.ValidationError,
+                ErrorCodes.LotNotFound,
+                ErrorCodes.JobNotFound);
         }
 
+        [HttpPost("{jobId:guid}/consumptions/verify-scan")]
+        [Authorize(Roles = nameof(UserRole.Scientist))]
+        public async Task<ActionResult<ServiceResult<VerifyScanResponseDto>>> VerifyScan(
+            Guid jobId,
+            [FromBody] VerifyScanRequestDto request,
+            CancellationToken ct)
+        {
+            var response = await lotService.VerifyScan(jobId, request, ct);
+
+            if (response.Success)
+            {
+                return Ok(response);
+            }
+
+            return ToActionResult(
+                response,
+                ErrorCodes.ValidationError,
+                ErrorCodes.LotNotFound,
+                ErrorCodes.JobNotFound);
+        }
+
+        /// <summary>
+        /// Memetakan <see cref="ServiceResult{T}.Code"/> ke status HTTP: 400 untuk
+        /// validasi, 404 untuk entity hilang, 409 untuk konflik state/stok.
+        /// </summary>
+        private ActionResult<ServiceResult<T>> ToActionResult<T>(
+            ServiceResult<T> response,
+            string validationCode,
+            params string[] notFoundCodes)
+        {
+            if (response.Code == validationCode)
+            {
+                return BadRequest(response);
+            }
+
+            if (Array.IndexOf(notFoundCodes, response.Code) >= 0)
+            {
+                return NotFound(response);
+            }
+
+            return Conflict(response);
+        }
 
     }

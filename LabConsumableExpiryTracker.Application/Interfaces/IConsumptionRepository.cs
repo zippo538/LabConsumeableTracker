@@ -11,4 +11,6 @@ public interface IConsumptionRepository : IRepository<Consumption, Guid>
         DateTimeOffset? from,
         DateTimeOffset? to,
         CancellationToken ct);
+
+    Task<Consumption?> GetPendingByJobAndLotAsync(Guid jobId, Guid lotId, CancellationToken ct);
 }

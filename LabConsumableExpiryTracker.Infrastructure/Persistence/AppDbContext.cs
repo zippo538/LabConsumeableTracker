@@ -190,9 +190,19 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
         builder.Property(consumption => consumption.Quantity).HasColumnName("quantity").HasPrecision(18, 3).IsRequired();
         builder.Property(consumption => consumption.ConsumedAt).HasColumnName("consumed_at").HasColumnType("timestamp with time zone").IsRequired();
         builder.Property(consumption => consumption.ConsumedBy).HasColumnName("consumed_by").IsRequired();
+        builder.Property(consumption => consumption.Status)
+            .HasColumnName("status")
+            .HasConversion<string>()
+            .HasMaxLength(50)
+            .IsRequired();
+        builder.Property(consumption => consumption.VerifiedAt)
+            .HasColumnName("verified_at")
+            .HasColumnType("timestamp with time zone");
 
         builder.HasIndex(consumption => consumption.JobId).HasDatabaseName("ix_consumptions_job_id");
         builder.HasIndex(consumption => consumption.LotId).HasDatabaseName("ix_consumptions_lot_id");
+        builder.HasIndex(consumption => new { consumption.JobId, consumption.LotId, consumption.Status })
+            .HasDatabaseName("ix_consumptions_pending");
     }
 
     private static void ConfigureDisposal(ModelBuilder modelBuilder)
