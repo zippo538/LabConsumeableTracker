@@ -1,12 +1,16 @@
 using LabConsumableExpiryTracker.Domain.Enums;
 using LabConsumableExpiryTracker.Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace LabConsumableExpiryTracker.Infrastructure.Persistence.Seeders;
 
 public class IdentitySeeder(
     RoleManager<IdentityRole<Guid>> roleManager,
-    UserManager<ApplicationUser> userManager)
+    UserManager<ApplicationUser> userManager,
+    IConfiguration configuration,
+    ILogger<IdentitySeeder> logger)
 {
     public async Task SeedAsync()
     {
@@ -25,6 +29,17 @@ public class IdentitySeeder(
 
         if (admin is null)
         {
+            var password = configuration["Seed:Admin:Password"];
+
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                logger.LogWarning(
+                    "Admin seed skipped; 'Seed:Admin:Password' is not configured. " +
+                    "NFR-08 forbids hardcoded seed passwords in source.");
+
+                return;
+            }
+
             admin = new ApplicationUser
             {
                 UserName = "warehouseadmin",
@@ -36,7 +51,7 @@ public class IdentitySeeder(
 
             var result = await userManager.CreateAsync(
                 admin,
-                "Admin@123");
+                password);
 
             if (!result.Succeeded)
             {

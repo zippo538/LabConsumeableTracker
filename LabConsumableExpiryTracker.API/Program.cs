@@ -114,6 +114,8 @@ builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IdentitySeeder>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+// --- Health checks ---
+builder.Services.AddHealthChecks();
 // --- HttpContext ---
 builder.Services.AddHttpContextAccessor();
 // --- FluentValidation ---
@@ -208,17 +210,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseStaticFiles();
-app.MapControllers();
 app.UseExceptionHandler();
 app.UseCors("ReactDevelopment");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-using (var scope = app.Services.CreateScope())
-{
-    var dbInitializer = scope.ServiceProvider
-        .GetRequiredService<IDbInitializer>();
-    await dbInitializer.InitializeAsync();
-}
+app.MapHealthChecks("/health");
 app.Run();
