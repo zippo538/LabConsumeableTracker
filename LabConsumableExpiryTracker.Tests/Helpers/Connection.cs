@@ -6,6 +6,12 @@ public abstract class Connection
     private static string _connectionString = string.Empty;
     public static string GetConnection(string connectionAppSettings)
     {
+        var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+        if (!string.IsNullOrWhiteSpace(connectionString))
+        {
+            return connectionString;
+        }
+
         var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile(

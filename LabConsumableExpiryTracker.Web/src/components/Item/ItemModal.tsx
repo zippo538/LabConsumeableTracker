@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, AlertCircle } from 'lucide-react';
+import { getImage } from '../../api/imageApi';
 import type {
   ItemDto,
   CreateItemPayload,
@@ -23,9 +24,6 @@ const UNIT_OPTIONS = [
   { value: 'Vial', label: 'Vial' },
   { value: 'Box', label: 'Box' },
 ];
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const IMAGE_BASE_URL = API_BASE_URL.replace(/\/api$/, '');
 
 export const ItemModal: React.FC<ItemModalProps> = ({
   isOpen,
@@ -53,11 +51,13 @@ useEffect(() => {
     setMinimumStock(item.minimumStock);
     setExpiringSoonDays(item.expiringSoonDays ?? 30);
 
-    setImagePreview(
-      item.imagePath
-        ? `${IMAGE_BASE_URL}/${item.imagePath}`
-        : null
-    );
+    if (item.imageId) {
+      getImage(item.imageId)
+        .then((blob) => setImagePreview(URL.createObjectURL(blob)))
+        .catch(() => setImagePreview(null));
+    } else {
+      setImagePreview(null);
+    }
 
     setImageFile(null);
   } else {

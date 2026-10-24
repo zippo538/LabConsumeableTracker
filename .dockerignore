@@ -1,0 +1,17 @@
+.git
+.claude
+.omc
+**/bin
+**/obj
+**/node_modules
+LabConsumableExpiryTracker.Web/dist
+LabConsumableExpiryTracker.Web/.env*
+.env
+.env.*
+!.env.example
+*.pdf
+README.md
+agent.md
+diagram.mmd
+srs.md
+specs

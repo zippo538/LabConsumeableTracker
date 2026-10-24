@@ -140,4 +140,77 @@ All API endpoints are defined in `LabConsumableExpiryTracker.API/Controllers/`. 
 │   ├── LabConsumableExpiryTracker.Tests/           # Unit & Integration Tests
 ```
 
+## Deployment (Docker Compose)
 
+The full stack runs on a Docker Compose file designed for a reverseproxy setup on an Ubuntu homeserver:
+
+```text
+├── docker-compose.yml             # Stack definition (api, web, db)
+├── .env.example                   # Secret template (copy to .env)
+├── Jenkinsfile                    # CI/CD pipeline
+├── docs/DEPLOY.md                 # Full deployment & Jenkins guide
+├── LabConsumableExpiryTracker.API/Dockerfile
+└── LabConsumableExpiryTracker.Web/Dockerfile + nginx-default.conf.template
+```
+
+### Architecture
+
+| Service  | Image                          | Port (container) | Network              |
+|----------|--------------------------------|------------------|----------------------|
+| `api`    | `lab-consumable-expiry-tracker-api`  | 8080             | `app` + `proxy_network` |
+| `web`    | `lab-consumable-expiry-tracker-web`  | 80               | `proxy_network`      |
+| `db`     | `postgres:16-alpine`           | 5432             | `app` (internal only)|
+
+- `web` serves the SPA and proxies `/api/` to `api:8080` via Nginx.
+- No port is published to the host; an external reverse proxy (join it to `proxy_network`) targets `web:80`.
+- `postgres-data` (database) and `api-images` (uploaded item images) are persistent volumes.
+- All services have health checks; `api` waits for `db`, `web` waits for `api`.
+- Resource limits for the whole stack are capped at **1 CPU / 2 GB RAM** total (`api` 0.5/1G, `web` 0.25/512M, `db` 0.25/512M). See `docs/DEPLOY.md` to adjust.
+
+### Quick Start
+
+```bash
+# 1. Create the shared reverse-proxy network (once)
+docker network create proxy_network
+
+# 2. Fill in secrets
+cp .env.example .env
+$EDITOR .env   # set POSTGRES_*, JWT_SECRET_KEY, SEED_*_PASSWORD
+
+# 3. Build and start
+docker compose up -d --build
+```
+
+Startup applies EF Core migrations, then seeds roles, admin, and demo data. Never commit real `.env` values — every variable is validated with `${VAR:?...}` so Compose fails fast if a secret is missing.
+
+### Useful Commands
+
+```bash
+docker compose logs -f api        # follow API logs (Serilog JSON)
+docker compose ps                 # health status
+docker compose down               # stop (keeps volumes)
+docker compose down -v            # stop and wipe database/images volumes
+docker compose pull && docker compose up -d --build   # update
+```
+
+## CI/CD (Jenkins)
+
+`Jenkinsfile` defines the pipeline stages:
+
+| Stage              | What it does                                                        |
+|--------------------|---------------------------------------------------------------------|
+| `Checkout`         | `checkout scm`                                                      |
+| `Test API`         | Starts a throwaway `postgres:16-alpine` (port 5433, auto-cleaned via `trap ... EXIT`), runs `dotnet test` against it via `CONNECTION_STRING` |
+| `Build Web`        | `npm ci && npm run build`                                           |
+| `Build API Image`  | `docker build` (root context, `LabConsumableExpiryTracker.API/Dockerfile`) |
+| `Build Web Image`  | `docker build`                                                      |
+| `Deploy` (optional)| Only when the `DEPLOY` parameter is checked — SSH into the homeserver and `docker compose up -d --build` |
+
+### Jenkins Setup
+
+1. The agent needs `dotnet` 8, `node`, `npm`, `docker`, and `git`.
+2. Create an **SSH private key** credential with ID `homeserver-deploy-ssh` (username = homeserver SSH user, key = OpenSSH private key).
+3. Provide `DEPLOY_HOST` (homeserver address) and `DEPLOY_DIR` (path to the repository checkout on the homeserver) as environment variables or pipeline parameters.
+4. New pipeline job → "Pipeline script from SCM" → point at this repository → build. Check the `DEPLOY` parameter only when you want a release.
+
+Without `DEPLOY`, the pipeline stops after tests and image builds — safe to run on every push. Full details: `docs/DEPLOY.md`.
