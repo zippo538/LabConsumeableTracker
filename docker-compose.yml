@@ -1,0 +1,107 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
+
+  api:
+    build:
+      context: .
+      dockerfile: LabConsumableExpiryTracker.API/Dockerfile
+    image: lab-consumable-expiry-tracker-api:local
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=${POSTGRES_DB:?Set POSTGRES_DB in .env};Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      JwtSettings__SecretKey: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
+      JwtSettings__Issuer: ${JWT_ISSUER:-LabConsumableExpiryTracker}
+      JwtSettings__Audience: ${JWT_AUDIENCE:-LabConsumableExpiryTrackerClient}
+      Seed__Admin__Password: ${SEED_ADMIN_PASSWORD:?Set SEED_ADMIN_PASSWORD in .env}
+      Seed__Users__Password: ${SEED_USERS_PASSWORD:?Set SEED_USERS_PASSWORD in .env}
+    volumes:
+      - api-images:/app/Storage/Images
+    expose:
+      - "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app
+      - proxy_network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 512M
+
+  web:
+    build:
+      context: ./LabConsumableExpiryTracker.Web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    image: lab-consumable-expiry-tracker-web:local
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - proxy_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
+
+volumes:
+  postgres-data:
+  api-images:
+
+networks:
+  app:
+    internal: true
+  proxy_network:
+    external: true
+    name: proxy_network
