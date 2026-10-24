@@ -1,8 +1,23 @@
+limit_req_zone $binary_remote_addr zone=api_limit:10m rate=5r/s;
+limit_req_status 429;
 server {
     listen 80;
     server_name _;
     root /usr/share/nginx/html;
     index index.html;
+
+    location /api/auth/login {
+        # Batasi dengan ketat, beri toleransi antrean (burst) 5, tanpa delay langsung tolak jika lebih
+        limit_req zone=api_limit burst=5 nodelay;
+
+        proxy_pass http://api:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 50m;
+    }
 
     location /api/ {
         proxy_pass http://api:8080;
